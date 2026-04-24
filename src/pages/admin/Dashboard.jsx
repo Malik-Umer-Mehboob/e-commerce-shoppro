@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Menu, LogOut, LayoutDashboard, Package, ShoppingCart, Users, Tag, Settings } from 'lucide-react';
+import { Menu, LogOut, LayoutDashboard, Package, ShoppingCart, Users, Tag, Settings, Mail, Target, FileText, Send } from 'lucide-react';
 import { authService } from '../../services/authService';
 import { logoutUser } from '../../store/authSlice';
 import { useNavigate } from 'react-router-dom';
@@ -24,12 +24,17 @@ export default function AdminDashboard() {
   };
 
   const navItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', active: true },
-    { icon: Package, label: 'Products', active: false },
-    { icon: ShoppingCart, label: 'Orders', active: false },
-    { icon: Users, label: 'Users', active: false },
-    { icon: Tag, label: 'Coupons', active: false },
-    { icon: Settings, label: 'Settings', active: false },
+    { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard', active: true },
+    { icon: Package, label: 'Products', path: '/admin/products', active: false },
+    { icon: Tag, label: 'Discounts', path: '/admin/discounts', active: false },
+    { icon: Upload, label: 'Bulk Upload', path: '/admin/bulk-upload', active: false },
+    { icon: AlertTriangle, label: 'Low Stock', path: '/admin/low-stock', active: false },
+    { icon: Tag, label: 'Categories', path: '/admin/categories', active: false },
+    { icon: Mail, label: 'Campaigns', path: '/admin/marketing/campaigns', active: false },
+    { icon: Target, label: 'Segments', path: '/admin/marketing/segments', active: false },
+    { icon: Send, label: 'Newsletters', path: '/admin/marketing/newsletters', active: false },
+    { icon: FileText, label: 'Templates', path: '/admin/marketing/templates', active: false },
+    { icon: Settings, label: 'Settings', path: '/admin/settings', active: false },
   ];
 
   return (
@@ -40,7 +45,11 @@ export default function AdminDashboard() {
         </div>
         <nav className="p-4 space-y-2">
           {navItems.map((item, idx) => (
-            <button key={idx} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${item.active ? 'bg-[#F97316] text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white'}`}>
+            <button 
+              key={idx} 
+              onClick={() => navigate(item.path)}
+              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${item.active ? 'bg-[#F97316] text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white'}`}
+            >
               <item.icon className="w-5 h-5" />
               <span>{item.label}</span>
             </button>

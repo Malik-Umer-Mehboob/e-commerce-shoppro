@@ -6,6 +6,7 @@ import { Toaster } from 'react-hot-toast';
 import { store } from './store';
 import App from './App';
 import './index.css';
+import './i18n';
 
 const token = localStorage.getItem('token');
 const user = localStorage.getItem('user');

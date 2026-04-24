@@ -104,6 +104,14 @@ export default function Register() {
                 </div>
                 <span className="text-xl">Secure Payment</span>
               </div>
+               <div className="flex items-center space-x-4">
+                <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-[#F97316]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <span className="text-xl">Easy Returns</span>
+              </div>
             </div>
           </div>
         </div>

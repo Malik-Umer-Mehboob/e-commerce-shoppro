@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Menu, LogOut, Package, ShoppingCart, BarChart2, Settings } from 'lucide-react';
+import { Menu, LogOut, LayoutDashboard, Package, ShoppingCart, BarChart2, Settings } from 'lucide-react';
 import { authService } from '../../services/authService';
 import { logoutUser } from '../../store/authSlice';
 import { useNavigate } from 'react-router-dom';
@@ -24,10 +24,11 @@ export default function SellerDashboard() {
   };
 
   const navItems = [
-    { icon: Package, label: 'My Products', active: true },
-    { icon: ShoppingCart, label: 'Orders', active: false },
-    { icon: BarChart2, label: 'Analytics', active: false },
-    { icon: Settings, label: 'Settings', active: false },
+    { icon: LayoutDashboard, label: 'Dashboard', path: '/seller/dashboard', active: false },
+    { icon: Package, label: 'My Products', path: '/seller/products', active: true },
+    { icon: ShoppingCart, label: 'Orders', path: '/seller/orders', active: false },
+    { icon: BarChart2, label: 'Analytics', path: '/seller/analytics', active: false },
+    { icon: Settings, label: 'Settings', path: '/seller/settings', active: false },
   ];
 
   return (
@@ -38,7 +39,11 @@ export default function SellerDashboard() {
         </div>
         <nav className="p-4 space-y-2">
           {navItems.map((item, idx) => (
-            <button key={idx} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${item.active ? 'bg-[#F97316] text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white'}`}>
+            <button 
+              key={idx} 
+              onClick={() => navigate(item.path)}
+              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${item.active ? 'bg-[#F97316] text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white'}`}
+            >
               <item.icon className="w-5 h-5" />
               <span>{item.label}</span>
             </button>
