@@ -78,7 +78,7 @@ const AdminPostEditor = () => {
   };
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
+    <div className="max-w-6xl mx-auto animate-in fade-in duration-500">
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center space-x-4">
           <button onClick={() => navigate('/admin/blog')} className="p-2 hover:bg-slate-100 rounded-xl transition-all">

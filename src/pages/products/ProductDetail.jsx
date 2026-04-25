@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from '../../components/layout/Header';
 import AddToCart from '../../components/common/AddToCart';
@@ -6,45 +6,49 @@ import AddToWishlist from '../../components/common/AddToWishlist';
 import api from '../../services/api';
 import { Minus, Plus, ChevronLeft, Star, ShieldCheck, Truck } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useQuery } from '@tanstack/react-query';
 
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [product, setProduct] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [quantity, setQuantity] = useState(1);
 
+  const { data: product, isLoading: loading, error } = useQuery({
+    queryKey: ['product', id],
+    queryFn: async () => {
+      const response = await api.get(`/products/${id}`);
+      return response.data;
+    },
+    onError: (err) => {
+      toast.error('Failed to load product');
+      navigate('/home');
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+
+  // Set default variant when product is loaded
   useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        const response = await api.get(`/products/${id}`);
-        setProduct(response.data);
-        if (response.data.variants?.length > 0) {
-          setSelectedVariant(response.data.variants[0]);
-        }
-      } catch (err) {
-        toast.error('Failed to load product');
-        navigate('/home');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProduct();
-  }, [id, navigate]);
+    if (product && product.variants?.length > 0 && !selectedVariant) {
+      setSelectedVariant(product.variants[0]);
+    }
+  }, [product, selectedVariant]);
 
   if (loading) {
     return (
       <div className="min-h-screen bg-white">
         <Header />
         <div className="max-w-7xl mx-auto px-4 py-20 flex justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+          <div className="relative w-16 h-16">
+            <div className="absolute top-0 left-0 w-full h-full border-4 border-orange-100 rounded-full"></div>
+            <div className="absolute top-0 left-0 w-full h-full border-4 border-orange-500 rounded-full border-t-transparent animate-spin"></div>
+          </div>
         </div>
       </div>
     );
   }
 
-  if (!product) return null;
+  if (error || !product) return null;
 
   const currentPrice = selectedVariant?.price || product.sale_price || product.price;
 
@@ -64,17 +68,17 @@ const ProductDetail = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Image Gallery */}
           <div className="space-y-4">
-            <div className="aspect-square rounded-3xl overflow-hidden bg-gray-50 border border-gray-100">
+            <div className="aspect-square rounded-3xl overflow-hidden bg-gray-50 border border-gray-100 shadow-sm">
               <img 
                 src={product.thumbnail || 'https://via.placeholder.com/600'} 
                 alt={product.name} 
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover transition-transform hover:scale-105 duration-500"
               />
             </div>
             {/* Thumbnail placeholders */}
             <div className="grid grid-cols-4 gap-4">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="aspect-square rounded-xl bg-gray-50 border border-gray-100 cursor-pointer overflow-hidden opacity-50 hover:opacity-100 transition-opacity">
+                <div key={i} className="aspect-square rounded-xl bg-gray-50 border border-gray-100 cursor-pointer overflow-hidden opacity-50 hover:opacity-100 transition-all hover:shadow-md">
                   <img src={product.thumbnail || 'https://via.placeholder.com/150'} alt="" className="w-full h-full object-cover" />
                 </div>
               ))}
@@ -126,7 +130,7 @@ const ProductDetail = () => {
                       onClick={() => setSelectedVariant(variant)}
                       className={`px-4 py-2 rounded-xl border-2 transition-all font-medium ${
                         selectedVariant?.id === variant.id
-                          ? 'border-orange-500 bg-orange-50 text-orange-600'
+                          ? 'border-orange-500 bg-orange-50 text-orange-600 shadow-sm'
                           : 'border-gray-100 hover:border-gray-300 text-gray-600'
                       }`}
                     >
@@ -142,14 +146,14 @@ const ProductDetail = () => {
               <div className="flex items-center gap-4 bg-gray-50 border border-gray-200 p-2 rounded-2xl">
                 <button 
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="w-10 h-10 flex items-center justify-center hover:bg-white rounded-xl transition-colors text-gray-600"
+                  className="w-10 h-10 flex items-center justify-center hover:bg-white rounded-xl transition-colors text-gray-600 shadow-sm"
                 >
                   <Minus size={20} />
                 </button>
                 <span className="w-8 text-lg font-black text-center text-gray-900">{quantity}</span>
                 <button 
                   onClick={() => setQuantity(quantity + 1)}
-                  className="w-10 h-10 flex items-center justify-center hover:bg-white rounded-xl transition-colors text-gray-600"
+                  className="w-10 h-10 flex items-center justify-center hover:bg-white rounded-xl transition-colors text-gray-600 shadow-sm"
                 >
                   <Plus size={20} />
                 </button>

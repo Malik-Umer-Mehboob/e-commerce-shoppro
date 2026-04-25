@@ -8,13 +8,16 @@ import { Link } from 'react-router-dom';
 
 const ProductComparisonPage = () => {
   const dispatch = useDispatch();
+  const { isAuthenticated } = useSelector((state) => state.auth);
   const { items, loading } = useSelector((state) => state.comparison);
 
   useEffect(() => {
-    dispatch(fetchComparison());
-  }, [dispatch]);
+    if (isAuthenticated) {
+      dispatch(fetchComparison());
+    }
+  }, [dispatch, isAuthenticated]);
 
-  if (loading && items.length === 0) {
+  if (loading && (items ?? []).length === 0) {
     return (
       <div className="min-h-screen bg-slate-50">
         <Header />
@@ -25,7 +28,7 @@ const ProductComparisonPage = () => {
     );
   }
 
-  if (items.length === 0) {
+  if ((items ?? []).length === 0) {
     return (
       <div className="min-h-screen bg-slate-50">
         <Header />
@@ -86,7 +89,7 @@ const ProductComparisonPage = () => {
                       <span>Comparison Matrix</span>
                     </div>
                   </th>
-                  {items.map((product) => (
+                  {(items ?? []).map((product) => (
                     <th key={product.id} className="p-8 border-r border-slate-100 last:border-0 min-w-[280px]">
                       <div className="relative group">
                         <button 
@@ -106,7 +109,7 @@ const ProductComparisonPage = () => {
               </thead>
               <tbody>
                 <tr className="bg-slate-50/30">
-                  <td colSpan={items.length + 1} className="p-4">
+                  <td colSpan={(items ?? []).length + 1} className="p-4">
                     <div className="flex items-center space-x-2 text-slate-900 font-black text-xs uppercase tracking-widest">
                       <Info size={14} className="text-orange-500" />
                       <span>Product Specifications</span>
@@ -116,7 +119,7 @@ const ProductComparisonPage = () => {
                 {specs.map((spec, idx) => (
                   <tr key={idx} className="border-t border-slate-100 hover:bg-slate-50/50 transition-colors">
                     <td className="p-6 font-bold text-slate-500 bg-slate-50/20 border-r border-slate-100">{spec.label}</td>
-                    {items.map((product) => (
+                    {(items ?? []).map((product) => (
                       <td key={product.id} className="p-6 text-slate-900 font-medium border-r border-slate-100 last:border-0">
                         {spec.render(product)}
                       </td>

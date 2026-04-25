@@ -7,23 +7,25 @@ export const fetchComparison = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await api.get('/comparison');
-      return response.data;
+      // The API returns data directly or inside a data wrapper
+      return response.data?.data ?? response.data ?? [];
     } catch (err) {
-      return rejectWithValue(err.response.data);
+      return rejectWithValue(err.response?.data || 'Failed to load comparison');
     }
   }
 );
 
 export const addToComparison = createAsyncThunk(
   'comparison/addToComparison',
-  async (productId, { rejectWithValue }) => {
+  async (productId, { rejectWithValue, dispatch }) => {
     try {
       const response = await api.post('/comparison', { product_id: productId });
-      toast.success('Added to comparison!');
+      toast.success(response.data?.message || 'Added to comparison!');
+      dispatch(fetchComparison());
       return response.data;
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to add to comparison');
-      return rejectWithValue(err.response.data);
+      return rejectWithValue(err.response?.data);
     }
   }
 );
@@ -37,7 +39,7 @@ export const removeFromComparison = createAsyncThunk(
       return productId;
     } catch (err) {
       toast.error('Failed to remove from comparison');
-      return rejectWithValue(err.response.data);
+      return rejectWithValue(err.response?.data);
     }
   }
 );
@@ -46,12 +48,12 @@ export const clearComparison = createAsyncThunk(
   'comparison/clearComparison',
   async (_, { rejectWithValue }) => {
     try {
-      await api.post('/comparison/clear');
+      await api.delete('/comparison');
       toast.success('Comparison list cleared');
       return null;
     } catch (err) {
       toast.error('Failed to clear comparison');
-      return rejectWithValue(err.response.data);
+      return rejectWithValue(err.response?.data);
     }
   }
 );
@@ -68,17 +70,16 @@ const comparisonSlice = createSlice({
     builder
       .addCase(fetchComparison.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(fetchComparison.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload.products || [];
+        state.items = Array.isArray(action.payload) ? action.payload : [];
       })
       .addCase(fetchComparison.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-      })
-      .addCase(addToComparison.fulfilled, (state, action) => {
-        state.items = action.payload.products || [];
+        state.items = []; // Reset on error to avoid crashing
       })
       .addCase(removeFromComparison.fulfilled, (state, action) => {
         state.items = state.items.filter(item => item.id !== action.payload);

@@ -1,20 +1,14 @@
 import { useState, useEffect } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
 import { 
-  Menu, LogOut, LayoutDashboard, Package, ShoppingCart, 
-  Users, Tag, Settings, Plus, Search, Filter, 
-  Pencil, Trash2, Eye, EyeOff, MoreVertical, 
-  AlertTriangle, CheckCircle, Clock, Upload
+  Package, CheckCircle, Clock, AlertTriangle, 
+  Plus, Search, Eye, EyeOff, Pencil, Trash2 
 } from 'lucide-react';
-import { authService } from '../../services/authService';
 import { productService } from '../../services/productService';
 import { categoryService } from '../../services/categoryService';
-import { logoutUser } from '../../store/authSlice';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 
 export default function AdminProducts() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -32,8 +26,6 @@ export default function AdminProducts() {
     page: 1
   });
 
-  const { user } = useSelector(state => state.auth);
-  const dispatch = useDispatch();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -50,7 +42,6 @@ export default function AdminProducts() {
       });
       setProducts(response.data.data);
       
-      // Rough stats calculation (ideally from backend)
       const allRes = await productService.getProducts({ limit: 1000 });
       const all = allRes.data.data;
       setStats({
@@ -69,7 +60,6 @@ export default function AdminProducts() {
   const fetchCategories = async () => {
     try {
       const response = await categoryService.getCategories();
-      // Flatten categories for dropdown
       const flattened = [];
       response.data.categories.forEach(cat => {
         flattened.push(cat);
@@ -82,17 +72,6 @@ export default function AdminProducts() {
       setCategories(flattened);
     } catch (error) {
       console.error('Failed to fetch categories');
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await authService.logout();
-      dispatch(logoutUser());
-      navigate('/login');
-      toast.success('Logged out successfully');
-    } catch (error) {
-      toast.error('Logout failed');
     }
   };
 
@@ -119,258 +98,190 @@ export default function AdminProducts() {
     }
   };
 
-  const navItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard', active: false },
-    { icon: Package, label: 'Products', path: '/admin/products', active: true },
-    { icon: Tag, label: 'Discounts', path: '/admin/discounts', active: false },
-    { icon: Upload, label: 'Bulk Upload', path: '/admin/bulk-upload', active: false },
-    { icon: AlertTriangle, label: 'Low Stock', path: '/admin/low-stock', active: false },
-    { icon: Tag, label: 'Categories', path: '/admin/categories', active: false },
-    { icon: Settings, label: 'Settings', path: '/admin/settings', active: false },
-  ];
-
   const getStatusBadge = (status, stock) => {
-    if (stock <= 0) return <span className="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-700">Out of Stock</span>;
-    if (status === 'published') return <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">Published</span>;
-    if (status === 'draft') return <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-700">Draft</span>;
-    return <span className="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-700">{status}</span>;
+    if (stock <= 0) return <span className="px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-full bg-red-100 text-red-700">Out of Stock</span>;
+    if (status === 'published') return <span className="px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-full bg-green-100 text-green-700">Published</span>;
+    if (status === 'draft') return <span className="px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-full bg-yellow-100 text-yellow-700">Draft</span>;
+    return <span className="px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-full bg-gray-100 text-gray-700">{status}</span>;
   };
 
   return (
-    <div className="min-h-screen flex bg-[#F8FAFC]">
-      {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 bg-[#0F172A] w-64 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 ease-in-out z-20`}>
-        <div className="flex h-16 items-center px-6 text-white font-bold text-xl border-b border-gray-700">
-          ShopPro Admin
+    <div className="space-y-8 animate-in fade-in duration-500">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-black text-[#0F172A]">Products Management</h1>
+          <p className="text-gray-500 font-medium">Manage your inventory and product listings.</p>
         </div>
-        <nav className="p-4 space-y-2">
-          {navItems.map((item, idx) => (
-            <button 
-              key={idx} 
-              onClick={() => navigate(item.path)}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${item.active ? 'bg-[#F97316] text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white'}`}
-            >
-              <item.icon className="w-5 h-5" />
-              <span>{item.label}</span>
-            </button>
-          ))}
-        </nav>
-      </aside>
-
-      {/* Main Content */}
-      <div className="flex-1 md:ml-64 flex flex-col min-h-screen transition-all duration-300">
-        <header className="h-16 bg-white shadow-sm flex items-center justify-between px-4 sm:px-6 z-10">
-          <button className="md:hidden text-gray-500" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
-            <Menu className="w-6 h-6" />
-          </button>
-          <div className="md:hidden font-bold text-[#0F172A] text-lg">ShopPro</div>
-          <div className="ml-auto flex items-center space-x-4">
-            <span className="text-sm font-medium text-[#0F172A] hidden sm:block">{user?.name}</span>
-            <div className="w-8 h-8 rounded-full bg-[#0F172A] text-white flex items-center justify-center font-bold">
-              {user?.name?.charAt(0) || 'A'}
-            </div>
-            <button onClick={handleLogout} className="text-gray-500 hover:text-[#F97316] transition-colors">
-              <LogOut className="w-5 h-5" />
-            </button>
-          </div>
-        </header>
-
-        <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-x-hidden">
-          <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-            <h1 className="text-2xl font-bold text-[#0F172A]">Products Management</h1>
-            <Link 
-              to="/admin/products/add"
-              className="inline-flex items-center justify-center px-4 py-2 bg-[#F97316] text-white rounded-lg font-semibold hover:bg-[#EA580C] transition-all shadow-sm gap-2"
-            >
-              <Plus className="w-5 h-5" />
-              Add Product
-            </Link>
-          </div>
-
-          {/* Stats Bar */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
-              <div className="p-3 bg-blue-50 text-blue-600 rounded-lg"><Package className="w-6 h-6" /></div>
-              <div>
-                <p className="text-sm text-gray-500">Total Products</p>
-                <p className="text-2xl font-bold text-[#0F172A]">{stats.total}</p>
-              </div>
-            </div>
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
-              <div className="p-3 bg-green-50 text-green-600 rounded-lg"><CheckCircle className="w-6 h-6" /></div>
-              <div>
-                <p className="text-sm text-gray-500">Published</p>
-                <p className="text-2xl font-bold text-[#0F172A]">{stats.published}</p>
-              </div>
-            </div>
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
-              <div className="p-3 bg-yellow-50 text-yellow-600 rounded-lg"><Clock className="w-6 h-6" /></div>
-              <div>
-                <p className="text-sm text-gray-500">Drafts</p>
-                <p className="text-2xl font-bold text-[#0F172A]">{stats.drafts}</p>
-              </div>
-            </div>
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
-              <div className="p-3 bg-red-50 text-red-600 rounded-lg"><AlertTriangle className="w-6 h-6" /></div>
-              <div>
-                <p className="text-sm text-gray-500">Low Stock</p>
-                <p className="text-2xl font-bold text-[#0F172A]">{stats.lowStock}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Filters */}
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6 flex flex-wrap gap-4 items-center">
-            <div className="relative flex-1 min-w-[240px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input 
-                type="text" 
-                placeholder="Search products..." 
-                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F97316] focus:border-transparent"
-                value={filters.search}
-                onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                onKeyDown={(e) => e.key === 'Enter' && fetchProducts()}
-              />
-            </div>
-            <select 
-              className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F97316] bg-white min-w-[160px]"
-              value={filters.category_id}
-              onChange={(e) => setFilters({ ...filters, category_id: e.target.value, page: 1 })}
-            >
-              <option value="">All Categories</option>
-              {categories.map(cat => (
-                <option key={cat.id} value={cat.id}>{cat.name}</option>
-              ))}
-            </select>
-            <select 
-              className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F97316] bg-white min-w-[140px]"
-              value={filters.status}
-              onChange={(e) => setFilters({ ...filters, status: e.target.value, page: 1 })}
-            >
-              <option value="">All Status</option>
-              <option value="published">Published</option>
-              <option value="draft">Draft</option>
-              <option value="archived">Archived</option>
-            </select>
-            <button 
-              onClick={fetchProducts}
-              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors"
-            >
-              Apply
-            </button>
-          </div>
-
-          {/* Products Table */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead className="bg-gray-50 border-b border-gray-100">
-                  <tr>
-                    <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Product</th>
-                    <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">SKU</th>
-                    <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Category</th>
-                    <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Price</th>
-                    <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">Stock</th>
-                    <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {loading ? (
-                    <tr>
-                      <td colSpan="7" className="px-6 py-10 text-center text-gray-500">Loading products...</td>
-                    </tr>
-                  ) : products.length === 0 ? (
-                    <tr>
-                      <td colSpan="7" className="px-6 py-10 text-center text-gray-500">No products found.</td>
-                    </tr>
-                  ) : products.map((product) => (
-                    <tr key={product.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <img 
-                            src={product.thumbnail ? `http://localhost:8000/storage/${product.thumbnail}` : 'https://via.placeholder.com/40'} 
-                            alt={product.name}
-                            className="w-10 h-10 rounded-lg object-cover bg-gray-100"
-                          />
-                          <div>
-                            <p className="font-semibold text-[#0F172A] line-clamp-1">{product.name}</p>
-                            <p className="text-xs text-gray-500">by {product.seller?.name}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600 font-mono text-center">{product.sku}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{product.category?.name}</td>
-                      <td className="px-6 py-4">
-                        <div className="flex flex-col">
-                          <span className="font-bold text-[#0F172A]">Rs. {product.price}</span>
-                          {product.sale_price && <span className="text-xs text-gray-400 line-through">Rs. {product.sale_price}</span>}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className={`text-sm font-semibold ${product.stock_quantity <= product.low_stock_threshold ? 'text-red-500' : 'text-gray-700'}`}>
-                          {product.stock_quantity}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        {getStatusBadge(product.status, product.stock_quantity)}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button 
-                            onClick={() => toggleStatus(product)}
-                            className="p-1.5 text-gray-400 hover:text-[#F97316] hover:bg-orange-50 rounded-lg transition-all"
-                            title="Toggle Status"
-                          >
-                            {product.status === 'published' ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                          </button>
-                          <button 
-                            onClick={() => navigate(`/admin/products/edit/${product.id}`)}
-                            className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                            title="Edit"
-                          >
-                            <Pencil className="w-5 h-5" />
-                          </button>
-                          <button 
-                            onClick={() => handleDelete(product.id)}
-                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                            title="Delete"
-                          >
-                            <Trash2 className="w-5 h-5" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            {/* Simple Pagination */}
-            <div className="p-4 border-t border-gray-100 flex items-center justify-between">
-              <span className="text-sm text-gray-500">Showing {products.length} products</span>
-              <div className="flex gap-2">
-                <button 
-                  disabled={filters.page === 1}
-                  onClick={() => setFilters({ ...filters, page: filters.page - 1 })}
-                  className="px-3 py-1 border border-gray-200 rounded hover:bg-gray-50 disabled:opacity-50"
-                >
-                  Prev
-                </button>
-                <button 
-                  onClick={() => setFilters({ ...filters, page: filters.page + 1 })}
-                  className="px-3 py-1 border border-gray-200 rounded hover:bg-gray-50 disabled:opacity-50"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          </div>
-        </main>
+        <Link 
+          to="/admin/products/add"
+          className="bg-[#0F172A] text-white px-6 py-3 rounded-2xl font-black flex items-center space-x-2 shadow-xl shadow-[#0F172A]/20 hover:bg-black transition-all transform hover:-translate-y-1"
+        >
+          <Plus className="w-5 h-5" />
+          <span>Add Product</span>
+        </Link>
       </div>
 
-      {isSidebarOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-10 md:hidden" onClick={() => setIsSidebarOpen(false)}></div>
-      )}
+      {/* Stats Bar */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[
+          { icon: Package, label: 'Total Products', value: stats.total, color: 'blue' },
+          { icon: CheckCircle, label: 'Published', value: stats.published, color: 'green' },
+          { icon: Clock, label: 'Drafts', value: stats.drafts, color: 'yellow' },
+          { icon: AlertTriangle, label: 'Low Stock', value: stats.lowStock, color: 'red' }
+        ].map((stat, idx) => (
+          <div key={idx} className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center space-x-4">
+            <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center">
+              <stat.icon className="w-6 h-6 text-[#F97316]" />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{stat.label}</p>
+              <p className="text-2xl font-black text-[#0F172A]">{stat.value}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Filters */}
+      <div className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm flex flex-wrap gap-4 items-center">
+        <div className="relative flex-1 min-w-[240px]">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input 
+            type="text" 
+            placeholder="Search products..." 
+            className="w-full pl-12 pr-4 py-3 rounded-2xl bg-gray-50 border-none focus:bg-white focus:ring-4 focus:ring-[#F97316]/10 outline-none transition-all font-bold text-[#0F172A]"
+            value={filters.search}
+            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+            onKeyDown={(e) => e.key === 'Enter' && fetchProducts()}
+          />
+        </div>
+        <select 
+          className="px-6 py-3 rounded-2xl bg-gray-50 border-none focus:bg-white focus:ring-4 focus:ring-[#F97316]/10 outline-none transition-all font-bold text-[#0F172A]"
+          value={filters.category_id}
+          onChange={(e) => setFilters({ ...filters, category_id: e.target.value, page: 1 })}
+        >
+          <option value="">All Categories</option>
+          {categories.map(cat => (
+            <option key={cat.id} value={cat.id}>{cat.name}</option>
+          ))}
+        </select>
+        <select 
+          className="px-6 py-3 rounded-2xl bg-gray-50 border-none focus:bg-white focus:ring-4 focus:ring-[#F97316]/10 outline-none transition-all font-bold text-[#0F172A]"
+          value={filters.status}
+          onChange={(e) => setFilters({ ...filters, status: e.target.value, page: 1 })}
+        >
+          <option value="">All Status</option>
+          <option value="published">Published</option>
+          <option value="draft">Draft</option>
+          <option value="archived">Archived</option>
+        </select>
+      </div>
+
+      {/* Products Table */}
+      <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="bg-gray-50/50">
+                <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Product</th>
+                <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Category</th>
+                <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Price</th>
+                <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] text-center">Stock</th>
+                <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Status</th>
+                <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {loading ? (
+                <tr>
+                  <td colSpan="6" className="px-8 py-20 text-center">
+                    <div className="flex flex-col items-center">
+                      <div className="w-12 h-12 border-4 border-[#F97316] border-t-transparent rounded-full animate-spin mb-4"></div>
+                      <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Loading products...</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : products.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="px-8 py-20 text-center">
+                    <Package className="w-16 h-16 text-gray-100 mx-auto mb-4" />
+                    <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">No products found</p>
+                  </td>
+                </tr>
+              ) : products.map((product) => (
+                <tr key={product.id} className="hover:bg-gray-50/50 transition-colors group">
+                  <td className="px-8 py-6">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 rounded-2xl bg-gray-50 overflow-hidden flex-shrink-0 border border-gray-100">
+                        <img 
+                          src={product.thumbnail ? `http://localhost:8000/storage/${product.thumbnail}` : 'https://via.placeholder.com/48'} 
+                          alt={product.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div>
+                        <p className="font-black text-[#0F172A] line-clamp-1">{product.name}</p>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">SKU: {product.sku}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-8 py-6 text-sm font-bold text-gray-500">{product.category?.name}</td>
+                  <td className="px-8 py-6">
+                    <p className="font-black text-[#0F172A]">Rs. {product.price}</p>
+                  </td>
+                  <td className="px-8 py-6 text-center">
+                    <span className={`font-black text-sm ${product.stock_quantity <= product.low_stock_threshold ? 'text-red-500' : 'text-[#0F172A]'}`}>
+                      {product.stock_quantity}
+                    </span>
+                  </td>
+                  <td className="px-8 py-6">
+                    {getStatusBadge(product.status, product.stock_quantity)}
+                  </td>
+                  <td className="px-8 py-6">
+                    <div className="flex items-center justify-end space-x-2">
+                      <button 
+                        onClick={() => toggleStatus(product)}
+                        className="p-2.5 text-gray-400 hover:text-[#F97316] hover:bg-orange-50 rounded-xl transition-all"
+                      >
+                        {product.status === 'published' ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                      <button 
+                        onClick={() => navigate(`/admin/products/edit/${product.id}`)}
+                        className="p-2.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+                      >
+                        <Pencil className="w-5 h-5" />
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(product.id)}
+                        className="p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="p-8 bg-gray-50/50 flex items-center justify-between border-t border-gray-50">
+          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Showing {products.length} products</p>
+          <div className="flex space-x-2">
+            <button 
+              disabled={filters.page === 1}
+              onClick={() => setFilters({ ...filters, page: filters.page - 1 })}
+              className="px-6 py-2 rounded-xl bg-white border border-gray-200 text-xs font-black text-[#0F172A] hover:bg-gray-50 disabled:opacity-50 transition-all"
+            >
+              Prev
+            </button>
+            <button 
+              onClick={() => setFilters({ ...filters, page: filters.page + 1 })}
+              className="px-6 py-2 rounded-xl bg-white border border-gray-200 text-xs font-black text-[#0F172A] hover:bg-gray-50 disabled:opacity-50 transition-all"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

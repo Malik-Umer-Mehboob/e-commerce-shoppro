@@ -1,27 +1,23 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import Header from '../../components/layout/Header';
 import ProductCard from '../../components/common/ProductCard';
 import api from '../../services/api';
 import { ShoppingBag, ChevronRight, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 
 export default function Home() {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { data: productsData, isLoading: loading, error } = useQuery({
+    queryKey: ['products', 'featured'],
+    queryFn: async () => {
+      const response = await api.get('/products');
+      return response.data.data?.data || response.data.data || response.data;
+    },
+    staleTime: 1000 * 60 * 10, // 10 minutes
+    cacheTime: 1000 * 60 * 30, // 30 minutes
+  });
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const response = await api.get('/products');
-        setProducts(response.data.data || response.data);
-      } catch (error) {
-        console.error('Failed to fetch products', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProducts();
-  }, []);
+  const products = productsData || [];
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">

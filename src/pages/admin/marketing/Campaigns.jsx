@@ -16,13 +16,17 @@ import {
   XCircle,
   ChevronRight
 } from 'lucide-react';
-import axios from 'axios';
+import api from '../../../services/api';
 import { toast } from 'react-hot-toast';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
 export default function Campaigns() {
   const [campaigns, setCampaigns] = useState([]);
+  const [stats, setStats] = useState({
+    total_sent: 0,
+    avg_open_rate: 0,
+    avg_click_rate: 0,
+    total_revenue: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [segments, setSegments] = useState([]);
@@ -37,28 +41,35 @@ export default function Campaigns() {
   });
 
   useEffect(() => {
-    fetchCampaigns();
+    fetchData();
     fetchSegments();
   }, []);
 
-  const fetchCampaigns = async () => {
+  const fetchData = async () => {
     try {
-      const response = await axios.get(`${API_URL}/admin/email-campaigns`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      setLoading(true);
+      const response = await api.get('/admin/email-campaigns');
+      // The controller returns data: { campaigns: [], stats: {} }
+      const resData = response.data?.data;
+      setCampaigns(resData?.campaigns ?? []);
+      setStats(resData?.stats ?? {
+        total_sent: 0,
+        avg_open_rate: 0,
+        avg_click_rate: 0,
+        total_revenue: 0,
       });
-      setCampaigns(response.data.data);
-      setLoading(false);
     } catch (error) {
       toast.error('Failed to load campaigns');
+      setCampaigns([]);
+    } finally {
+      setLoading(false);
     }
   };
 
   const fetchSegments = async () => {
     try {
-      const response = await axios.get(`${API_URL}/admin/user-segments`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
-      setSegments(response.data.data);
+      const response = await api.get('/admin/user-segments');
+      setSegments(response.data?.data ?? []);
     } catch (error) {
       console.error('Error fetching segments:', error);
     }
@@ -67,12 +78,10 @@ export default function Campaigns() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${API_URL}/admin/email-campaigns`, formData, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
+      await api.post('/admin/email-campaigns', formData);
       toast.success('Campaign created successfully');
       setShowModal(false);
-      fetchCampaigns();
+      fetchData();
     } catch (error) {
       toast.error('Failed to create campaign');
     }
@@ -81,13 +90,22 @@ export default function Campaigns() {
   const handleSend = async (id) => {
     if (!window.confirm('Are you sure you want to send this campaign now?')) return;
     try {
-      await axios.post(`${API_URL}/admin/email-campaigns/${id}/send`, {}, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
+      await api.post(`/admin/email-campaigns/${id}/send`, {});
       toast.success('Campaign is being sent!');
-      fetchCampaigns();
+      fetchData();
     } catch (error) {
       toast.error('Failed to send campaign');
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this campaign?')) return;
+    try {
+      await api.delete(`/admin/email-campaigns/${id}`);
+      toast.success('Campaign deleted');
+      fetchData();
+    } catch (error) {
+      toast.error('Failed to delete campaign');
     }
   };
 
@@ -99,6 +117,19 @@ export default function Campaigns() {
       case 'cancelled': return 'bg-red-100 text-red-700';
       default: return 'bg-gray-100 text-gray-700';
     }
+  };
+
+  const formatStatValue = (val, type) => {
+    if (loading) return null;
+    if (type === 'percent') return val + '%';
+    if (type === 'currency') {
+        return val >= 1000 
+            ? '$' + (val / 1000).toFixed(1) + 'k' 
+            : '$' + val;
+    }
+    return val >= 1000 
+        ? (val / 1000).toFixed(1) + 'k' 
+        : val;
   };
 
   return (
@@ -120,17 +151,21 @@ export default function Campaigns() {
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {[
-          { label: 'Total Sent', value: '45.2k', icon: Mail, color: 'text-blue-600', bg: 'bg-blue-50' },
-          { label: 'Avg. Open Rate', value: '24.8%', icon: Eye, color: 'text-purple-600', bg: 'bg-purple-50' },
-          { label: 'Avg. Click Rate', value: '3.2%', icon: TrendingUp, color: 'text-green-600', bg: 'bg-green-50' },
-          { label: 'Revenue', value: '$12.4k', icon: BarChart2, color: 'text-orange-600', bg: 'bg-orange-50' },
+          { label: 'Total Sent', value: formatStatValue(stats.total_sent, 'count'), icon: Mail, color: 'text-blue-600', bg: 'bg-blue-50' },
+          { label: 'Avg. Open Rate', value: formatStatValue(stats.avg_open_rate, 'percent'), icon: Eye, color: 'text-purple-600', bg: 'bg-purple-50' },
+          { label: 'Avg. Click Rate', value: formatStatValue(stats.avg_click_rate, 'percent'), icon: TrendingUp, color: 'text-green-600', bg: 'bg-green-50' },
+          { label: 'Revenue', value: formatStatValue(stats.total_revenue, 'currency'), icon: BarChart2, color: 'text-orange-600', bg: 'bg-orange-50' },
         ].map((stat, i) => (
           <div key={i} className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
             <div className={`w-12 h-12 ${stat.bg} rounded-2xl flex items-center justify-center mb-4`}>
               <stat.icon className={`w-6 h-6 ${stat.color}`} />
             </div>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{stat.label}</p>
-            <p className="text-2xl font-black text-[#0F172A]">{stat.value}</p>
+            {loading ? (
+                <div className="h-8 w-24 bg-gray-100 animate-pulse rounded-lg"></div>
+            ) : (
+                <p className="text-2xl font-black text-[#0F172A]">{stat.value}</p>
+            )}
           </div>
         ))}
       </div>
@@ -160,7 +195,19 @@ export default function Campaigns() {
             </thead>
             <tbody className="divide-y divide-gray-50">
               {loading ? (
-                [1, 2, 3].map(n => <tr key={n} className="animate-pulse"><td colSpan="6" className="px-8 py-8 h-20"></td></tr>)
+                [1, 2, 3, 4, 5].map(n => (
+                    <tr key={n}>
+                        <td colSpan="6" className="px-8 py-6">
+                            <div className="flex items-center space-x-4">
+                                <div className="w-10 h-10 bg-gray-100 rounded-xl animate-pulse"></div>
+                                <div className="space-y-2">
+                                    <div className="h-4 w-40 bg-gray-100 rounded animate-pulse"></div>
+                                    <div className="h-3 w-60 bg-gray-50 rounded animate-pulse"></div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                ))
               ) : campaigns.length > 0 ? (
                 campaigns.map((campaign) => (
                   <tr key={campaign.id} className="hover:bg-gray-50/50 transition-colors group">
@@ -177,7 +224,7 @@ export default function Campaigns() {
                     </td>
                     <td className="px-8 py-6">
                       <span className="text-sm font-bold text-gray-600 bg-gray-100 px-3 py-1 rounded-lg">
-                        {campaign.segment?.name || 'All Users'}
+                        {campaign.segment_name}
                       </span>
                     </td>
                     <td className="px-8 py-6">
@@ -188,11 +235,15 @@ export default function Campaigns() {
                     <td className="px-8 py-6">
                       <div className="flex items-center space-x-6 text-[10px] font-black uppercase tracking-widest text-gray-400">
                         <div className="flex flex-col">
-                          <span className="text-[#0F172A] text-xs">24%</span>
+                          <span className="text-[#0F172A] text-xs">
+                            {campaign.sent_count > 0 ? ((campaign.open_count / campaign.sent_count) * 100).toFixed(1) : 0}%
+                          </span>
                           <span>Opens</span>
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-[#0F172A] text-xs">3.1%</span>
+                          <span className="text-[#0F172A] text-xs">
+                            {campaign.sent_count > 0 ? ((campaign.click_count / campaign.sent_count) * 100).toFixed(1) : 0}%
+                          </span>
                           <span>Clicks</span>
                         </div>
                       </div>
@@ -200,7 +251,7 @@ export default function Campaigns() {
                     <td className="px-8 py-6">
                       <div className="flex items-center text-xs text-gray-400 font-bold">
                         {campaign.status === 'scheduled' ? <Clock className="w-3 h-3 mr-1.5" /> : <CheckCircle2 className="w-3 h-3 mr-1.5" />}
-                        {new Date(campaign.scheduled_at || campaign.created_at).toLocaleDateString()}
+                        {campaign.scheduled_at || campaign.created_at}
                       </div>
                     </td>
                     <td className="px-8 py-6 text-right">
@@ -214,6 +265,13 @@ export default function Campaigns() {
                             <Send className="w-4 h-4" />
                           </button>
                         )}
+                        <button 
+                          onClick={() => handleDelete(campaign.id)}
+                          className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                         <button className="p-2 text-gray-400 hover:text-[#0F172A] hover:bg-gray-100 rounded-xl transition-all">
                           <ChevronRight className="w-5 h-5" />
                         </button>

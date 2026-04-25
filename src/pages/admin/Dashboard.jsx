@@ -1,95 +1,154 @@
-import { useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { Menu, LogOut, LayoutDashboard, Package, ShoppingCart, Users, Tag, Settings, Mail, Target, FileText, Send } from 'lucide-react';
-import { authService } from '../../services/authService';
-import { logoutUser } from '../../store/authSlice';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-hot-toast';
+import React, { useState, useEffect } from 'react';
+import adminService from '../../services/adminService';
+import toast from 'react-hot-toast';
 
 export default function AdminDashboard() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const { user } = useSelector(state => state.auth);
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
+  const [stats, setStats] = useState(null);
+  const [recentOrders, setRecentOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleLogout = async () => {
-    try {
-      await authService.logout();
-      dispatch(logoutUser());
-      navigate('/login');
-      toast.success('Logged out successfully');
-    } catch (error) {
-      toast.error('Logout failed');
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await adminService.getDashboardStats();
+        setStats(response.data.data.stats);
+        setRecentOrders(response.data.data.recent_orders);
+      } catch (err) {
+        toast.error('Failed to load dashboard data');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStats();
+  }, []);
+
+  const statCards = [
+    { 
+      label: 'Total Orders', 
+      value: loading ? '...' : stats?.total_orders ?? 0, 
+      change: loading ? '' : `${stats?.orders_growth >= 0 ? '+' : ''}${stats?.orders_growth}%`, 
+      color: 'blue' 
+    },
+    { 
+      label: 'Revenue', 
+      value: loading ? '...' : `$${Number(stats?.total_revenue ?? 0).toLocaleString()}`, 
+      change: loading ? '' : `${stats?.revenue_growth >= 0 ? '+' : ''}${stats?.revenue_growth}%`, 
+      color: 'green' 
+    },
+    { 
+      label: 'New Users', 
+      value: loading ? '...' : stats?.new_users ?? 0, 
+      change: loading ? '' : `${stats?.users_growth >= 0 ? '+' : ''}${stats?.users_growth}%`, 
+      color: 'purple' 
+    },
+    { 
+      label: 'Products', 
+      value: loading ? '...' : stats?.total_products ?? 0, 
+      change: loading ? '' : `${stats?.products_growth >= 0 ? '+' : ''}${stats?.products_growth}%`, 
+      color: 'orange' 
+    }
+  ];
+
+  const getStatusColor = (status) => {
+    switch (status.toLowerCase()) {
+      case 'pending': return 'bg-yellow-50 text-yellow-600 border-yellow-100';
+      case 'processing': return 'bg-blue-50 text-blue-600 border-blue-100';
+      case 'shipped': return 'bg-purple-50 text-purple-600 border-purple-100';
+      case 'delivered': return 'bg-green-50 text-green-600 border-green-100';
+      case 'cancelled': return 'bg-red-50 text-red-600 border-red-100';
+      default: return 'bg-gray-50 text-gray-600 border-gray-100';
     }
   };
 
-  const navItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard', active: true },
-    { icon: Package, label: 'Products', path: '/admin/products', active: false },
-    { icon: Tag, label: 'Discounts', path: '/admin/discounts', active: false },
-    { icon: Upload, label: 'Bulk Upload', path: '/admin/bulk-upload', active: false },
-    { icon: AlertTriangle, label: 'Low Stock', path: '/admin/low-stock', active: false },
-    { icon: Tag, label: 'Categories', path: '/admin/categories', active: false },
-    { icon: Mail, label: 'Campaigns', path: '/admin/marketing/campaigns', active: false },
-    { icon: Target, label: 'Segments', path: '/admin/marketing/segments', active: false },
-    { icon: Send, label: 'Newsletters', path: '/admin/marketing/newsletters', active: false },
-    { icon: FileText, label: 'Templates', path: '/admin/marketing/templates', active: false },
-    { icon: Settings, label: 'Settings', path: '/admin/settings', active: false },
-  ];
-
   return (
-    <div className="min-h-screen flex bg-[#F8FAFC]">
-      <aside className={`fixed inset-y-0 left-0 bg-[#0F172A] w-64 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 ease-in-out z-20`}>
-        <div className="flex h-16 items-center px-6 text-white font-bold text-xl border-b border-gray-700">
-          ShopPro Admin
-        </div>
-        <nav className="p-4 space-y-2">
-          {navItems.map((item, idx) => (
-            <button 
-              key={idx} 
-              onClick={() => navigate(item.path)}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${item.active ? 'bg-[#F97316] text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white'}`}
-            >
-              <item.icon className="w-5 h-5" />
-              <span>{item.label}</span>
-            </button>
-          ))}
-        </nav>
-      </aside>
-
-      <div className="flex-1 md:ml-64 flex flex-col min-h-screen transition-all duration-300">
-        <header className="h-16 bg-white shadow-sm flex items-center justify-between px-4 sm:px-6 z-10">
-          <button className="md:hidden text-gray-500" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
-            <Menu className="w-6 h-6" />
-          </button>
-          <div className="md:hidden font-bold text-[#0F172A] text-lg">ShopPro</div>
-          <div className="ml-auto flex items-center space-x-4">
-            <span className="text-sm font-medium text-[#0F172A] hidden sm:block">{user?.name}</span>
-            <div className="w-8 h-8 rounded-full bg-[#0F172A] text-white flex items-center justify-center font-bold">
-              {user?.name?.charAt(0) || 'A'}
-            </div>
-            <button onClick={handleLogout} className="text-gray-500 hover:text-[#F97316] transition-colors">
-              <LogOut className="w-5 h-5" />
-            </button>
-          </div>
-        </header>
-
-        <main className="flex-1 p-6 z-0">
-          <h1 className="text-2xl font-bold text-[#0F172A] mb-6">Welcome Admin 👋</h1>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {['Orders', 'Revenue', 'Users', 'Products'].map((stat, idx) => (
-              <div key={idx} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-32 flex flex-col justify-center">
-                <span className="text-gray-500 text-sm font-medium">{stat}</span>
-                <span className="text-3xl font-bold text-[#0F172A] mt-2">0</span>
-              </div>
-            ))}
-          </div>
-        </main>
+    <div className="space-y-8 animate-in fade-in duration-500">
+      <div>
+        <h1 className="text-3xl font-black text-[#0F172A]">Welcome Admin 👋</h1>
+        <p className="text-gray-500 font-medium">Here's what's happening with your store today.</p>
       </div>
-      
-      {isSidebarOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-10 md:hidden" onClick={() => setIsSidebarOpen(false)}></div>
-      )}
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {loading ? (
+          // Loading Skeletons
+          Array(4).fill(0).map((_, idx) => (
+            <div key={idx} className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 h-[180px] animate-pulse">
+              <div className="h-2 w-20 bg-gray-100 rounded mb-4"></div>
+              <div className="h-8 w-32 bg-gray-100 rounded mb-6"></div>
+              <div className="h-2 w-24 bg-gray-100 rounded"></div>
+            </div>
+          ))
+        ) : (
+          statCards.map((stat, idx) => (
+            <div key={idx} className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col justify-between hover:shadow-xl transition-all group overflow-hidden relative">
+              <div className={`absolute -right-4 -top-4 w-24 h-24 bg-gray-50 rounded-full blur-2xl group-hover:bg-[#F97316]/5 transition-colors`}></div>
+              <div>
+                <span className="text-gray-400 text-[10px] font-black uppercase tracking-widest">{stat.label}</span>
+                <div className="text-3xl font-black text-[#0F172A] mt-2">{stat.value}</div>
+              </div>
+              <div className="flex items-center mt-6">
+                <span className={`text-xs font-bold ${stat.change.startsWith('+') ? 'text-green-500' : stat.change.startsWith('-') ? 'text-red-500' : 'text-gray-400'}`}>
+                  {stat.change}
+                </span>
+                <span className="text-gray-400 text-[10px] ml-2 font-bold uppercase tracking-tighter">vs last month</span>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm min-h-[400px] flex items-center justify-center text-gray-300 font-bold italic">
+          Sales Chart Placeholder
+        </div>
+        <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
+          <h3 className="text-lg font-black text-[#0F172A] mb-6">Recent Orders</h3>
+          
+          {loading ? (
+            <div className="space-y-6">
+              {Array(5).fill(0).map((_, idx) => (
+                <div key={idx} className="flex items-center space-x-4 animate-pulse">
+                  <div className="w-10 h-10 rounded-xl bg-gray-100"></div>
+                  <div className="space-y-2 flex-1">
+                    <div className="h-3 w-3/4 bg-gray-100 rounded"></div>
+                    <div className="h-2 w-1/4 bg-gray-100 rounded"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : recentOrders.length > 0 ? (
+            <div className="space-y-6">
+              {recentOrders.map((order) => (
+                <div key={order.id} className="flex items-center justify-between group">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-[10px] font-black text-gray-400 group-hover:bg-orange-50 group-hover:text-orange-500 transition-colors">
+                      {order.id}
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-[#0F172A]">{order.order_number}</p>
+                      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{order.customer_name}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full border mb-1 inline-block ${getStatusColor(order.status)}`}>
+                      {order.status}
+                    </div>
+                    <p className="text-[10px] text-gray-400 font-bold">{order.created_at}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4 text-gray-200">
+                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
+              </div>
+              <p className="text-gray-400 font-bold italic text-sm">No orders yet</p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

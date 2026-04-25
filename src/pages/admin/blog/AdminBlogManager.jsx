@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '../../../services/api';
 import { Link } from 'react-router-dom';
-import { Plus, Edit, Trash2, Eye, Filter, MoreVertical, CheckCircle, Clock, FileText } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, Filter, MoreVertical, CheckCircle, Clock, FileText, MessageSquare } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 const AdminBlogManager = () => {
@@ -35,7 +35,7 @@ const AdminBlogManager = () => {
   };
 
   return (
-    <div className="p-8">
+    <div className="animate-in fade-in duration-500">
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-black text-slate-900">Blog Management</h1>
@@ -46,7 +46,7 @@ const AdminBlogManager = () => {
             to="/admin/blog/comments" 
             className="bg-white border border-slate-100 text-slate-600 px-6 py-3 rounded-2xl font-bold flex items-center space-x-2 transition-all hover:bg-slate-50"
           >
-            <MessageCircle size={20} />
+            <MessageSquare size={20} />
             <span>Moderate Comments</span>
           </Link>
           <Link 

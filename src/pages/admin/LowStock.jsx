@@ -1,26 +1,15 @@
 import { useState, useEffect } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
 import { 
-  Menu, LogOut, LayoutDashboard, Package, ShoppingCart, 
-  Users, Tag, Settings, AlertTriangle, ArrowRight,
-  RefreshCw, TrendingDown, Box, MoreVertical
+  AlertTriangle, RefreshCw, TrendingDown, Box, ArrowRight, X 
 } from 'lucide-react';
-import { authService } from '../../services/authService';
 import { productService } from '../../services/productService';
-import { logoutUser } from '../../store/authSlice';
-import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 
 export default function LowStock() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [items, setItems] = useState([]);
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [restockingId, setRestockingId] = useState(null);
   const [newStock, setNewStock] = useState('');
-  
-  const { user } = useSelector(state => state.auth);
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
 
   useEffect(() => {
     fetchLowStock();
@@ -30,27 +19,20 @@ export default function LowStock() {
     try {
       setLoading(true);
       const response = await productService.getLowStockProducts();
-      // Combined list of products and potential variants could be handled here
-      setItems(response.data.data);
+      // The API returns data directly or inside a data wrapper
+      const data = response.data?.data || response.data || [];
+      setProducts(Array.isArray(data) ? data : []);
     } catch (error) {
       toast.error('Failed to fetch low stock alerts');
+      setProducts([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await authService.logout();
-      dispatch(logoutUser());
-      navigate('/login');
-    } catch (error) {}
-  };
-
   const handleRestock = async (id) => {
     if (!newStock || newStock < 0) return;
     try {
-      // Assuming a generic update call for demo (ideally a specialized restock API)
       await productService.updateProduct(id, { stock_quantity: newStock });
       toast.success('Inventory updated');
       setRestockingId(null);
@@ -61,163 +43,165 @@ export default function LowStock() {
     }
   };
 
-  const navItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard', active: false },
-    { icon: Package, label: 'Products', path: '/admin/products', active: false },
-    { icon: AlertTriangle, label: 'Low Stock', path: '/admin/low-stock', active: true },
-    { icon: Tag, label: 'Categories', path: '/admin/categories', active: false },
-    { icon: Settings, label: 'Settings', path: '/admin/settings', active: false },
-  ];
+  const lowStockCount = (products ?? []).length;
+  const outOfStockCount = (products ?? []).filter(i => i.stock_quantity === 0).length;
 
   return (
-    <div className="min-h-screen flex bg-[#F8FAFC]">
-      <aside className={`fixed inset-y-0 left-0 bg-[#0F172A] w-64 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 ease-in-out z-20`}>
-        <div className="flex h-16 items-center px-6 text-white font-bold text-xl border-b border-gray-700">ShopPro Admin</div>
-        <nav className="p-4 space-y-2">
-          {navItems.map((item, idx) => (
-            <button key={idx} onClick={() => navigate(item.path)} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${item.active ? 'bg-[#F97316] text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white'}`}>
-              <item.icon className="w-5 h-5" />
-              <span>{item.label}</span>
-            </button>
-          ))}
-        </nav>
-      </aside>
+    <div className="space-y-8 animate-in fade-in duration-500">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-black text-[#0F172A]">Inventory Alerts</h1>
+          <p className="text-gray-500 font-medium">Monitor and manage products running low on stock.</p>
+        </div>
+        <button 
+          onClick={fetchLowStock}
+          disabled={loading}
+          className="bg-[#0F172A] text-white px-6 py-3 rounded-2xl font-black flex items-center space-x-2 shadow-xl shadow-[#0F172A]/20 hover:bg-black transition-all transform hover:-translate-y-1 disabled:opacity-50 disabled:transform-none"
+        >
+          <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+          <span>Refresh Scan</span>
+        </button>
+      </div>
 
-      <div className="flex-1 md:ml-64 flex flex-col min-h-screen transition-all duration-300">
-        <header className="h-16 bg-white shadow-sm flex items-center justify-between px-6 z-10">
-          <button className="md:hidden text-gray-500" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
-            <Menu className="w-6 h-6" />
-          </button>
-          <h1 className="text-xl font-bold text-[#0F172A] hidden md:block">Inventory Alerts</h1>
-          <div className="ml-auto flex items-center space-x-4">
-            <span className="text-sm font-medium text-[#0F172A]">{user?.name}</span>
-            <button onClick={handleLogout} className="text-gray-500 hover:text-[#F97316]">
-              <LogOut className="w-5 h-5" />
-            </button>
+      <div className="flex items-center gap-6 mb-8 bg-orange-50/50 border border-orange-100 p-8 rounded-[2.5rem]">
+        <div className="w-16 h-16 bg-[#F97316] text-white rounded-[2rem] flex items-center justify-center shadow-xl shadow-orange-200">
+          <AlertTriangle className="w-8 h-8" />
+        </div>
+        <div>
+          <h2 className="text-2xl font-black text-[#0F172A]">Low Stock Warning</h2>
+          <p className="text-orange-700 font-bold uppercase tracking-widest text-[10px] mt-1">
+            {loading ? 'Calculating...' : `${lowStockCount} items require immediate attention`}
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm flex items-center space-x-6">
+          <div className="w-14 h-14 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center">
+            <TrendingDown className="w-7 h-7" />
           </div>
-        </header>
-
-        <main className="p-6">
-          <div className="flex items-center gap-4 mb-8 bg-orange-50 border border-orange-100 p-6 rounded-2xl">
-            <div className="w-12 h-12 bg-[#F97316] text-white rounded-full flex items-center justify-center shadow-lg shadow-orange-200">
-              <AlertTriangle className="w-6 h-6" />
-            </div>
-            <div>
-              <h2 className="text-xl font-black text-[#0F172A]">Low Stock Warning</h2>
-              <p className="text-orange-700 text-sm font-medium">{items.length} items require immediate replenishment.</p>
-            </div>
+          <div>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Out of Stock</p>
+            <p className="text-3xl font-black text-[#0F172A]">
+              {loading ? '...' : outOfStockCount}
+            </p>
           </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
-              <div className="p-3 bg-red-50 text-red-600 rounded-xl"><TrendingDown className="w-6 h-6" /></div>
-              <div>
-                <p className="text-sm text-gray-400 font-bold uppercase tracking-wider">Critical Items</p>
-                <p className="text-2xl font-black text-[#0F172A]">{items.filter(i => i.stock_quantity === 0).length}</p>
-              </div>
-            </div>
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
-              <div className="p-3 bg-orange-50 text-orange-600 rounded-xl"><Box className="w-6 h-6" /></div>
-              <div>
-                <p className="text-sm text-gray-400 font-bold uppercase tracking-wider">Below Threshold</p>
-                <p className="text-2xl font-black text-[#0F172A]">{items.length}</p>
-              </div>
-            </div>
+        </div>
+        <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm flex items-center space-x-6">
+          <div className="w-14 h-14 bg-orange-50 text-orange-600 rounded-2xl flex items-center justify-center">
+            <Box className="w-7 h-7" />
           </div>
+          <div>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Below Threshold</p>
+            <p className="text-3xl font-black text-[#0F172A]">
+              {loading ? '...' : lowStockCount}
+            </p>
+          </div>
+        </div>
+      </div>
 
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-              <h3 className="font-bold text-[#0F172A]">Stock Management List</h3>
-              <button 
-                onClick={fetchLowStock}
-                className="p-2 text-gray-400 hover:text-[#F97316] transition-colors"
-                title="Refresh"
-              >
-                <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-              </button>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase">Product Details</th>
-                    <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase">Current Stock</th>
-                    <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase">Threshold</th>
-                    <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase">Status</th>
-                    <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase text-right">Quick Restock</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {loading ? (
-                    <tr><td colSpan="5" className="px-6 py-10 text-center text-gray-500">Scanning inventory...</td></tr>
-                  ) : items.length === 0 ? (
-                    <tr><td colSpan="5" className="px-6 py-10 text-center text-gray-500">Perfect! All products are well stocked.</td></tr>
-                  ) : items.map((item) => (
-                    <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-4">
-                          <img 
-                            src={item.thumbnail ? `http://localhost:8000/storage/${item.thumbnail}` : 'https://via.placeholder.com/40'} 
-                            className="w-12 h-12 rounded-xl object-cover"
+      <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="bg-gray-50/50">
+                <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Product Details</th>
+                <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] text-center">Stock</th>
+                <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] text-center">Threshold</th>
+                <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Status</th>
+                <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] text-right">Quick Restock</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {loading ? (
+                <tr>
+                  <td colSpan="5" className="px-8 py-20 text-center">
+                    <div className="w-12 h-12 border-4 border-[#F97316] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Scanning inventory...</p>
+                  </td>
+                </tr>
+              ) : (products ?? []).length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="px-8 py-20 text-center">
+                    <Box className="w-16 h-16 text-gray-100 mx-auto mb-4" />
+                    <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">All products are well stocked</p>
+                  </td>
+                </tr>
+              ) : (products ?? []).map((item) => (
+                <tr key={item.id} className="hover:bg-gray-50/50 transition-colors group">
+                  <td className="px-8 py-6">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 rounded-2xl bg-gray-50 overflow-hidden flex-shrink-0 border border-gray-100">
+                        <img 
+                          src={item.thumbnail ? `http://localhost:8000/storage/${item.thumbnail}` : 'https://via.placeholder.com/48'} 
+                          alt={item.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div>
+                        <p className="font-black text-[#0F172A]">{item.name}</p>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{item.sku}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-8 py-6 text-center">
+                    <span className={`text-lg font-black ${item.stock_quantity === 0 ? 'text-red-600' : 'text-orange-600'}`}>
+                      {item.stock_quantity}
+                    </span>
+                  </td>
+                  <td className="px-8 py-6 text-center">
+                    <span className="text-sm font-bold text-gray-400">{item.low_stock_threshold || 5}</span>
+                  </td>
+                  <td className="px-8 py-6">
+                    {item.stock_quantity === 0 ? (
+                      <span className="px-3 py-1 text-[10px] font-black uppercase tracking-widest bg-red-100 text-red-600 rounded-full">Out of Stock</span>
+                    ) : (
+                      <span className="px-3 py-1 text-[10px] font-black uppercase tracking-widest bg-orange-100 text-orange-600 rounded-full">Low Level</span>
+                    )}
+                  </td>
+                  <td className="px-8 py-6">
+                    <div className="flex items-center justify-end">
+                      {restockingId === item.id ? (
+                        <div className="flex items-center space-x-2 animate-in slide-in-from-right-4">
+                          <input 
+                            type="number"
+                            className="w-24 px-4 py-2 rounded-xl bg-gray-50 border-none focus:ring-4 focus:ring-[#F97316]/10 outline-none font-bold text-sm"
+                            placeholder="Add"
+                            value={newStock}
+                            onChange={(e) => setNewStock(e.target.value)}
+                            autoFocus
                           />
-                          <div>
-                            <p className="font-bold text-[#0F172A]">{item.name}</p>
-                            <p className="text-xs text-gray-400 font-mono uppercase">{item.sku}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`text-lg font-black ${item.stock_quantity === 0 ? 'text-red-600' : 'text-orange-600'}`}>
-                          {item.stock_quantity}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm font-bold text-gray-600">{item.low_stock_threshold || 5}</td>
-                      <td className="px-6 py-4">
-                        {item.stock_quantity === 0 ? (
-                          <span className="px-3 py-1 text-[10px] font-black uppercase bg-red-100 text-red-600 rounded-full">Out of Stock</span>
-                        ) : (
-                          <span className="px-3 py-1 text-[10px] font-black uppercase bg-orange-100 text-orange-600 rounded-full">Low Level</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        {restockingId === item.id ? (
-                          <div className="flex items-center justify-end gap-2 animate-in slide-in-from-right-2 duration-300">
-                            <input 
-                              type="number"
-                              className="w-20 px-2 py-1 border border-orange-500 rounded outline-none text-sm"
-                              placeholder="Add"
-                              value={newStock}
-                              onChange={(e) => setNewStock(e.target.value)}
-                              autoFocus
-                            />
-                            <button 
-                              onClick={() => handleRestock(item.id)}
-                              className="p-1.5 bg-[#F97316] text-white rounded-lg"
-                            ><ArrowRight className="w-4 h-4" /></button>
-                            <button 
-                              onClick={() => setRestockingId(null)}
-                              className="p-1.5 bg-gray-100 text-gray-400 rounded-lg hover:text-red-500"
-                            ><X className="w-4 h-4" /></button>
-                          </div>
-                        ) : (
                           <button 
-                            onClick={() => {
-                              setRestockingId(item.id);
-                              setNewStock(item.stock_quantity + 10);
-                            }}
-                            className="text-sm font-black text-[#F97316] hover:text-[#EA580C] bg-orange-50 px-4 py-2 rounded-xl transition-all"
+                            onClick={() => handleRestock(item.id)}
+                            className="p-2 bg-[#F97316] text-white rounded-xl shadow-lg shadow-orange-200"
                           >
-                            Restock
+                            <ArrowRight className="w-5 h-5" />
                           </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </main>
+                          <button 
+                            onClick={() => setRestockingId(null)}
+                            className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                          >
+                            <X className="w-5 h-5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <button 
+                          onClick={() => {
+                            setRestockingId(item.id);
+                            setNewStock(item.stock_quantity + 10);
+                          }}
+                          className="text-xs font-black text-[#F97316] hover:text-white hover:bg-[#F97316] bg-orange-50 px-6 py-2.5 rounded-xl transition-all"
+                        >
+                          Quick Restock
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

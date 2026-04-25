@@ -205,7 +205,7 @@ export default function Register() {
               <div className="pt-2">
                 <p className="text-sm font-medium text-gray-700 mb-2">Account Type</p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <label className="relative flex cursor-pointer rounded-lg border bg-white p-3 shadow-sm focus:outline-none has-[:checked]:border-[#F97316] has-[:checked]:ring-1 has-[:checked]:ring-[#F97316] transition-all">
+                  <label className="relative flex cursor-pointer rounded-lg border bg-white p-3 shadow-sm focus:outline-none has-checked:border-[#F97316] has-checked:ring-1 has-checked:ring-[#F97316] transition-all">
                     <input type="radio" value="customer" {...register('role')} className="sr-only" />
                     <span className="flex flex-1">
                       <span className="flex flex-col">
@@ -216,7 +216,7 @@ export default function Register() {
                       </span>
                     </span>
                   </label>
-                  <label className="relative flex cursor-pointer rounded-lg border bg-white p-3 shadow-sm focus:outline-none has-[:checked]:border-[#F97316] has-[:checked]:ring-1 has-[:checked]:ring-[#F97316] transition-all">
+                  <label className="relative flex cursor-pointer rounded-lg border bg-white p-3 shadow-sm focus:outline-none has-checked:border-[#F97316] has-checked:ring-1 has-checked:ring-[#F97316] transition-all">
                     <input type="radio" value="seller" {...register('role')} className="sr-only" />
                     <span className="flex flex-1">
                       <span className="flex flex-col">
@@ -227,7 +227,7 @@ export default function Register() {
                       </span>
                     </span>
                   </label>
-                  <label className="relative flex cursor-pointer rounded-lg border bg-white p-3 shadow-sm focus:outline-none has-[:checked]:border-[#F97316] has-[:checked]:ring-1 has-[:checked]:ring-[#F97316] transition-all">
+                  <label className="relative flex cursor-pointer rounded-lg border bg-white p-3 shadow-sm focus:outline-none has-checked:border-[#F97316] has-checked:ring-1 has-checked:ring-[#F97316] transition-all">
                     <input type="radio" value="support" {...register('role')} className="sr-only" />
                     <span className="flex flex-1">
                       <span className="flex flex-col">
@@ -244,7 +244,7 @@ export default function Register() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full flex justify-center items-center py-3 px-4 mt-2 border border-transparent rounded-lg shadow-sm text-white bg-gradient-to-r from-[#F97316] to-[#fb923c] hover:from-[#ea580c] hover:to-[#f97316] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F97316] font-medium transition-all"
+                className="w-full flex justify-center items-center py-3 px-4 mt-2 border border-transparent rounded-lg shadow-sm text-white bg-linear-to-r from-[#F97316] to-[#fb923c] hover:from-[#ea580c] hover:to-[#f97316] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F97316] font-medium transition-all"
               >
                 {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Register'}
               </button>

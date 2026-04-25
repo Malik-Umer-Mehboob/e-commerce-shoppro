@@ -6,11 +6,14 @@ import { Link } from 'react-router-dom';
 
 const ComparisonSidebar = () => {
   const dispatch = useDispatch();
+  const { isAuthenticated } = useSelector((state) => state.auth);
   const { items, loading } = useSelector((state) => state.comparison);
 
   useEffect(() => {
-    dispatch(fetchComparison());
-  }, [dispatch]);
+    if (isAuthenticated) {
+      dispatch(fetchComparison());
+    }
+  }, [dispatch, isAuthenticated]);
 
   if (items.length === 0) return null;
 

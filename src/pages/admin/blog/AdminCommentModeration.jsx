@@ -44,7 +44,7 @@ const AdminCommentModeration = () => {
   };
 
   return (
-    <div className="p-8">
+    <div className="animate-in fade-in duration-500">
       <div className="mb-8">
         <h1 className="text-3xl font-black text-slate-900">Comment Moderation</h1>
         <p className="text-slate-500">Manage and moderate community discussions.</p>
