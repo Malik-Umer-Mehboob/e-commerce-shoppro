@@ -307,7 +307,7 @@ This project is licensed under the [MIT License](LICENSE).
 
 **Malik Umer Khan**
 - 📧 malik.umerkhan97@gmail.com
-- 🐙 [GitHub](https://github.com/YOUR_USERNAME)
+
 
 ---
 
