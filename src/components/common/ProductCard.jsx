@@ -21,7 +21,7 @@ const ProductCard = ({ product }) => {
   const formattedPrice = formatCurrency(price, currentCurrency, currencySymbol, exchangeRate);
   const formattedOldPrice = formatCurrency(product.price, currentCurrency, currencySymbol, exchangeRate);
   return (
-    <div className="group bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+    <div className="group bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer">
       {/* Image Area */}
       <div className="relative aspect-square overflow-hidden bg-gray-50">
         <Link to={`/products/${product.id}`}>

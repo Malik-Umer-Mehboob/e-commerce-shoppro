@@ -1,5 +1,19 @@
 @import "tailwindcss";
 
+button, 
+a, 
+[role="button"],
+select,
+label,
+input[type="checkbox"],
+input[type="radio"],
+input[type="file"],
+input[type="submit"],
+input[type="range"],
+.cursor-pointer {
+  cursor: pointer !important;
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";

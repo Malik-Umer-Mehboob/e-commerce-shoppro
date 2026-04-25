@@ -1,5 +1,6 @@
 import React from 'react';
 import Header from '../../components/layout/Header';
+import Footer from '../../components/layout/Footer';
 import ProductCard from '../../components/common/ProductCard';
 import api from '../../services/api';
 import { ShoppingBag, ChevronRight, Sparkles } from 'lucide-react';
@@ -14,7 +15,7 @@ export default function Home() {
       return response.data.data?.data || response.data.data || response.data;
     },
     staleTime: 1000 * 60 * 10, // 10 minutes
-    cacheTime: 1000 * 60 * 30, // 30 minutes
+    gcTime: 1000 * 60 * 30, // 30 minutes
   });
 
   const products = productsData || [];
@@ -92,12 +93,7 @@ export default function Home() {
         )}
       </main>
       
-      {/* Footer Placeholder */}
-      <footer className="bg-white border-t border-gray-100 py-12 mt-20">
-        <div className="max-w-7xl mx-auto px-4 text-center text-gray-400 text-sm">
-          <p>© 2026 ShopPro E-commerce. All rights reserved.</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

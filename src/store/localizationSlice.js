@@ -1,10 +1,10 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import api from '../services/api';
 
 export const fetchLanguages = createAsyncThunk(
   'localization/fetchLanguages',
   async () => {
-    const response = await axios.get(`${import.meta.env.VITE_API_URL}/localization/languages`);
+    const response = await api.get('/localization/languages');
     return response.data;
   }
 );
@@ -52,15 +52,18 @@ const localizationSlice = createSlice({
       })
       .addCase(fetchLanguages.fulfilled, (state, action) => {
         state.loading = false;
-        state.languages = action.payload;
+        const data = Array.isArray(action.payload) ? action.payload : (action.payload?.data || []);
+        state.languages = data;
         
         // Update current settings if language found
-        const current = action.payload.find(l => l.code === state.currentLanguage);
-        if (current) {
-          state.currentCurrency = current.currency_code;
-          state.currencySymbol = current.currency_symbol;
-          state.exchangeRate = current.exchange_rate;
-          state.direction = current.direction;
+        if (Array.isArray(data)) {
+          const current = data.find(l => l.code === state.currentLanguage);
+          if (current) {
+            state.currentCurrency = current.currency_code;
+            state.currencySymbol = current.currency_symbol;
+            state.exchangeRate = current.exchange_rate;
+            state.direction = current.direction;
+          }
         }
       })
       .addCase(fetchLanguages.rejected, (state, action) => {

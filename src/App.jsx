@@ -37,6 +37,9 @@ const AdminSearchDashboard = lazy(() => import('./pages/admin/search/AdminSearch
 // Seller Components
 const SellerDashboard = lazy(() => import('./pages/seller/Dashboard'));
 const SellerProducts = lazy(() => import('./pages/seller/Products'));
+const SellerOrders = lazy(() => import('./pages/seller/Orders'));
+const SellerAnalytics = lazy(() => import('./pages/seller/Analytics'));
+const SellerSettings = lazy(() => import('./pages/seller/Settings'));
 const SellerReportsDashboard = lazy(() => import('./pages/seller/SellerReportsDashboard'));
 
 // Support Components
@@ -343,6 +346,21 @@ function App() {
           <Route path="/seller/products/add" element={
             <ProtectedRoute allowedRoles={['seller']}>
               <AddProduct />
+            </ProtectedRoute>
+          } />
+          <Route path="/seller/orders" element={
+            <ProtectedRoute allowedRoles={['seller']}>
+              <SellerOrders />
+            </ProtectedRoute>
+          } />
+          <Route path="/seller/analytics" element={
+            <ProtectedRoute allowedRoles={['seller']}>
+              <SellerAnalytics />
+            </ProtectedRoute>
+          } />
+          <Route path="/seller/settings" element={
+            <ProtectedRoute allowedRoles={['seller']}>
+              <SellerSettings />
             </ProtectedRoute>
           } />
           <Route path="/seller/reports" element={

@@ -20,12 +20,16 @@ const ProductDetail = () => {
       const response = await api.get(`/products/${id}`);
       return response.data;
     },
-    onError: (err) => {
-      toast.error('Failed to load product');
-      navigate('/home');
-    },
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
+
+  // Handle errors
+  useEffect(() => {
+    if (error) {
+      toast.error('Failed to load product');
+      navigate('/home');
+    }
+  }, [error, navigate]);
 
   // Set default variant when product is loaded
   useEffect(() => {

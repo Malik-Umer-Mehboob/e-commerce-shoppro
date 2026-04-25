@@ -9,10 +9,10 @@ import {
   BarChart2, 
   Settings, 
   Globe, 
-  TrendingUp, 
-  DollarSign, 
-  AlertCircle,
-  ChevronRight
+  ChevronRight,
+  Search,
+  Filter,
+  Download
 } from 'lucide-react';
 import { authService } from '../../services/authService';
 import { logoutUser } from '../../store/authSlice';
@@ -20,34 +20,34 @@ import { useNavigate, NavLink, Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import api from '../../services/api';
 
-export default function SellerDashboard() {
+export default function SellerOrders() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [stats, setStats] = useState({});
-  const [recentOrders, setRecentOrders] = useState([]);
-  const [lowStock, setLowStock] = useState([]);
+  const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
   
   const { user } = useSelector(state => state.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await api.get('/seller/dashboard');
-        if (response.data?.success) {
-          setStats(response.data.data.stats || {});
-          setRecentOrders(response.data.data.recent_orders || []);
-          setLowStock(response.data.data.low_stock_products || []);
-        }
-      } catch (error) {
-        toast.error('Failed to fetch dashboard data');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+    fetchOrders();
   }, []);
+
+  const fetchOrders = async () => {
+    setLoading(true);
+    try {
+      const response = await api.get('/seller/orders');
+      if (response.data?.success) {
+        setOrders(response.data.data.data || []);
+      }
+    } catch (error) {
+      toast.error('Failed to fetch orders');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -76,24 +76,17 @@ export default function SellerDashboard() {
     }).format(amount || 0);
   };
 
-  const StatCard = ({ title, value, subText, icon: Icon, colorClass, subColorClass = "text-gray-400" }) => (
-    <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex flex-col justify-between">
-      <div className="flex items-center justify-between mb-4">
-        <div className={`p-3 rounded-2xl ${colorClass} bg-opacity-10`}>
-          <Icon className={`w-6 h-6 ${colorClass.replace('bg-', 'text-')}`} />
-        </div>
-      </div>
-      <div>
-        <h3 className="text-gray-500 text-xs font-black uppercase tracking-widest mb-1">{title}</h3>
-        <p className="text-2xl font-black text-[#0F172A]">{loading ? '...' : value}</p>
-        <p className={`text-xs font-bold mt-1 ${subColorClass}`}>{loading ? 'Loading...' : subText}</p>
-      </div>
-    </div>
-  );
+  const filteredOrders = orders.filter(order => {
+    const matchesSearch = order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         order.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         order.product_name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <div className="min-h-screen flex bg-[#F8FAFC]">
-      {/* Sidebar */}
+      {/* Sidebar - Same as Dashboard */}
       <aside className={`fixed inset-y-0 left-0 bg-[#0F172A] w-72 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 ease-in-out z-30 shadow-2xl shadow-black/50 overflow-y-auto custom-scrollbar`}>
         <div className="flex h-20 items-center px-8 text-white font-black text-2xl border-b border-white/5 sticky top-0 bg-[#0F172A] z-10">
           <div className="w-10 h-10 bg-[#F97316] rounded-xl flex items-center justify-center mr-3 shadow-lg shadow-[#F97316]/20">
@@ -154,111 +147,136 @@ export default function SellerDashboard() {
         </header>
 
         <main className="flex-1 p-8 lg:p-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="mb-10">
-            <h1 className="text-3xl font-black text-[#0F172A] mb-2">Welcome back, {user?.name}!</h1>
-            <p className="text-gray-400 font-bold">Here's what's happening with your store today.</p>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
+            <div>
+              <h1 className="text-3xl font-black text-[#0F172A] mb-2">My Orders</h1>
+              <p className="text-gray-400 font-bold">Manage orders containing your products</p>
+            </div>
+            <button className="flex items-center space-x-2 px-6 py-3 bg-white border border-gray-100 text-[#0F172A] font-bold rounded-2xl shadow-sm hover:shadow-md transition-all">
+              <Download className="w-4 h-4" />
+              <span>Export Orders</span>
+            </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-            <StatCard 
-              title="Total Products" 
-              value={stats.total_products} 
-              subText={`${stats.published_products} published · ${stats.draft_products} drafts`}
-              icon={Package}
-              colorClass="bg-blue-500"
-            />
-            <StatCard 
-              title="Total Orders" 
-              value={stats.total_orders} 
-              subText={`${stats.this_month_orders} this month`}
-              icon={ShoppingCart}
-              colorClass="bg-purple-500"
-            />
-            <StatCard 
-              title="Total Revenue" 
-              value={formatPrice(stats.total_revenue)} 
-              subText={`${formatPrice(stats.this_month_revenue)} this month`}
-              icon={DollarSign}
-              colorClass="bg-green-500"
-              subColorClass="text-green-600"
-            />
-            <StatCard 
-              title="Out of Stock" 
-              value={stats.out_of_stock} 
-              subText="Products need restocking"
-              icon={AlertCircle}
-              colorClass="bg-red-500"
-              subColorClass={stats.out_of_stock > 0 ? "text-red-500" : "text-gray-400"}
-            />
-          </div>
-
-          {lowStock.length > 0 && (
-            <div className="bg-orange-50 border border-orange-100 p-6 rounded-[2rem] mb-10 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm mb-8">
+            <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+              <div className="flex-1 relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input 
+                  type="text" 
+                  placeholder="Search by order #, customer, or product..." 
+                  className="w-full pl-12 pr-4 py-3 bg-gray-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-[#F97316]/20 outline-none transition-all"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
               <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-orange-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-orange-500/20">
-                  <AlertCircle className="w-6 h-6" />
-                </div>
-                <div>
-                  <h3 className="font-black text-orange-900">{lowStock.length} products are running low on stock</h3>
-                  <p className="text-orange-700/70 text-sm font-bold">Some items are below their threshold. Restock soon to avoid losing sales.</p>
+                <div className="relative flex-shrink-0">
+                  <Filter className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <select 
+                    className="pl-12 pr-10 py-3 bg-gray-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-[#F97316]/20 outline-none transition-all appearance-none cursor-pointer"
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                  >
+                    <option value="all">All Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="processing">Processing</option>
+                    <option value="shipped">Shipped</option>
+                    <option value="delivered">Delivered</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
                 </div>
               </div>
-              <Link to="/seller/products" className="px-6 py-3 bg-orange-500 text-white rounded-2xl font-black text-sm shadow-xl shadow-orange-500/20 hover:bg-orange-600 transition-all">
-                Manage Inventory
-              </Link>
             </div>
-          )}
+          </div>
 
           <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
-            <div className="px-8 py-6 border-b border-gray-50 flex items-center justify-between">
-              <h3 className="text-lg font-black text-[#0F172A]">Recent Orders</h3>
-              <Link to="/seller/orders" className="text-xs font-black text-[#F97316] hover:underline uppercase tracking-widest">View All Orders</Link>
-            </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead>
                   <tr className="bg-gray-50/50">
-                    <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Order #</th>
+                    <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Order Info</th>
                     <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Product</th>
                     <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Customer</th>
-                    <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Qty</th>
+                    <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Qty/Price</th>
                     <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Total</th>
                     <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
                     <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Date</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {recentOrders.length === 0 ? (
+                  {loading ? (
+                    Array(5).fill(0).map((_, i) => (
+                      <tr key={i} className="animate-pulse">
+                        <td colSpan="7" className="px-8 py-6 h-20 bg-gray-50/20"></td>
+                      </tr>
+                    ))
+                  ) : filteredOrders.length === 0 ? (
                     <tr>
-                      <td colSpan="7" className="px-8 py-10 text-center text-gray-400 font-bold">No orders yet</td>
+                      <td colSpan="7" className="px-8 py-20 text-center">
+                        <div className="flex flex-col items-center">
+                          <ShoppingCart className="w-12 h-12 text-gray-200 mb-4" />
+                          <p className="text-gray-400 font-bold">No orders yet. Start selling products to see orders here.</p>
+                        </div>
+                      </td>
                     </tr>
                   ) : (
-                    recentOrders.map((order, idx) => (
-                      <tr key={idx} className="hover:bg-gray-50/50 transition-colors group">
-                        <td className="px-8 py-5 font-black text-xs text-[#0F172A]">{order.order_number}</td>
+                    filteredOrders.map((order) => (
+                      <tr key={order.id} className="hover:bg-gray-50/50 transition-colors group">
                         <td className="px-8 py-5">
-                          <p className="font-bold text-xs text-[#0F172A] group-hover:text-[#F97316] transition-colors">{order.product_name}</p>
+                          <p className="font-black text-xs text-[#0F172A]">{order.order_number}</p>
+                          <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter mt-0.5">PAYMENT: {order.payment_status}</p>
                         </td>
-                        <td className="px-8 py-5 text-xs font-bold text-gray-600">{order.customer_name}</td>
-                        <td className="px-8 py-5 text-xs font-bold text-gray-500">{order.quantity}</td>
-                        <td className="px-8 py-5 font-black text-xs text-[#0F172A]">{formatPrice(order.total)}</td>
+                        <td className="px-8 py-5">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 rounded-xl bg-gray-50 overflow-hidden flex-shrink-0 border border-gray-100">
+                              {order.product_thumbnail ? (
+                                <img src={order.product_thumbnail} alt="" className="w-full h-full object-cover" />
+                              ) : (
+                                <Package className="w-full h-full p-2 text-gray-300" />
+                              )}
+                            </div>
+                            <p className="font-bold text-xs text-[#0F172A] line-clamp-1">{order.product_name}</p>
+                          </div>
+                        </td>
+                        <td className="px-8 py-5">
+                          <p className="text-xs font-black text-[#0F172A]">{order.customer_name}</p>
+                          <p className="text-[10px] text-gray-400 font-bold truncate max-w-[120px]">{order.customer_email}</p>
+                        </td>
+                        <td className="px-8 py-5">
+                          <p className="text-xs font-bold text-gray-600">{order.quantity} x {formatPrice(order.price)}</p>
+                        </td>
+                        <td className="px-8 py-5 font-black text-xs text-[#F97316]">{formatPrice(order.total)}</td>
                         <td className="px-8 py-5 text-xs">
                           <span className={`px-3 py-1 rounded-full font-black text-[10px] uppercase tracking-tighter ${
                             order.status === 'delivered' ? 'bg-green-100 text-green-600' :
                             order.status === 'processing' ? 'bg-blue-100 text-blue-600' :
+                            order.status === 'shipped' ? 'bg-purple-100 text-purple-600' :
                             order.status === 'cancelled' ? 'bg-red-100 text-red-600' :
                             'bg-yellow-100 text-yellow-600'
                           }`}>
                             {order.status}
                           </span>
                         </td>
-                        <td className="px-8 py-5 text-xs font-bold text-gray-400">{order.created_at}</td>
+                        <td className="px-8 py-5 text-xs font-bold text-gray-400 whitespace-nowrap">{order.created_at}</td>
                       </tr>
                     ))
                   )}
                 </tbody>
               </table>
             </div>
+            
+            {/* Simple Pagination Placeholder */}
+            {!loading && filteredOrders.length > 0 && (
+              <div className="px-8 py-6 border-t border-gray-50 flex items-center justify-between">
+                <p className="text-xs font-bold text-gray-400">Showing {filteredOrders.length} results</p>
+                <div className="flex space-x-2">
+                  <button className="px-4 py-2 border border-gray-100 rounded-xl text-xs font-bold text-gray-400 cursor-not-allowed">Previous</button>
+                  <button className="px-4 py-2 bg-orange-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-orange-500/20">1</button>
+                  <button className="px-4 py-2 border border-gray-100 rounded-xl text-xs font-bold text-[#0F172A] hover:bg-gray-50 transition-colors">Next</button>
+                </div>
+              </div>
+            )}
           </div>
         </main>
       </div>

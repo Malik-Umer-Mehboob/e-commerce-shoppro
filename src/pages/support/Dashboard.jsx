@@ -7,7 +7,8 @@ import {
   AlertCircle,
   TrendingUp,
   Users,
-  Package
+  Package,
+  Book
 } from 'lucide-react';
 import axios from 'axios';
 

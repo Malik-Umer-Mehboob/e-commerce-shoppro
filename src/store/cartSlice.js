@@ -110,8 +110,10 @@ const cartSlice = createSlice({
 
 export const { clearCartState } = cartSlice.actions;
 
+const EMPTY_ARRAY = [];
+
 export const selectCart = (state) => state.cart.cart;
-export const selectCartItems = (state) => state.cart.cart?.items || [];
+export const selectCartItems = (state) => state.cart.cart?.items || EMPTY_ARRAY;
 export const selectCartTotal = (state) => state.cart.cart?.total || 0;
 export const selectCartItemsCount = (state) => state.cart.cart?.total_items || 0;
 

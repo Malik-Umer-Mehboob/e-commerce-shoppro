@@ -10,10 +10,10 @@ const ComparisonSidebar = () => {
   const { items, loading } = useSelector((state) => state.comparison);
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && items.length === 0 && !loading) {
       dispatch(fetchComparison());
     }
-  }, [dispatch, isAuthenticated]);
+  }, [dispatch, isAuthenticated, items.length, loading]);
 
   if (items.length === 0) return null;
 
