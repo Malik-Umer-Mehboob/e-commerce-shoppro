@@ -19,12 +19,19 @@ import {
   MessageSquare,
   ChevronRight,
   Bell,
-  Globe
+  Globe,
+  ShoppingCart,
+  Truck,
+  Users,
+  Star,
+  Activity,
+  RotateCcw
 } from 'lucide-react';
 import { authService } from '../../services/authService';
 import { logoutUser } from '../../store/authSlice';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
+import ThemeToggle from '../ThemeToggle';
 
 export default function AdminLayout({ children }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -50,9 +57,12 @@ export default function AdminLayout({ children }) {
       title: 'Main',
       items: [
         { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
+        { icon: ShoppingCart, label: 'Orders', path: '/admin/orders' },
+        { icon: RotateCcw, label: 'Returns', path: '/admin/returns' },
         { icon: Package, label: 'Products', path: '/admin/products' },
         { icon: Tag, label: 'Discounts', path: '/admin/discounts' },
         { icon: BarChart2, label: 'Reports', path: '/admin/reports' },
+        { icon: Truck, label: 'Rider Assignments', path: '/admin/rider-assignments' },
       ]
     },
     {
@@ -60,6 +70,7 @@ export default function AdminLayout({ children }) {
       items: [
         { icon: Upload, label: 'Bulk Upload', path: '/admin/bulk-upload' },
         { icon: AlertTriangle, label: 'Low Stock', path: '/admin/low-stock' },
+        { icon: Globe, label: 'Warehouses', path: '/admin/warehouses' },
       ]
     },
     {
@@ -76,12 +87,16 @@ export default function AdminLayout({ children }) {
       items: [
         { icon: BookOpen, label: 'Blog Manager', path: '/admin/blog' },
         { icon: MessageSquare, label: 'Comments', path: '/admin/blog/comments' },
+        { icon: Star, label: 'Reviews', path: '/admin/reviews' },
         { icon: Search, label: 'Search Analytics', path: '/admin/search' },
       ]
     },
     {
       title: 'System',
       items: [
+        { icon: Truck, label: 'Shipping Zones', path: '/admin/shipping-zones' },
+        { icon: Users, label: 'Users', path: '/admin/users' },
+        { icon: Activity, label: 'System Logs', path: '/admin/system-logs' },
         { icon: Settings, label: 'Settings', path: '/admin/settings' },
       ]
     }
@@ -164,6 +179,7 @@ export default function AdminLayout({ children }) {
             </button>
             <div className="h-8 w-px bg-gray-100 mx-2"></div>
             <div className="flex items-center space-x-3">
+              <ThemeToggle />
               <div className="text-right hidden sm:block">
                 <p className="text-sm font-black text-[#0F172A]">{user?.name}</p>
                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Administrator</p>

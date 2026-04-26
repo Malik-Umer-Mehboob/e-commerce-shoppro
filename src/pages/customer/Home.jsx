@@ -6,6 +6,7 @@ import api from '../../services/api';
 import { ShoppingBag, ChevronRight, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import SEOHead from '../../components/SEOHead';
 
 export default function Home() {
   const { data: productsData, isLoading: loading, error } = useQuery({
@@ -22,6 +23,10 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
+      <SEOHead
+        title="ShopPro - Your One Stop Shopping Destination"
+        description="Shop thousands of products at the best prices"
+      />
       <Header />
 
       {/* Hero Section */}

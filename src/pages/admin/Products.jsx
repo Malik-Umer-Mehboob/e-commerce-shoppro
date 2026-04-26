@@ -99,10 +99,18 @@ export default function AdminProducts() {
   };
 
   const getStatusBadge = (status, stock) => {
-    if (stock <= 0) return <span className="px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-full bg-red-100 text-red-700">Out of Stock</span>;
-    if (status === 'published') return <span className="px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-full bg-green-100 text-green-700">Published</span>;
-    if (status === 'draft') return <span className="px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-full bg-yellow-100 text-yellow-700">Draft</span>;
-    return <span className="px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-full bg-gray-100 text-gray-700">{status}</span>;
+    if (stock <= 0) return <span className="px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-lg bg-red-100 text-red-700">Out of Stock</span>;
+    
+    switch (status) {
+      case 'published':
+        return <span className="px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-lg bg-green-100 text-green-700">Published</span>;
+      case 'draft':
+        return <span className="px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-lg bg-gray-100 text-gray-500">Draft</span>;
+      case 'archived':
+        return <span className="px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-lg bg-red-100 text-red-600">Archived</span>;
+      default:
+        return <span className="px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-lg bg-gray-100 text-gray-700">{status}</span>;
+    }
   };
 
   return (
@@ -233,23 +241,35 @@ export default function AdminProducts() {
                       {product.stock_quantity}
                     </span>
                   </td>
-                  <td className="px-8 py-6">
-                    {getStatusBadge(product.status, product.stock_quantity)}
-                  </td>
-                  <td className="px-8 py-6">
-                    <div className="flex items-center justify-end space-x-2">
-                      <button 
-                        onClick={() => toggleStatus(product)}
-                        className="p-2.5 text-gray-400 hover:text-[#F97316] hover:bg-orange-50 rounded-xl transition-all"
-                      >
-                        {product.status === 'published' ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                      </button>
-                      <button 
-                        onClick={() => navigate(`/admin/products/edit/${product.id}`)}
-                        className="p-2.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
-                      >
-                        <Pencil className="w-5 h-5" />
-                      </button>
+                    <td className="px-8 py-6">
+                      <div className="flex flex-col space-y-2">
+                        {getStatusBadge(product.status, product.stock_quantity)}
+                        {product.status === 'draft' && (
+                          <button 
+                            onClick={() => toggleStatus(product)}
+                            className="text-[10px] font-black text-[#F97316] uppercase tracking-widest hover:underline text-left"
+                          >
+                            Publish
+                          </button>
+                        )}
+                        {product.status === 'published' && (
+                          <button 
+                            onClick={() => toggleStatus(product)}
+                            className="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:underline text-left"
+                          >
+                            Unpublish
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-8 py-6">
+                      <div className="flex items-center justify-end space-x-2">
+                        <button 
+                          onClick={() => navigate(`/admin/products/edit/${product.id}`)}
+                          className="p-2.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+                        >
+                          <Pencil className="w-5 h-5" />
+                        </button>
                       <button 
                         onClick={() => handleDelete(product.id)}
                         className="p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"

@@ -17,8 +17,9 @@ export const authService = {
     const response = await api.get('/auth/me');
     return response.data;
   },
-  getGoogleRedirectUrl: () => {
-    return 'http://localhost:8000/api/auth/google/redirect';
+  getGoogleRedirectUrl: async () => {
+    const response = await api.get('/auth/google/redirect');
+    return response.data?.url;
   },
   forgotPassword: async (email) => {
     const response = await api.post('/auth/forgot-password', { email });

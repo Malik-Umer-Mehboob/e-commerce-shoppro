@@ -11,7 +11,12 @@ import {
   Eye, 
   EyeOff, 
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Monitor,
+  Smartphone,
+  Tablet,
+  LogOut,
+  Globe
 } from 'lucide-react';
 import api from '../../services/api';
 import { updateUser } from '../../store/authSlice';
@@ -36,9 +41,51 @@ export default function Settings() {
   const [showNew, setShowNew] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
 
+  // Device state
+  const [devices, setDevices] = useState([]);
+  const [devicesLoading, setDevicesLoading] = useState(false);
+  const [loggingOutId, setLoggingOutId] = useState(null);
+
   useEffect(() => {
     fetchProfile();
+    fetchDevices();
   }, []);
+
+  const fetchDevices = async () => {
+    try {
+      setDevicesLoading(true);
+      const response = await api.get('/devices');
+      setDevices(response.data?.data || []);
+    } catch (error) {
+      console.error('Failed to fetch devices:', error);
+    } finally {
+      setDevicesLoading(false);
+    }
+  };
+
+  const handleLogoutDevice = async (tokenId) => {
+    try {
+      setLoggingOutId(tokenId);
+      await api.delete(`/devices/${tokenId}`);
+      toast.success('Device logged out');
+      fetchDevices();
+    } catch (error) {
+      toast.error('Failed to logout device');
+    } finally {
+      setLoggingOutId(null);
+    }
+  };
+
+  const handleLogoutAllOthers = async () => {
+    if (!window.confirm('Are you sure you want to logout all other devices?')) return;
+    try {
+      await api.post('/devices/logout-all-others');
+      toast.success('All other devices logged out');
+      fetchDevices();
+    } catch (error) {
+      toast.error('Failed to logout other devices');
+    }
+  };
 
   const fetchProfile = async () => {
     try {
@@ -300,6 +347,77 @@ export default function Settings() {
                 {savingPassword ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : 'Update Password'}
               </button>
             </form>
+          </div>
+
+          <div className="bg-white p-10 rounded-[2.5rem] border border-gray-100 shadow-sm">
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="text-xl font-black text-[#0F172A] flex items-center">
+                <Monitor className="w-5 h-5 mr-3 text-[#F97316]" />
+                Active Devices & Sessions
+              </h3>
+              <button 
+                onClick={handleLogoutAllOthers}
+                className="text-[10px] font-black text-[#F97316] uppercase tracking-widest hover:underline"
+              >
+                Logout All Others
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {devicesLoading ? (
+                <div className="py-10 text-center">
+                  <Loader2 className="w-8 h-8 animate-spin text-[#F97316] mx-auto" />
+                </div>
+              ) : devices.length === 0 ? (
+                <p className="text-center py-10 text-gray-400 font-bold">No active sessions found</p>
+              ) : (
+                devices.map((device) => (
+                  <div key={device.id} className="flex items-center justify-between p-6 bg-gray-50 rounded-3xl border border-transparent hover:border-gray-100 transition-all">
+                    <div className="flex items-center space-x-4">
+                      <div className="p-3 bg-white rounded-2xl text-gray-400 shadow-sm">
+                        {device.device_type === 'mobile' ? <Smartphone className="w-5 h-5" /> : 
+                         device.device_type === 'tablet' ? <Tablet className="w-5 h-5" /> : 
+                         <Monitor className="w-5 h-5" />}
+                      </div>
+                      <div>
+                        <div className="flex items-center">
+                          <h4 className="font-bold text-[#0F172A] text-sm">{device.device_name}</h4>
+                          {device.is_current && (
+                            <span className="ml-3 px-2 py-0.5 bg-green-100 text-green-600 text-[8px] font-black uppercase tracking-widest rounded-md">
+                              Current Session
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center mt-1 space-x-3">
+                          <span className="flex items-center text-[10px] font-bold text-gray-400">
+                            <Globe className="w-3 h-3 mr-1" />
+                            {device.ip_address}
+                          </span>
+                          <span className="text-[10px] font-bold text-gray-300">•</span>
+                          <span className="flex items-center text-[10px] font-bold text-gray-400">
+                            <Clock className="w-3 h-3 mr-1" />
+                            {device.last_used_at}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    {!device.is_current && (
+                      <button 
+                        onClick={() => handleLogoutDevice(device.id)}
+                        disabled={loggingOutId === device.id}
+                        className="p-3 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-2xl transition-all"
+                      >
+                        {loggingOutId === device.id ? <Loader2 className="w-5 h-5 animate-spin" /> : <LogOut className="w-5 h-5" />}
+                      </button>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+            
+            <p className="mt-8 p-4 bg-orange-50 rounded-2xl text-[11px] font-bold text-[#F97316] leading-relaxed">
+              If you notice any suspicious activity, we recommend logging out of all other sessions and changing your password immediately.
+            </p>
           </div>
         </div>
 

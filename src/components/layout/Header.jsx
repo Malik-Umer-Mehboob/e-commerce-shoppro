@@ -12,11 +12,25 @@ import SearchBar from '../search/SearchBar';
 import NotificationBell from '../notifications/NotificationBell';
 import LanguageSwitcher from './LanguageSwitcher';
 import CurrencySwitcher from './CurrencySwitcher';
+import ThemeToggle from '../ThemeToggle';
+import { useState, useRef, useEffect } from 'react';
 
 const Header = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useSelector((state) => state.auth);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -68,25 +82,53 @@ const Header = () => {
 
             <NotificationBell />
             <CartIcon />
+            <ThemeToggle />
 
             {isAuthenticated ? (
-              <div className="flex items-center space-x-3">
-                <div className="hidden lg:flex items-center space-x-2 text-gray-300 border-l border-gray-700 pl-3">
-                  {user?.avatar ? (
-                    <img src={user.avatar} className="w-8 h-8 rounded-full border border-slate-700" alt={user.name} />
-                  ) : (
-                    <User className="w-4 h-4" />
-                  )}
-                  <span className="font-medium text-sm">{user?.name}</span>
-                </div>
-
+              <div className="relative" ref={dropdownRef}>
                 <button
-                  onClick={handleLogout}
-                  className="flex items-center space-x-1.5 bg-[#F97316] hover:bg-[#ea580c] text-white px-3 py-1.5 rounded-lg font-medium transition-all shadow-md hover:shadow-lg text-sm"
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className="flex items-center space-x-2 text-gray-300 hover:text-white border-l border-gray-700 pl-3 focus:outline-none transition-colors"
                 >
-                  <LogOut className="w-4 h-4" />
-                  <span className="hidden sm:inline">Logout</span>
+                  {user?.avatar ? (
+                    <img src={user.avatar} className="w-8 h-8 rounded-full border border-slate-700 object-cover" alt={user.name} />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-[#1E293B] flex items-center justify-center border border-slate-700">
+                      <User className="w-4 h-4 text-gray-300" />
+                    </div>
+                  )}
+                  <span className="font-medium text-sm hidden lg:block">{user?.name}</span>
                 </button>
+
+                {isDropdownOpen && (
+                  <div className="absolute right-0 mt-3 w-48 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="px-4 py-2 border-b border-gray-50 mb-2">
+                      <p className="text-sm font-bold text-[#0F172A] truncate">{user?.name}</p>
+                      <p className="text-[10px] font-medium text-gray-400 truncate">{user?.email}</p>
+                    </div>
+                    
+                    <Link to="/profile" onClick={() => setIsDropdownOpen(false)} className="block px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-[#F97316] transition-colors">
+                      My Profile
+                    </Link>
+                    <Link to="/user/orders" onClick={() => setIsDropdownOpen(false)} className="block px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-[#F97316] transition-colors">
+                      My Orders
+                    </Link>
+                    <Link to="/returns" onClick={() => setIsDropdownOpen(false)} className="block px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-[#F97316] transition-colors">
+                      My Returns
+                    </Link>
+                    <Link to="/wishlist" onClick={() => setIsDropdownOpen(false)} className="block px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-[#F97316] transition-colors border-b border-gray-50 mb-1 pb-3">
+                      Wishlist
+                    </Link>
+                    
+                    <button
+                      onClick={() => { setIsDropdownOpen(false); handleLogout(); }}
+                      className="w-full text-left px-4 py-2 text-sm font-bold text-red-600 hover:bg-red-50 transition-colors flex items-center space-x-2"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>Logout</span>
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <Link

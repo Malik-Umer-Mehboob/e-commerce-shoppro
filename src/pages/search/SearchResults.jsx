@@ -5,6 +5,7 @@ import { searchProducts, setSortBy, setFilter, clearAllFilters, setQuery } from 
 import Header from '../../components/layout/Header';
 import SearchResultsSidebar from './components/SearchResultsSidebar';
 import ProductCard from '../../components/common/ProductCard';
+import SEOHead from '../../components/SEOHead';
 import {
     Search, SlidersHorizontal, X, ChevronLeft, ChevronRight,
     Package, Loader2, Star, ShoppingCart, Heart, ListFilter, Sparkles
@@ -15,6 +16,11 @@ const SearchResults = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const { results, pagination, loading, query, sortBy, appliedFilters, availableFilters } = useSelector((state) => state.search);
     const [showMobileFilters, setShowMobileFilters] = useState(false);
+
+    // Find category name if category filter is active
+    const activeCategory = appliedFilters.category && availableFilters.category
+        ? availableFilters.category.find(c => c.id.toString() === appliedFilters.category.toString())
+        : null;
 
     useEffect(() => {
         const q = searchParams.get('q') || '';
@@ -66,6 +72,19 @@ const SearchResults = () => {
 
     return (
         <div className="min-h-screen bg-slate-50">
+            {activeCategory ? (
+                <SEOHead
+                    title={`${activeCategory.name} - ShopPro`}
+                    description={`Browse ${activeCategory.name} products at ShopPro`}
+                />
+            ) : query ? (
+                <SEOHead
+                    title={`Search results for "${query}" - ShopPro`}
+                    description={`Explore products matching "${query}" at ShopPro`}
+                />
+            ) : (
+                <SEOHead />
+            )}
             <Header />
 
             <div className="max-w-7xl mx-auto px-4 py-12">

@@ -33,6 +33,15 @@ const AdminPostEditor = lazy(() => import('./pages/admin/blog/AdminPostEditor.js
 const AdminCommentModeration = lazy(() => import('./pages/admin/blog/AdminCommentModeration.jsx'));
 const SearchAnalytics = lazy(() => import('./pages/admin/SearchAnalytics.jsx'));
 const AdminSearchDashboard = lazy(() => import('./pages/admin/search/AdminSearchDashboard.jsx'));
+const Users = lazy(() => import('./pages/admin/Users'));
+const Reviews = lazy(() => import('./pages/admin/Reviews'));
+const Warehouses = lazy(() => import('./pages/admin/Warehouses'));
+const SystemLogs = lazy(() => import('./pages/admin/SystemLogs'));
+const RiderAssignments = lazy(() => import('./pages/admin/RiderAssignments'));
+const AdminReturns = lazy(() => import('./pages/admin/Returns'));
+
+// Rider Components
+const RiderDashboard = lazy(() => import('./pages/rider/Dashboard'));
 
 // Seller Components
 const SellerDashboard = lazy(() => import('./pages/seller/Dashboard'));
@@ -50,6 +59,8 @@ const KBManagement = lazy(() => import('./pages/support/KBManagement'));
 const SupportLayout = lazy(() => import('./pages/support/components/SupportLayout'));
 
 // Customer Components
+const Checkout = lazy(() => import('./pages/customer/Checkout'));
+const OrderConfirmation = lazy(() => import('./pages/customer/OrderConfirmation'));
 const Home = lazy(() => import('./pages/customer/Home'));
 const CartPage = lazy(() => import('./pages/customer/CartPage'));
 const WishlistPage = lazy(() => import('./pages/customer/WishlistPage'));
@@ -63,6 +74,8 @@ const OrderLookup = lazy(() => import('./pages/help/OrderLookup'));
 const MyTickets = lazy(() => import('./pages/customer/MyTickets'));
 const TicketDetail = lazy(() => import('./pages/customer/TicketDetail'));
 const ReturnRequest = lazy(() => import('./pages/customer/ReturnRequest'));
+const CustomerReturns = lazy(() => import('./pages/customer/Returns'));
+const CustomerProfile = lazy(() => import('./pages/customer/Profile'));
 const EmailPreferenceCenter = lazy(() => import('./pages/customer/EmailPreferenceCenter'));
 const Unsubscribe = lazy(() => import('./pages/Unsubscribe'));
 const AffiliateDashboard = lazy(() => import('./pages/customer/AffiliateDashboard.jsx'));
@@ -76,6 +89,10 @@ const SharedWishlistPage = lazy(() => import('./pages/customer/SharedWishlistPag
 const LoyaltyDashboard = lazy(() => import('./pages/loyalty/LoyaltyDashboard.jsx'));
 const GiftCardShop = lazy(() => import('./pages/loyalty/GiftCardShop.jsx'));
 const GiftCardBalance = lazy(() => import('./pages/loyalty/GiftCardBalance.jsx'));
+const CustomerOrders = lazy(() => import('./pages/customer/Orders'));
+const OrderDetail = lazy(() => import('./pages/customer/OrderDetail'));
+const AdminOrders = lazy(() => import('./pages/admin/Orders'));
+const AdminShippingZones = lazy(() => import('./pages/admin/ShippingZones'));
 
 // Shared/Common Components
 const ChatWidget = lazy(() => import('./components/common/ChatWidget'));
@@ -111,6 +128,16 @@ function App() {
           <Route path="/" element={<Navigate to={getDefaultRoute()} replace />} />
           <Route path="/home" element={<Home />} />
           <Route path="/cart" element={<CartPage />} />
+          <Route path="/checkout" element={
+            <ProtectedRoute allowedRoles={['customer']}>
+              <Checkout />
+            </ProtectedRoute>
+          } />
+          <Route path="/order-confirmation" element={
+            <ProtectedRoute allowedRoles={['customer']}>
+              <OrderConfirmation />
+            </ProtectedRoute>
+          } />
           <Route path="/wishlist" element={
             <ProtectedRoute allowedRoles={['customer', 'admin', 'seller', 'support']}>
               <WishlistPage />
@@ -161,6 +188,26 @@ function App() {
           <Route path="/customer/returns" element={
             <ProtectedRoute allowedRoles={['customer', 'admin', 'seller', 'support']}>
               <ReturnRequest />
+            </ProtectedRoute>
+          } />
+          <Route path="/returns" element={
+            <ProtectedRoute allowedRoles={['customer']}>
+              <CustomerReturns />
+            </ProtectedRoute>
+          } />
+          <Route path="/profile" element={
+            <ProtectedRoute allowedRoles={['customer']}>
+              <CustomerProfile />
+            </ProtectedRoute>
+          } />
+          <Route path="/customer/orders/:id" element={
+            <ProtectedRoute allowedRoles={['customer', 'admin', 'seller', 'support']}>
+              <OrderDetail />
+            </ProtectedRoute>
+          } />
+          <Route path="/user/orders" element={
+            <ProtectedRoute allowedRoles={['customer']}>
+              <CustomerOrders />
             </ProtectedRoute>
           } />
           <Route path="/email-preferences" element={
@@ -250,6 +297,25 @@ function App() {
               </AdminLayout>
             </ProtectedRoute>
           } />
+          <Route path="/admin/orders" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminLayout>
+                <AdminOrders />
+              </AdminLayout>
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/returns" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminReturns />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/shipping-zones" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminLayout>
+                <AdminShippingZones />
+              </AdminLayout>
+            </ProtectedRoute>
+          } />
           <Route path="/admin/reports" element={
             <ProtectedRoute allowedRoles={['admin']}>
               <AdminLayout>
@@ -321,6 +387,53 @@ function App() {
               <AdminLayout>
                 <SearchAnalytics />
               </AdminLayout>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin/users" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminLayout>
+                <Users />
+              </AdminLayout>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin/reviews" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminLayout>
+                <Reviews />
+              </AdminLayout>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin/warehouses" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminLayout>
+                <Warehouses />
+              </AdminLayout>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin/system-logs" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminLayout>
+                <SystemLogs />
+              </AdminLayout>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin/rider-assignments" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminLayout>
+                <RiderAssignments />
+              </AdminLayout>
+            </ProtectedRoute>
+          } />
+
+          {/* Rider Routes */}
+          <Route path="/rider/dashboard" element={
+            <ProtectedRoute allowedRoles={['rider']}>
+              <RiderDashboard />
             </ProtectedRoute>
           } />
           

@@ -16,6 +16,7 @@ import { authService } from '../../../services/authService.js';
 import { logoutUser } from '../../../store/authSlice.js';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
+import ThemeToggle from '../../../components/ThemeToggle';
 
 export default function SupportLayout({ children }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -118,6 +119,7 @@ export default function SupportLayout({ children }) {
             </button>
             <div className="h-8 w-px bg-gray-100 mx-2"></div>
             <div className="flex items-center space-x-3">
+              <ThemeToggle />
               <div className="text-right hidden sm:block">
                 <p className="text-sm font-black text-[#0F172A]">{user?.name}</p>
                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Support Agent</p>

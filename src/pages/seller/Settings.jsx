@@ -27,6 +27,7 @@ import { updateUser, logoutUser } from '../../store/authSlice';
 import { authService } from '../../services/authService';
 import { toast } from 'react-hot-toast';
 import { useNavigate, NavLink } from 'react-router-dom';
+import ThemeToggle from '../../components/ThemeToggle';
 
 export default function SellerSettings() {
   const { user } = useSelector(state => state.auth);
@@ -219,6 +220,7 @@ export default function SellerSettings() {
           </button>
           
           <div className="ml-auto flex items-center space-x-6">
+            <ThemeToggle />
             <div className="text-right hidden sm:block">
               <p className="text-sm font-black text-[#0F172A]">{user?.name}</p>
               <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Seller Panel</p>

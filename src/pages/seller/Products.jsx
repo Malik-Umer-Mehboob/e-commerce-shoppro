@@ -11,6 +11,7 @@ import { productService } from '../../services/productService';
 import { logoutUser } from '../../store/authSlice';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
+import ThemeToggle from '../../components/ThemeToggle';
 
 export default function SellerProducts() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -122,6 +123,7 @@ export default function SellerProducts() {
           </button>
           <div className="md:hidden font-bold text-[#0F172A] text-lg">ShopPro</div>
           <div className="ml-auto flex items-center space-x-4">
+            <ThemeToggle />
             <span className="text-sm font-medium text-[#0F172A] hidden sm:block">{user?.name}</span>
             <div className="w-8 h-8 rounded-full bg-[#0F172A] text-white flex items-center justify-center font-bold">
               {user?.name?.charAt(0)}
@@ -207,15 +209,34 @@ export default function SellerProducts() {
                     <td className="px-6 py-4 font-bold text-[#0F172A]">Rs. {product.price}</td>
                     <td className={`px-6 py-4 font-semibold ${product.stock_quantity <= product.low_stock_threshold ? 'text-red-500' : 'text-gray-700'}`}>{product.stock_quantity}</td>
                     <td className="px-6 py-4">
-                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${product.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                        {product.status}
-                      </span>
+                      <div className="flex flex-col space-y-1">
+                        <span className={`px-2 py-0.5 text-[9px] font-black uppercase tracking-widest rounded-lg w-fit ${
+                          product.status === 'published' ? 'bg-green-100 text-green-700' : 
+                          product.status === 'draft' ? 'bg-gray-100 text-gray-500' : 
+                          'bg-red-100 text-red-600'
+                        }`}>
+                          {product.status}
+                        </span>
+                        {product.status === 'draft' && (
+                          <button 
+                            onClick={() => toggleStatus(product)}
+                            className="text-[9px] font-black text-[#F97316] uppercase tracking-widest hover:underline text-left"
+                          >
+                            Publish
+                          </button>
+                        )}
+                        {product.status === 'published' && (
+                          <button 
+                            onClick={() => toggleStatus(product)}
+                            className="text-[9px] font-black text-gray-400 uppercase tracking-widest hover:underline text-left"
+                          >
+                            Unpublish
+                          </button>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <button onClick={() => toggleStatus(product)} className="p-1.5 text-gray-400 hover:text-[#F97316] hover:bg-orange-50 rounded-lg">
-                          {product.status === 'published' ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                        </button>
                         <button onClick={() => navigate(`/admin/products/edit/${product.id}`)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg">
                           <Pencil className="w-5 h-5" />
                         </button>

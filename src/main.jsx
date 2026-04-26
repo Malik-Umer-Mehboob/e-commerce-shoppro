@@ -24,26 +24,30 @@ if (token && !user) {
   localStorage.removeItem('token');
 }
 
+import { HelmetProvider } from 'react-helmet-async';
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <Provider store={store}>
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-          <App />
-          <Toaster position="top-right" toastOptions={{
-            style: {
-              background: '#0F172A',
-              color: '#fff',
-            },
-            success: {
-              iconTheme: {
-                primary: '#F97316',
-                secondary: '#fff',
+    <HelmetProvider>
+      <Provider store={store}>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+            <App />
+            <Toaster position="top-right" toastOptions={{
+              style: {
+                background: '#0F172A',
+                color: '#fff',
               },
-            },
-          }} />
-        </BrowserRouter>
-      </QueryClientProvider>
-    </Provider>
+              success: {
+                iconTheme: {
+                  primary: '#F97316',
+                  secondary: '#fff',
+                },
+              },
+            }} />
+          </BrowserRouter>
+        </QueryClientProvider>
+      </Provider>
+    </HelmetProvider>
   </React.StrictMode>
 );

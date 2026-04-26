@@ -7,6 +7,7 @@ import api from '../../services/api';
 import { Minus, Plus, ChevronLeft, Star, ShieldCheck, Truck } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useQuery } from '@tanstack/react-query';
+import SEOHead from '../../components/SEOHead';
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -14,7 +15,7 @@ const ProductDetail = () => {
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [quantity, setQuantity] = useState(1);
 
-  const { data: product, isLoading: loading, error } = useQuery({
+  const { data, isLoading: loading, error } = useQuery({
     queryKey: ['product', id],
     queryFn: async () => {
       const response = await api.get(`/products/${id}`);
@@ -22,6 +23,8 @@ const ProductDetail = () => {
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
+
+  const product = data?.data;
 
   // Handle errors
   useEffect(() => {
@@ -58,6 +61,15 @@ const ProductDetail = () => {
 
   return (
     <div className="min-h-screen bg-white">
+      {product?.seo && (
+        <SEOHead
+          title={product.seo.title}
+          description={product.seo.description}
+          image={product.seo.og_image}
+          url={product.seo.canonical_url}
+          schema={product.seo.schema}
+        />
+      )}
       <Header />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

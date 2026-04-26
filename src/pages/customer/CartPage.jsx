@@ -10,7 +10,7 @@ import {
 } from '../../store/cartSlice';
 import Header from '../../components/layout/Header';
 import { Trash2, Minus, Plus, ShoppingBag, Receipt, Truck, Tag, ArrowRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 const CartPage = () => {
@@ -18,6 +18,8 @@ const CartPage = () => {
   const cart = useSelector(selectCart);
   const items = useSelector(selectCartItems);
   const { loading } = useSelector((state) => state.cart);
+  const { isAuthenticated } = useSelector((state) => state.auth);
+  const navigate = useNavigate();
   const [couponCode, setCouponCode] = useState('');
 
   useEffect(() => {
@@ -90,7 +92,7 @@ const CartPage = () => {
               <div key={item.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex flex-col sm:flex-row gap-4">
                 {/* Product Image */}
                 <div className="w-full sm:w-32 h-32 bg-gray-50 rounded-xl overflow-hidden flex-shrink-0">
-                  <img src={item.product.thumbnail || 'https://via.placeholder.com/150'} alt={item.product.name} className="w-full h-full object-cover" />
+                  <img src={item.product.thumbnail || 'https://placehold.co/150'} alt={item.product.name} className="w-full h-full object-cover" />
                 </div>
                 
                 {/* Details */}
@@ -200,7 +202,17 @@ const CartPage = () => {
                 )}
               </form>
               
-              <button className="w-full bg-[#0F172A] hover:bg-black text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+              <button 
+                onClick={() => {
+                  if (isAuthenticated) {
+                    navigate('/checkout');
+                  } else {
+                    toast.error('Please login to checkout');
+                    navigate('/login', { state: { from: '/checkout' } });
+                  }
+                }}
+                className="w-full bg-[#0F172A] hover:bg-black text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+              >
                 Proceed to Checkout <ArrowRight size={20} />
               </button>
               

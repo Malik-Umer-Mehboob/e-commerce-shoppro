@@ -12,10 +12,12 @@ import blogReducer from './blogSlice';
 import comparisonReducer from './comparisonSlice';
 import loyaltyReducer from './loyaltySlice';
 import giftCardReducer from './giftCardSlice';
+import themeReducer from './themeSlice';
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
+    theme: themeReducer,
     cart: cartReducer,
     wishlist: wishlistReducer,
     search: searchReducer,
