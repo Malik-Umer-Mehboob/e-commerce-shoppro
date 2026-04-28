@@ -14,7 +14,8 @@ const AdminCommentModeration = () => {
   const fetchComments = async () => {
     try {
       const response = await api.get('/admin/blog/comments');
-      setComments(response.data);
+      // Handle both paginated response (.data) and raw array
+      setComments(response.data?.data || response.data || []);
       setLoading(false);
     } catch (err) {
       toast.error('Failed to fetch comments');
@@ -24,7 +25,7 @@ const AdminCommentModeration = () => {
 
   const handleStatusChange = async (id, status) => {
     try {
-      await api.patch(`/admin/blog/comments/${id}`, { status });
+      await api.patch(`/admin/blog/comments/${id}/moderate`, { status });
       toast.success(`Comment ${status}`);
       fetchComments();
     } catch (err) {

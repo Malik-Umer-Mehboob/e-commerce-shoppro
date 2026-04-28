@@ -15,10 +15,8 @@ import {
   Lock,
   Flag
 } from 'lucide-react';
-import axios from 'axios';
+import api from '../../services/api';
 import { toast } from 'react-hot-toast';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
 export default function AgentTicketDetail() {
   const { id } = useParams();
@@ -41,11 +39,7 @@ export default function AgentTicketDetail() {
 
   const fetchTicket = async () => {
     try {
-      const response = await axios.get(`${API_URL}/tickets/${id}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const response = await api.get(`/tickets/${id}`);
       setTicket(response.data.data);
       setLoading(false);
     } catch (error) {
@@ -61,13 +55,9 @@ export default function AgentTicketDetail() {
 
     setSending(true);
     try {
-      await axios.post(`${API_URL}/tickets/${id}/messages`, {
+      await api.post(`/tickets/${id}/messages`, {
         message: newMessage,
         is_internal: isInternal
-      }, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
       });
       setNewMessage('');
       fetchTicket();
@@ -82,11 +72,7 @@ export default function AgentTicketDetail() {
   const handleUpdateStatus = async (status) => {
     setUpdatingStatus(true);
     try {
-      await axios.put(`${API_URL}/tickets/${id}/status`, { status }, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      await api.put(`/tickets/${id}/status`, { status });
       toast.success(`Ticket marked as ${status}`);
       fetchTicket();
     } catch (error) {

@@ -12,10 +12,8 @@ import {
   ArrowUpDown
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../services/api';
 import { toast } from 'react-hot-toast';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
 export default function AgentTicketsList() {
   const [tickets, setTickets] = useState([]);
@@ -39,12 +37,7 @@ export default function AgentTicketsList() {
       if (filters.category !== 'All') params.category = filters.category;
       if (filters.priority !== 'All') params.priority = filters.priority;
 
-      const response = await axios.get(`${API_URL}/tickets`, {
-        params,
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const response = await api.get(`/tickets`, { params });
       setTickets(response.data.data);
     } catch (error) {
       toast.error('Failed to load tickets');

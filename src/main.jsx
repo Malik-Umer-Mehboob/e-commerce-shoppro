@@ -18,13 +18,20 @@ const queryClient = new QueryClient({
   },
 });
 
-const token = localStorage.getItem('token');
-const user = localStorage.getItem('user');
-if (token && !user) {
-  localStorage.removeItem('token');
-}
-
 import { HelmetProvider } from 'react-helmet-async';
+
+// Migration: clear old token keys if exist
+const oldToken = localStorage.getItem('token');
+const oldUser = localStorage.getItem('user');
+if (oldToken && !localStorage.getItem('shoppro_token')) {
+    localStorage.setItem('shoppro_token', oldToken);
+}
+if (oldUser && !localStorage.getItem('shoppro_user')) {
+    localStorage.setItem('shoppro_user', oldUser);
+}
+// Remove old keys
+localStorage.removeItem('token');
+localStorage.removeItem('user');
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

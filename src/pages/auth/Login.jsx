@@ -31,29 +31,37 @@ export default function Login() {
     setIsLoading(true);
     try {
       const response = await authService.login(data.email, data.password);
-      if (response.success) {
-        dispatch(setCredentials({ user: response.data.user, token: response.data.token }));
-        dispatch(fetchCart());
-        dispatch(fetchWishlist());
-        toast.success('Logged in successfully');
-        
-        switch (response.data.user.role) {
-          case 'admin':
-            navigate('/admin/dashboard');
-            break;
-          case 'seller':
-            navigate('/seller/dashboard');
-            break;
-          case 'support':
-            navigate('/support/dashboard');
-            break;
-          case 'rider':
-            navigate('/rider/dashboard');
-            break;
-          default:
-            navigate('/');
-        }
+      const { user, token } = response.data?.data ?? response.data ?? {}; // Fallback to response.data just in case authService unwraps it
+
+      // Debug: log what we received
+      console.log('Login response user:', user);
+      console.log('Login response token:', token);
+      console.log('User role:', user?.role);
+
+      if (!user || !token) {
+          toast.error('Login failed: invalid response from server');
+          return;
       }
+
+      // Save to Redux + localStorage
+      dispatch(setCredentials({ user, token }));
+      dispatch(fetchCart());
+      dispatch(fetchWishlist());
+      toast.success('Logged in successfully');
+
+      // Verify it was saved
+      console.log('localStorage after save:',
+          localStorage.getItem('shoppro_token'),
+          localStorage.getItem('shoppro_user')
+      );
+
+      // Redirect based on role
+      const role = user.role;
+      if (role === 'admin') navigate('/admin/dashboard');
+      else if (role === 'seller') navigate('/seller/dashboard');
+      else if (role === 'support') navigate('/support/dashboard');
+      else if (role === 'rider') navigate('/rider/dashboard');
+      else navigate('/home');
      } catch (err) {
       if (err.response?.status === 429) {
         const minutesLeft = err.response?.data?.minutes_left || 15;

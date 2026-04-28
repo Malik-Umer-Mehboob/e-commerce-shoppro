@@ -16,7 +16,8 @@ import {
   Smartphone,
   Tablet,
   LogOut,
-  Globe
+  Globe,
+  Clock
 } from 'lucide-react';
 import api from '../../services/api';
 import { updateUser } from '../../store/authSlice';

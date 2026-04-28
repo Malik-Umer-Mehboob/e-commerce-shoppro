@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import ProtectedRoute from './components/ProtectedRoute';
 import { Toaster } from 'react-hot-toast';
+import SplashPage from './pages/SplashPage';
 
 // Auth Components
 const Login = lazy(() => import('./pages/auth/Login'));
@@ -42,6 +43,7 @@ const AdminReturns = lazy(() => import('./pages/admin/Returns'));
 
 // Rider Components
 const RiderDashboard = lazy(() => import('./pages/rider/Dashboard'));
+const RiderSettings = lazy(() => import('./pages/rider/Settings'));
 
 // Seller Components
 const SellerDashboard = lazy(() => import('./pages/seller/Dashboard'));
@@ -57,6 +59,7 @@ const AgentTicketsList = lazy(() => import('./pages/support/TicketsList'));
 const AgentTicketDetail = lazy(() => import('./pages/support/TicketDetail'));
 const KBManagement = lazy(() => import('./pages/support/KBManagement'));
 const SupportLayout = lazy(() => import('./pages/support/components/SupportLayout'));
+const SupportSettings = lazy(() => import('./pages/support/Settings'));
 
 // Customer Components
 const Checkout = lazy(() => import('./pages/customer/Checkout'));
@@ -116,6 +119,7 @@ function App() {
     if (role === 'admin') return '/admin/dashboard';
     if (role === 'seller') return '/seller/dashboard';
     if (role === 'support') return '/support/dashboard';
+    if (role === 'rider') return '/rider/dashboard';
     return '/home';
   };
 
@@ -125,8 +129,12 @@ function App() {
         <AffiliateLinkTracker />
         <ComparisonSidebar />
         <Routes>
-          <Route path="/" element={<Navigate to={getDefaultRoute()} replace />} />
-          <Route path="/home" element={<Home />} />
+          <Route path="/" element={<SplashPage />} />
+          <Route path="/home" element={
+            <ProtectedRoute allowedRoles={['customer']}>
+              <Home />
+            </ProtectedRoute>
+          } />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/checkout" element={
             <ProtectedRoute allowedRoles={['customer']}>
@@ -139,7 +147,7 @@ function App() {
             </ProtectedRoute>
           } />
           <Route path="/wishlist" element={
-            <ProtectedRoute allowedRoles={['customer', 'admin', 'seller', 'support']}>
+            <ProtectedRoute allowedRoles={['customer']}>
               <WishlistPage />
             </ProtectedRoute>
           } />
@@ -436,6 +444,11 @@ function App() {
               <RiderDashboard />
             </ProtectedRoute>
           } />
+          <Route path="/rider/settings" element={
+            <ProtectedRoute allowedRoles={['rider']}>
+              <RiderSettings />
+            </ProtectedRoute>
+          } />
           
           <Route path="/admin/settings" element={
             <ProtectedRoute allowedRoles={['admin']}>
@@ -505,6 +518,13 @@ function App() {
             <ProtectedRoute allowedRoles={['support', 'admin']}>
               <SupportLayout>
                 <KBManagement />
+              </SupportLayout>
+            </ProtectedRoute>
+          } />
+          <Route path="/support/settings" element={
+            <ProtectedRoute allowedRoles={['support']}>
+              <SupportLayout>
+                <SupportSettings />
               </SupportLayout>
             </ProtectedRoute>
           } />

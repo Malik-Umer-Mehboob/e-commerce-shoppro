@@ -14,10 +14,7 @@ import {
   XCircle,
   Save
 } from 'lucide-react';
-import axios from 'axios';
-import { toast } from 'react-hot-toast';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+import api from '../../../services/api';
 
 export default function Segments() {
   const [segments, setSegments] = useState([]);
@@ -39,9 +36,7 @@ export default function Segments() {
 
   const fetchSegments = async () => {
     try {
-      const response = await axios.get(`${API_URL}/admin/user-segments`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
+      const response = await api.get(`/admin/user-segments`);
       setSegments(response.data.data);
       setLoading(false);
     } catch (error) {
@@ -52,9 +47,7 @@ export default function Segments() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${API_URL}/admin/user-segments`, formData, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
+      await api.post(`/admin/user-segments`, formData);
       toast.success('Segment created successfully');
       setShowModal(false);
       fetchSegments();
@@ -66,9 +59,7 @@ export default function Segments() {
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure? This will not delete users, only the segment definition.')) return;
     try {
-      await axios.delete(`${API_URL}/admin/user-segments/${id}`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
+      await api.delete(`/admin/user-segments/${id}`);
       toast.success('Segment deleted');
       fetchSegments();
     } catch (error) {

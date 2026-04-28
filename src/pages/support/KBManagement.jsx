@@ -13,10 +13,8 @@ import {
   FileText
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../services/api';
 import { toast } from 'react-hot-toast';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
 export default function KBManagement() {
   const [articles, setArticles] = useState([]);
@@ -36,7 +34,7 @@ export default function KBManagement() {
 
   const fetchArticles = async () => {
     try {
-      const response = await axios.get(`${API_URL}/kb`);
+      const response = await api.get(`/kb`);
       setArticles(response.data.data);
       setLoading(false);
     } catch (error) {
@@ -48,14 +46,10 @@ export default function KBManagement() {
     e.preventDefault();
     try {
       if (editingArticle) {
-        await axios.put(`${API_URL}/kb/${editingArticle.id}`, formData, {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-        });
+        await api.put(`/kb/${editingArticle.id}`, formData);
         toast.success('Article updated');
       } else {
-        await axios.post(`${API_URL}/kb`, formData, {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-        });
+        await api.post(`/kb`, formData);
         toast.success('Article created');
       }
       setShowModal(false);
@@ -70,9 +64,7 @@ export default function KBManagement() {
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this article?')) return;
     try {
-      await axios.delete(`${API_URL}/kb/${id}`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
+      await api.delete(`/kb/${id}`);
       toast.success('Article deleted');
       fetchArticles();
     } catch (error) {

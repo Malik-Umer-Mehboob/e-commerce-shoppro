@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, createSelector } from '@reduxjs/toolkit';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
 
@@ -90,7 +90,12 @@ const wishlistSlice = createSlice({
 
 export const { clearWishlistState } = wishlistSlice.actions;
 
-export const selectWishlistItems = (state) => state.wishlist.wishlist?.items || [];
+const selectWishlistState = (state) => state.wishlist;
+
+export const selectWishlistItems = createSelector(
+  [selectWishlistState],
+  (wishlistState) => wishlistState.wishlist?.items || []
+);
 export const selectIsInWishlist = (productId) => (state) => 
   state.wishlist.wishlist?.items.some(item => item.product_id === productId);
 

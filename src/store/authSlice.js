@@ -1,51 +1,81 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 const getInitialState = () => {
-  try {
-    const token = localStorage.getItem('token');
-    const userStr = localStorage.getItem('user');
-    const user = userStr ? JSON.parse(userStr) : null;
-    
-    if (token && user && user.role) {
-      return { user, token, role: user.role, isAuthenticated: true };
+    try {
+        const token = localStorage.getItem('shoppro_token');
+        const userStr = localStorage.getItem('shoppro_user');
+        const user = userStr ? JSON.parse(userStr) : null;
+
+        if (token && user && user.role) {
+            return {
+                user,
+                token,
+                role: user.role,
+                isAuthenticated: true,
+            };
+        }
+    } catch {
+        // corrupted data
     }
-    
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    return { user: null, token: null, role: null, isAuthenticated: false };
-  } catch {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    return { user: null, token: null, role: null, isAuthenticated: false };
-  }
+
+    localStorage.removeItem('shoppro_token');
+    localStorage.removeItem('shoppro_user');
+    return {
+        user: null,
+        token: null,
+        role: null,
+        isAuthenticated: false,
+    };
 };
 
 const authSlice = createSlice({
-  name: 'auth',
-  initialState: getInitialState(),
-  reducers: {
-    setCredentials: (state, action) => {
-      const { user, token } = action.payload;
-      state.user = user;
-      state.token = token;
-      state.role = user.role;
-      state.isAuthenticated = true;
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
+    name: 'auth',
+    initialState: getInitialState(),
+    reducers: {
+        setCredentials: (state, action) => {
+            const { user, token } = action.payload;
+
+            if (!user || !token) {
+                console.error('setCredentials: missing user or token', action.payload);
+                return;
+            }
+
+            state.user = user;
+            state.token = token;
+            state.role = user.role;
+            state.isAuthenticated = true;
+
+            // Save to localStorage with clear keys
+            try {
+                localStorage.setItem('shoppro_token', token);
+                localStorage.setItem('shoppro_user', JSON.stringify(user));
+            } catch (err) {
+                console.error('localStorage save failed:', err);
+            }
+        },
+
+        logoutUser: (state) => {
+            state.user = null;
+            state.token = null;
+            state.role = null;
+            state.isAuthenticated = false;
+
+            localStorage.removeItem('shoppro_token');
+            localStorage.removeItem('shoppro_user');
+        },
+
+        updateUser: (state, action) => {
+            if (state.user) {
+                state.user = { ...state.user, ...action.payload };
+                try {
+                    localStorage.setItem(
+                        'shoppro_user',
+                        JSON.stringify(state.user)
+                    );
+                } catch {}
+            }
+        },
     },
-    logoutUser: (state) => {
-      state.user = null;
-      state.token = null;
-      state.role = null;
-      state.isAuthenticated = false;
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-    },
-    updateUser: (state, action) => {
-      state.user = { ...state.user, ...action.payload };
-      localStorage.setItem('user', JSON.stringify(state.user));
-    }
-  },
 });
 
 export const { setCredentials, logoutUser, updateUser } = authSlice.actions;

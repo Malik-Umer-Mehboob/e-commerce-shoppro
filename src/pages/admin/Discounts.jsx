@@ -6,6 +6,8 @@ import {
 import { discountService } from '../../services/discountService';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
+import { categoryService } from '../../services/categoryService';
+import { productService } from '../../services/productService';
 
 export default function Discounts() {
   const [discounts, setDiscounts] = useState([]);
@@ -13,6 +15,9 @@ export default function Discounts() {
   const [loading, setLoading] = useState(true);
   const [couponsLoading, setCouponsLoading] = useState(true);
   const [showCouponModal, setShowCouponModal] = useState(false);
+  const [showDiscountModal, setShowDiscountModal] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [products, setProducts] = useState([]);
   const [couponForm, setCouponForm] = useState({
     code: '',
     type: 'percentage',
@@ -23,11 +28,45 @@ export default function Discounts() {
     expires_at: '',
     is_active: true,
   });
+  const [discountForm, setDiscountForm] = useState({
+    name: '',
+    type: 'percentage',
+    value: '',
+    applies_to: 'all',
+    target_id: '',
+    starts_at: '',
+    ends_at: '',
+    is_active: true,
+  });
 
   useEffect(() => {
     fetchDiscounts();
     fetchCoupons();
+    fetchFilterOptions();
   }, []);
+
+  const fetchFilterOptions = async () => {
+    try {
+      const [catRes, prodRes] = await Promise.all([
+        categoryService.getCategories(),
+        productService.getProducts({ limit: 1000 })
+      ]);
+      
+      const flatCategories = [];
+      if (catRes.data.categories) {
+        catRes.data.categories.forEach(cat => {
+          flatCategories.push(cat);
+          if (cat.children) {
+            cat.children.forEach(child => flatCategories.push({...child, name: `— ${child.name}`}));
+          }
+        });
+      }
+      setCategories(flatCategories);
+      setProducts(prodRes.data.data || []);
+    } catch (error) {
+      console.error('Failed to load filter options', error);
+    }
+  };
 
   const fetchDiscounts = async () => {
     try {
@@ -62,6 +101,32 @@ export default function Discounts() {
       } catch (error) {
         toast.error('Failed to delete discount');
       }
+    }
+  };
+
+  const handleDiscountSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const payload = {
+        name: discountForm.name,
+        type: discountForm.type,
+        value: parseFloat(discountForm.value),
+        starts_at: discountForm.starts_at || null,
+        ends_at: discountForm.ends_at || null,
+        is_active: discountForm.is_active,
+        category_id: discountForm.applies_to === 'category' ? discountForm.target_id : null,
+        product_id: discountForm.applies_to === 'product' ? discountForm.target_id : null,
+      };
+      
+      await discountService.createDiscount(payload);
+      toast.success('Discount created successfully');
+      setShowDiscountModal(false);
+      setDiscountForm({
+        name: '', type: 'percentage', value: '', applies_to: 'all', target_id: '', starts_at: '', ends_at: '', is_active: true
+      });
+      fetchDiscounts();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to create discount');
     }
   };
 
@@ -107,7 +172,7 @@ export default function Discounts() {
             <p className="text-gray-500 font-medium">Manage your promotional codes and store-wide sales.</p>
           </div>
           <button 
-            onClick={() => toast.success('Discount creation modal would open here')}
+            onClick={() => setShowDiscountModal(true)}
             className="bg-[#0F172A] text-white px-6 py-3 rounded-2xl font-black flex items-center space-x-2 shadow-xl shadow-[#0F172A]/20 hover:bg-black transition-all transform hover:-translate-y-1"
           >
             <Plus className="w-5 h-5" />
@@ -438,6 +503,147 @@ export default function Discounts() {
                     className="flex-1 py-4 rounded-2xl bg-[#F97316] text-white font-black hover:bg-orange-600 transition-all shadow-lg shadow-orange-500/20"
                   >
                     Create Coupon
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- Add Discount Modal --- */}
+      {showDiscountModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-xl overflow-y-auto max-h-[90vh]">
+            <div className="p-8">
+              <div className="flex items-center justify-between mb-8">
+                <h3 className="text-2xl font-black text-[#0F172A]">Create Discount</h3>
+                <button onClick={() => setShowDiscountModal(false)} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-all">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <form onSubmit={handleDiscountSubmit} className="space-y-5">
+                <div>
+                  <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Discount Name</label>
+                  <input
+                    required
+                    value={discountForm.name}
+                    onChange={e => setDiscountForm(f => ({ ...f, name: e.target.value }))}
+                    placeholder="e.g. Summer Sale"
+                    className="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 font-black text-[#0F172A] focus:ring-2 focus:ring-orange-500/20 outline-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Type</label>
+                    <select
+                      value={discountForm.type}
+                      onChange={e => setDiscountForm(f => ({ ...f, type: e.target.value }))}
+                      className="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 font-bold text-[#0F172A] focus:ring-2 focus:ring-orange-500/20 outline-none"
+                    >
+                      <option value="percentage">Percentage (%)</option>
+                      <option value="fixed">Fixed Amount (Rs.)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Value</label>
+                    <input
+                      required
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={discountForm.value}
+                      onChange={e => setDiscountForm(f => ({ ...f, value: e.target.value }))}
+                      placeholder={discountForm.type === 'percentage' ? '10' : '500'}
+                      className="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 font-bold text-[#0F172A] focus:ring-2 focus:ring-orange-500/20 outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Applies To</label>
+                  <select
+                    value={discountForm.applies_to}
+                    onChange={e => setDiscountForm(f => ({ ...f, applies_to: e.target.value, target_id: '' }))}
+                    className="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 font-bold text-[#0F172A] focus:ring-2 focus:ring-orange-500/20 outline-none mb-3"
+                  >
+                    <option value="all">All Products</option>
+                    <option value="category">Specific Category</option>
+                    <option value="product">Specific Product</option>
+                  </select>
+
+                  {discountForm.applies_to === 'category' && (
+                    <select
+                      required
+                      value={discountForm.target_id}
+                      onChange={e => setDiscountForm(f => ({ ...f, target_id: e.target.value }))}
+                      className="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 font-bold text-[#0F172A] focus:ring-2 focus:ring-orange-500/20 outline-none"
+                    >
+                      <option value="">Select Category...</option>
+                      {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                  )}
+
+                  {discountForm.applies_to === 'product' && (
+                    <select
+                      required
+                      value={discountForm.target_id}
+                      onChange={e => setDiscountForm(f => ({ ...f, target_id: e.target.value }))}
+                      className="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 font-bold text-[#0F172A] focus:ring-2 focus:ring-orange-500/20 outline-none"
+                    >
+                      <option value="">Select Product...</option>
+                      {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    </select>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Start Date (Optional)</label>
+                    <input
+                      type="datetime-local"
+                      value={discountForm.starts_at}
+                      onChange={e => setDiscountForm(f => ({ ...f, starts_at: e.target.value }))}
+                      className="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 font-bold text-[#0F172A] focus:ring-2 focus:ring-orange-500/20 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">End Date (Optional)</label>
+                    <input
+                      type="datetime-local"
+                      value={discountForm.ends_at}
+                      onChange={e => setDiscountForm(f => ({ ...f, ends_at: e.target.value }))}
+                      className="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 font-bold text-[#0F172A] focus:ring-2 focus:ring-orange-500/20 outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-3 pt-2">
+                  <input
+                    type="checkbox"
+                    id="discount-active"
+                    checked={discountForm.is_active}
+                    onChange={e => setDiscountForm(f => ({ ...f, is_active: e.target.checked }))}
+                    className="w-5 h-5 accent-orange-500"
+                  />
+                  <label htmlFor="discount-active" className="text-sm font-bold text-[#0F172A]">Active</label>
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowDiscountModal(false)}
+                    className="flex-1 py-4 rounded-2xl border-2 border-slate-200 font-black text-gray-600 hover:bg-slate-50 transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 py-4 rounded-2xl bg-[#0F172A] text-white font-black hover:bg-black transition-all shadow-lg shadow-[#0F172A]/20"
+                  >
+                    Create Discount
                   </button>
                 </div>
               </form>

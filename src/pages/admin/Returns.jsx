@@ -28,9 +28,12 @@ export default function AdminReturns() {
       const response = await api.get(`/admin/returns${query}`);
       
       if (response.data?.success) {
-        setReturns(response.data.data.returns || response.data.data);
-        if (response.data.data.stats) {
-          setStats(response.data.data.stats);
+        const payload = response.data.data;
+        const returnsObj = payload.returns || payload;
+        setReturns(Array.isArray(returnsObj) ? returnsObj : (returnsObj.data || []));
+        
+        if (payload.stats) {
+          setStats(payload.stats);
         }
       }
     } catch (error) {

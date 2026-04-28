@@ -12,10 +12,7 @@ import {
   MoreVertical,
   Code
 } from 'lucide-react';
-import axios from 'axios';
-import { toast } from 'react-hot-toast';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+import api from '../../../services/api';
 
 export default function Templates() {
   const [templates, setTemplates] = useState([]);
@@ -34,9 +31,7 @@ export default function Templates() {
 
   const fetchTemplates = async () => {
     try {
-      const response = await axios.get(`${API_URL}/admin/email-templates`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
+      const response = await api.get(`/admin/email-templates`);
       setTemplates(response.data.data);
       setLoading(false);
     } catch (error) {
@@ -47,9 +42,7 @@ export default function Templates() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${API_URL}/admin/email-templates`, formData, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
+      await api.post(`/admin/email-templates`, formData);
       toast.success('Template saved successfully');
       setShowModal(false);
       fetchTemplates();

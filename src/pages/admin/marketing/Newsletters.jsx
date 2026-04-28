@@ -14,10 +14,7 @@ import {
   BarChart,
   FileText
 } from 'lucide-react';
-import axios from 'axios';
-import { toast } from 'react-hot-toast';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+import api from '../../../services/api';
 
 export default function Newsletters() {
   const [newsletters, setNewsletters] = useState([]);
@@ -39,9 +36,7 @@ export default function Newsletters() {
 
   const fetchNewsletters = async () => {
     try {
-      const response = await axios.get(`${API_URL}/admin/newsletters`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
+      const response = await api.get(`/admin/newsletters`);
       setNewsletters(response.data.data);
       setLoading(false);
     } catch (error) {
@@ -51,9 +46,7 @@ export default function Newsletters() {
 
   const fetchSubscribers = async () => {
     try {
-      const response = await axios.get(`${API_URL}/admin/newsletter-subscribers`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
+      const response = await api.get(`/admin/newsletter-subscribers`);
       setSubscribers(response.data.data);
     } catch (error) {
       console.error('Error fetching subscribers:', error);
@@ -63,9 +56,7 @@ export default function Newsletters() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${API_URL}/admin/newsletters`, formData, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
+      await api.post(`/admin/newsletters`, formData);
       toast.success('Newsletter created');
       setShowModal(false);
       fetchNewsletters();
@@ -77,9 +68,7 @@ export default function Newsletters() {
   const handleSend = async (id) => {
     if (!window.confirm('Send this newsletter to all subscribers?')) return;
     try {
-      await axios.post(`${API_URL}/admin/newsletters/${id}/send`, {}, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
+      await api.post(`/admin/newsletters/${id}/send`, {});
       toast.success('Newsletter is being sent!');
       fetchNewsletters();
     } catch (error) {

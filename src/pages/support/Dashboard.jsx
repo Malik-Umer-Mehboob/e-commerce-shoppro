@@ -10,9 +10,7 @@ import {
   Package,
   Book
 } from 'lucide-react';
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+import api from '../../services/api';
 
 export default function SupportDashboard() {
   const { user } = useSelector(state => state.auth);
@@ -30,9 +28,7 @@ export default function SupportDashboard() {
 
   const fetchMetrics = async () => {
     try {
-      const response = await axios.get(`${API_URL}/support/metrics`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
+      const response = await api.get(`/support/metrics`);
       setMetrics(response.data.data);
     } catch (error) {
       console.error('Error fetching metrics:', error);

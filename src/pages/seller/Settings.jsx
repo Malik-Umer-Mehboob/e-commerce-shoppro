@@ -192,11 +192,15 @@ export default function SellerSettings() {
               className={({ isActive }) => `w-full flex items-center justify-between px-4 py-3 rounded-2xl transition-all group ${isActive ? 'bg-[#F97316] text-white shadow-xl shadow-[#F97316]/20' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
               onClick={() => setIsSidebarOpen(false)}
             >
-              <div className="flex items-center space-x-3">
-                <item.icon className={`w-5 h-5 transition-colors`} />
-                <span className="font-bold text-sm">{item.label}</span>
-              </div>
-              {({ isActive }) => isActive && <ChevronRight className="w-4 h-4 animate-in slide-in-from-left-2" />}
+              {({ isActive }) => (
+                <>
+                  <div className="flex items-center space-x-3">
+                    <item.icon className={`w-5 h-5 transition-colors`} />
+                    <span className="font-bold text-sm">{item.label}</span>
+                  </div>
+                  {isActive && <ChevronRight className="w-4 h-4 animate-in slide-in-from-left-2" />}
+                </>
+              )}
             </NavLink>
           ))}
         </nav>

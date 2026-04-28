@@ -92,14 +92,14 @@ const CartPage = () => {
               <div key={item.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex flex-col sm:flex-row gap-4">
                 {/* Product Image */}
                 <div className="w-full sm:w-32 h-32 bg-gray-50 rounded-xl overflow-hidden flex-shrink-0">
-                  <img src={item.product.thumbnail || 'https://placehold.co/150'} alt={item.product.name} className="w-full h-full object-cover" />
+                  <img src={item.product?.thumbnail || 'https://placehold.co/150'} alt={item.product?.name || 'Unknown Product'} className="w-full h-full object-cover" />
                 </div>
                 
                 {/* Details */}
                 <div className="flex-1 flex flex-col justify-between">
                   <div>
                     <div className="flex justify-between">
-                      <h3 className="text-lg font-bold text-gray-900 truncate">{item.product.name}</h3>
+                      <h3 className="text-lg font-bold text-gray-900 truncate">{item.product?.name || 'Unknown Product'}</h3>
                       <button 
                         onClick={() => handleRemove(item.id)}
                         className="text-gray-400 hover:text-red-500 transition-colors"

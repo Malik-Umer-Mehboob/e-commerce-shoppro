@@ -116,11 +116,15 @@ export default function SellerAnalytics() {
               className={({ isActive }) => `w-full flex items-center justify-between px-4 py-3 rounded-2xl transition-all group ${isActive ? 'bg-[#F97316] text-white shadow-xl shadow-[#F97316]/20' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
               onClick={() => setIsSidebarOpen(false)}
             >
-              <div className="flex items-center space-x-3">
-                <item.icon className={`w-5 h-5 transition-colors`} />
-                <span className="font-bold text-sm">{item.label}</span>
-              </div>
-              {({ isActive }) => isActive && <ChevronRight className="w-4 h-4 animate-in slide-in-from-left-2" />}
+              {({ isActive }) => (
+                <>
+                  <div className="flex items-center space-x-3">
+                    <item.icon className={`w-5 h-5 transition-colors`} />
+                    <span className="font-bold text-sm">{item.label}</span>
+                  </div>
+                  {isActive && <ChevronRight className="w-4 h-4 animate-in slide-in-from-left-2" />}
+                </>
+              )}
             </NavLink>
           ))}
         </nav>
@@ -167,7 +171,7 @@ export default function SellerAnalytics() {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
             {/* Monthly Revenue Chart */}
-            <div className="lg:col-span-2 bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
+            <div className="lg:col-span-2 bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm min-w-0">
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center space-x-3">
                   <div className="p-3 bg-orange-100 text-orange-600 rounded-2xl">
@@ -181,7 +185,7 @@ export default function SellerAnalytics() {
                 </div>
               </div>
               
-              <div className="h-[350px] w-full">
+              <div className="h-[350px] w-full min-w-0 min-h-0">
                 {loading ? (
                   <div className="w-full h-full bg-gray-50 animate-pulse rounded-2xl"></div>
                 ) : (

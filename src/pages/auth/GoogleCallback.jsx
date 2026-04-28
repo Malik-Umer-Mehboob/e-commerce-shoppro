@@ -34,15 +34,11 @@ export default function GoogleCallback() {
             toast.success(`Welcome, ${user.name}!`);
 
             // Redirect based on role
-            if (user.role === 'admin') {
-                navigate('/admin/dashboard');
-            } else if (user.role === 'seller') {
-                navigate('/seller/dashboard');
-            } else if (user.role === 'support') {
-                navigate('/support/dashboard');
-            } else {
-                navigate('/');
-            }
+            if (user.role === 'admin') navigate('/admin/dashboard');
+            else if (user.role === 'seller') navigate('/seller/dashboard');
+            else if (user.role === 'support') navigate('/support/dashboard');
+            else if (user.role === 'rider') navigate('/rider/dashboard');
+            else navigate('/home');
         } catch {
             toast.error('Google login failed. Please try again.');
             navigate('/login');

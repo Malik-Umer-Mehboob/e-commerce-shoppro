@@ -12,11 +12,12 @@ import {
   XCircle,
   Menu,
   ChevronRight,
-  AlertCircle
+  AlertCircle,
+  Settings as SettingsIcon
 } from 'lucide-react';
 import { authService } from '../../services/authService';
 import { logoutUser } from '../../store/authSlice';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, NavLink } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import api from '../../services/api';
 import ThemeToggle from '../../components/ThemeToggle';
@@ -48,10 +49,10 @@ export default function RiderDashboard() {
 
   const handleLogout = async () => {
     try {
-      await authService.logout();
-      dispatch(logoutUser());
-      navigate('/login');
-    } catch (error) {}
+      await api.post('/auth/logout');
+    } catch {}
+    dispatch(logoutUser());
+    navigate('/login');
   };
 
   const updateDeliveryStatus = async (id, status) => {
@@ -83,14 +84,18 @@ export default function RiderDashboard() {
           ShopPro <span className="text-[#F97316] ml-2">Rider</span>
         </div>
         <nav className="p-4 space-y-2">
-          <button className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl bg-[#F97316] text-white shadow-lg shadow-[#F97316]/20 transition-all font-bold">
+          <NavLink to="/rider/dashboard" className={({isActive}) => `w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all font-bold ${isActive ? 'bg-[#F97316] text-white shadow-lg shadow-[#F97316]/20' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
             <LayoutDashboard className="w-5 h-5" />
             <span>Dashboard</span>
-          </button>
+          </NavLink>
           <button className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition-all font-bold">
             <Truck className="w-5 h-5" />
             <span>My Deliveries</span>
           </button>
+          <NavLink to="/rider/settings" className={({isActive}) => `w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all font-bold ${isActive ? 'bg-[#F97316] text-white shadow-lg shadow-[#F97316]/20' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
+            <SettingsIcon className="w-5 h-5" />
+            <span>Settings</span>
+          </NavLink>
         </nav>
         <div className="absolute bottom-0 w-full p-4 border-t border-white/5">
           <button onClick={handleLogout} className="w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-xl text-red-400 font-bold hover:bg-red-500/10 transition-all border border-red-500/20">
@@ -103,18 +108,40 @@ export default function RiderDashboard() {
       {/* Main Content */}
       <div className="flex-1 md:ml-64 flex flex-col min-h-screen">
         <header className="h-16 bg-white shadow-sm flex items-center justify-between px-6 z-10 sticky top-0">
-          <button className="md:hidden text-gray-500" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
-            <Menu className="w-6 h-6" />
-          </button>
+          <div className="flex items-center space-x-4">
+            <button className="md:hidden text-gray-500" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
+              <Menu className="w-6 h-6" />
+            </button>
+            <div className="hidden md:flex items-center space-x-2">
+              <span className="font-black text-[#0F172A] text-lg">ShopPro</span>
+              <span className="px-2 py-1 bg-[#F97316]/10 text-[#F97316] text-[10px] font-black rounded-lg uppercase tracking-widest">
+                Rider Panel
+              </span>
+            </div>
+          </div>
           <div className="flex items-center space-x-4 ml-auto">
             <ThemeToggle />
             <div className="text-right">
               <p className="text-sm font-black text-[#0F172A]">{user?.name}</p>
               <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Delivery Rider</p>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-[#0F172A] text-white flex items-center justify-center font-black border-2 border-white shadow-lg">
-              {user?.name?.charAt(0)}
+            <div 
+              onClick={() => navigate('/rider/settings')}
+              className="w-10 h-10 rounded-xl bg-[#0F172A] text-white flex items-center justify-center font-black border-2 border-white shadow-lg cursor-pointer overflow-hidden"
+              title="My Profile"
+            >
+              {user?.avatar ? (
+                <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+              ) : (
+                user?.name?.charAt(0).toUpperCase() ?? 'R'
+              )}
             </div>
+            <button onClick={() => navigate('/rider/settings')} className="text-gray-500 hover:text-[#F97316] transition-colors" title="Settings">
+              <SettingsIcon className="w-5 h-5" />
+            </button>
+            <button onClick={handleLogout} className="text-gray-500 hover:text-red-500 transition-colors" title="Logout">
+              <LogOut className="w-5 h-5" />
+            </button>
           </div>
         </header>
 

@@ -5,6 +5,8 @@ import { ShoppingBag, Mail, Lock, Eye, EyeOff, Loader2, User, Store, HelpCircle,
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
+import { useDispatch } from 'react-redux';
+import { setCredentials } from '../../store/authSlice';
 import { authService } from '../../services/authService';
 import api from '../../services/api';
 
@@ -51,6 +53,7 @@ export default function Register() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const { register, handleSubmit, watch, formState: { errors } } = useForm({
     resolver: zodResolver(registerSchema),
@@ -65,7 +68,20 @@ export default function Register() {
     setIsLoading(true);
     try {
       const response = await authService.register(data.name, data.email, data.password, data.role);
-      if (response.success) {
+      
+      const { user, token } = response.data?.data ?? response.data ?? {};
+      
+      if (user && token) {
+        dispatch(setCredentials({ user, token }));
+        toast.success('Registration successful!');
+        
+        const role = user?.role;
+        if (role === 'admin') navigate('/admin/dashboard');
+        else if (role === 'seller') navigate('/seller/dashboard');
+        else if (role === 'support') navigate('/support/dashboard');
+        else if (role === 'rider') navigate('/rider/dashboard');
+        else navigate('/home');
+      } else {
         toast.success('Registration successful! Please login.');
         navigate('/login');
       }

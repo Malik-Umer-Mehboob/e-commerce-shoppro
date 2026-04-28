@@ -42,6 +42,7 @@ export default function SupportLayout({ children }) {
     { icon: MessageSquare, label: 'Tickets', path: '/support/tickets' },
     { icon: Book, label: 'Knowledge Base', path: '/support/kb' },
     { icon: ShoppingBag, label: 'Store Front', path: '/home' },
+    { icon: Settings, label: 'Settings', path: '/support/settings' },
   ];
 
   return (
