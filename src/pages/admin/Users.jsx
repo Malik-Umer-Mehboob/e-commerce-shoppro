@@ -2,19 +2,19 @@ import { useState, useEffect } from 'react';
 import { 
   Users as UsersIcon, 
   Search, 
-  Filter, 
   Lock, 
   Unlock, 
   Eye, 
-  MoreVertical,
-  ShieldAlert,
   UserCheck,
   UserX,
   ShoppingBag,
   Clock,
-  Mail,
   Loader2,
-  X
+  X,
+  Store,
+  Headphones,
+  Truck,
+  ShieldAlert
 } from 'lucide-react';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
@@ -31,6 +31,8 @@ export default function Users() {
     total: 0,
     customers: 0,
     sellers: 0,
+    support: 0,
+    riders: 0,
     blocked: 0
   });
   const [page, setPage] = useState(1);
@@ -51,20 +53,25 @@ export default function Users() {
     try {
       setLoading(true);
       const response = await api.get('/admin/users', { 
-        params: { ...filters, page } 
+        params: { 
+            search: filters.search,
+            role: filters.role,
+            status: filters.status,
+            page 
+        } 
       });
-      const data = response.data?.data;
-      setUsers(data?.data ?? []);
-      setLastPage(data?.last_page ?? 1);
       
-      // Update stats based on the fetched data (or a separate stats endpoint if available)
-      // For now, let's assume we fetch them separately or calculate from a dashboard endpoint
-      // Mocking stats for the UI
-      setStats({
-        total: data?.total ?? 0,
-        customers: users.filter(u => u.role === 'customer').length, // This is just for the current page, better to have a real stats API
-        sellers: users.filter(u => u.role === 'seller').length,
-        blocked: users.filter(u => u.is_blocked).length
+      const userData = response.data?.data?.users;
+      setUsers(userData?.data ?? []);
+      setLastPage(userData?.last_page ?? 1);
+      
+      setStats(response.data?.data?.stats ?? {
+        total: 0,
+        customers: 0,
+        sellers: 0,
+        support: 0,
+        riders: 0,
+        blocked: 0,
       });
     } catch (error) {
       toast.error('Failed to fetch users');
@@ -110,12 +117,20 @@ export default function Users() {
     }
   };
 
-  const getRoleBadgeColor = (role) => {
-    switch (role?.toLowerCase()) {
-      case 'customer': return 'bg-blue-100 text-blue-600';
-      case 'seller': return 'bg-orange-100 text-orange-600';
-      case 'support': return 'bg-purple-100 text-purple-600';
-      default: return 'bg-gray-100 text-gray-600';
+  const getRoleBadgeStyle = (role) => {
+    switch(role?.toLowerCase()) {
+        case 'admin':
+            return { backgroundColor: '#FEE2E2', color: '#991B1B' };
+        case 'seller':
+            return { backgroundColor: '#FED7AA', color: '#9A3412' };
+        case 'customer':
+            return { backgroundColor: '#DBEAFE', color: '#1E40AF' };
+        case 'support':
+            return { backgroundColor: '#EDE9FE', color: '#5B21B6' };
+        case 'rider':
+            return { backgroundColor: '#D1FAE5', color: '#065F46' };
+        default:
+            return { backgroundColor: '#F1F5F9', color: '#475569' };
     }
   };
 
@@ -133,20 +148,25 @@ export default function Users() {
       </div>
 
       {/* Stats Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
         {[
-          { label: 'Total Users', value: stats.total, icon: UsersIcon, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-          { label: 'Customers', value: stats.customers, icon: UserCheck, color: 'text-blue-600', bg: 'bg-blue-50' },
-          { label: 'Sellers', value: stats.sellers, icon: ShoppingBag, color: 'text-orange-600', bg: 'bg-orange-50' },
-          { label: 'Blocked', value: stats.blocked, icon: UserX, color: 'text-red-600', bg: 'bg-red-50' },
+          { label: 'Total Users', value: stats.total ?? 0, icon: UsersIcon, color: '#0F172A', bg: '#F1F5F9' },
+          { label: 'Customers', value: stats.customers ?? 0, icon: ShoppingBag, color: '#1E40AF', bg: '#DBEAFE' },
+          { label: 'Sellers', value: stats.sellers ?? 0, icon: Store, color: '#F97316', bg: '#FED7AA' },
+          { label: 'Support', value: stats.support ?? 0, icon: Headphones, color: '#5B21B6', bg: '#EDE9FE' },
+          { label: 'Riders', value: stats.riders ?? 0, icon: Truck, color: '#10B981', bg: '#D1FAE5' },
+          { label: 'Blocked', value: stats.blocked ?? 0, icon: UserX, color: '#EF4444', bg: '#FEE2E2' },
         ].map((stat, idx) => (
-          <div key={idx} className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center space-x-4">
-            <div className={`p-4 rounded-2xl ${stat.bg} ${stat.color}`}>
-              <stat.icon className="w-6 h-6" />
+          <div key={idx} className="bg-white p-5 rounded-[2rem] border border-gray-100 shadow-sm flex items-center space-x-3">
+            <div 
+                className="p-3 rounded-2xl flex items-center justify-center"
+                style={{ backgroundColor: stat.bg, color: stat.color }}
+            >
+              <stat.icon className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{stat.label}</p>
-              <h4 className="text-2xl font-black text-[#0F172A]">{stat.value}</h4>
+              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-tight">{stat.label}</p>
+              <h4 className="text-xl font-black text-[#0F172A] leading-tight">{stat.value}</h4>
             </div>
           </div>
         ))}
@@ -177,6 +197,7 @@ export default function Users() {
               <option value="customer">Customer</option>
               <option value="seller">Seller</option>
               <option value="support">Support</option>
+              <option value="rider">Rider</option>
             </select>
             <select 
               name="status"
@@ -243,7 +264,10 @@ export default function Users() {
                     </td>
                     <td className="px-8 py-5 font-medium text-gray-500">{user.email}</td>
                     <td className="px-8 py-5">
-                      <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${getRoleBadgeColor(user.role)}`}>
+                      <span 
+                        className="px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest"
+                        style={getRoleBadgeStyle(user.role)}
+                      >
                         {user.role}
                       </span>
                     </td>
@@ -356,7 +380,10 @@ export default function Users() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-4 bg-gray-50 rounded-2xl">
                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Role</p>
-                  <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest ${getRoleBadgeColor(selectedUser.role)}`}>
+                  <span 
+                    className="px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest"
+                    style={getRoleBadgeStyle(selectedUser.role)}
+                  >
                     {selectedUser.role}
                   </span>
                 </div>
@@ -432,7 +459,7 @@ export default function Users() {
       {/* Block Reason Modal */}
       {showBlockModal && selectedUser && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="bg-white w-full max-w-md rounded-[2.5rem] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
+          <div className="bg-white w-full max-md rounded-[2.5rem] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
             <div className="p-8 space-y-6">
               <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mx-auto text-red-500">
                 <ShieldAlert className="w-8 h-8" />

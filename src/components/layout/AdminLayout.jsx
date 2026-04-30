@@ -32,6 +32,7 @@ import { logoutUser } from '../../store/authSlice';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import ThemeToggle from '../ThemeToggle';
+import GlobalSearch from '../admin/GlobalSearch';
 
 export default function AdminLayout({ children }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -166,9 +167,8 @@ export default function AdminLayout({ children }) {
             <button className="md:hidden p-2 text-gray-500 hover:bg-gray-100 rounded-xl" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
               <Menu className="w-6 h-6" />
             </button>
-            <div className="hidden lg:flex items-center bg-gray-50 px-4 py-2 rounded-2xl border border-gray-100 focus-within:ring-2 focus-within:ring-[#F97316]/20 transition-all w-80">
-              <Search className="w-4 h-4 text-gray-400 mr-2" />
-              <input type="text" placeholder="Search orders, products..." className="bg-transparent text-sm font-medium outline-none w-full" />
+            <div className="hidden lg:block">
+              <GlobalSearch />
             </div>
           </div>
           

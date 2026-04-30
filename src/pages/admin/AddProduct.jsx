@@ -39,6 +39,7 @@ export default function AddProduct() {
 
   const [variants, setVariants] = useState([]);
   const [discountData, setDiscountData] = useState({
+    name: '',
     apply: false,
     type: 'percentage',
     value: '',
@@ -68,7 +69,15 @@ export default function AddProduct() {
   const fetchVariants = async () => {
     try {
       const response = await variantService.getVariants(id);
-      setVariants(response.data.data);
+      const formattedVariants = response.data.data.map(v => ({
+        ...v,
+        size: v.size || '',
+        color: v.color || '',
+        material: v.material || '',
+        price: v.price || '',
+        stock_quantity: v.stock_quantity ?? 0
+      }));
+      setVariants(formattedVariants);
     } catch (error) {
       console.error('Failed to fetch variants');
     }
@@ -231,6 +240,7 @@ export default function AddProduct() {
       if (discountData.apply && (user.role === 'admin')) {
         await discountService.createDiscount({
           ...discountData,
+          name: discountData.name || `Sale on ${savedProduct.name}`,
           product_id: savedProduct.id
         });
       }
@@ -481,11 +491,11 @@ export default function AddProduct() {
                       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                         <div>
                           <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Size</label>
-                          <select 
-                            className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded bg-white outline-none focus:ring-1 focus:ring-[#F97316]"
-                            value={v.size}
-                            onChange={(e) => updateVariantField(idx, 'size', e.target.value)}
-                          >
+                            <select 
+                              className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded bg-white outline-none focus:ring-1 focus:ring-[#F97316]"
+                              value={v.size || ''}
+                              onChange={(e) => updateVariantField(idx, 'size', e.target.value)}
+                            >
                             <option value="">N/A</option>
                             <option value="XS">XS</option>
                             <option value="S">S</option>
@@ -502,14 +512,14 @@ export default function AddProduct() {
                             <input 
                               type="color"
                               className="w-8 h-8 rounded border-none cursor-pointer"
-                              value={v.color || '#000000'}
+                              value={/^#[0-9A-Fa-f]{6}$/.test(v.color || '') ? v.color : '#000000'}
                               onChange={(e) => updateVariantField(idx, 'color', e.target.value)}
                             />
                             <input 
                               type="text"
                               className="flex-1 px-2 py-1.5 text-sm border border-gray-200 rounded outline-none"
                               placeholder="#000000"
-                              value={v.color}
+                              value={v.color || ''}
                               onChange={(e) => updateVariantField(idx, 'color', e.target.value)}
                             />
                           </div>
@@ -520,7 +530,7 @@ export default function AddProduct() {
                             type="text"
                             className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded outline-none"
                             placeholder="Cotton"
-                            value={v.material}
+                            value={v.material || ''}
                             onChange={(e) => updateVariantField(idx, 'material', e.target.value)}
                           />
                         </div>
@@ -530,7 +540,7 @@ export default function AddProduct() {
                             type="number"
                             className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded outline-none"
                             placeholder="Optional"
-                            value={v.price}
+                            value={v.price || ''}
                             onChange={(e) => updateVariantField(idx, 'price', e.target.value)}
                           />
                         </div>
@@ -540,7 +550,7 @@ export default function AddProduct() {
                             type="number"
                             className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded outline-none"
                             placeholder="0"
-                            value={v.stock_quantity}
+                            value={v.stock_quantity ?? ''}
                             onChange={(e) => updateVariantField(idx, 'stock_quantity', e.target.value)}
                           />
                         </div>
@@ -579,6 +589,16 @@ export default function AddProduct() {
                   
                   {discountData.apply && (
                     <div className="space-y-4 animate-in fade-in duration-300">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Discount Name</label>
+                        <input 
+                          type="text"
+                          className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none"
+                          placeholder="e.g. Special Offer"
+                          value={discountData.name}
+                          onChange={(e) => setDiscountData({ ...discountData, name: e.target.value })}
+                        />
+                      </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
                         <div className="flex gap-2">

@@ -3,16 +3,40 @@ import adminService from '../../services/adminService';
 import toast from 'react-hot-toast';
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState(null);
+  const [stats, setStats] = useState({
+    total_orders: 0,
+    orders_growth: 0,
+    total_revenue: 0,
+    revenue_growth: 0,
+    new_users: 0,
+    users_growth: 0,
+    total_products: 0,
+    products_growth: 0,
+  });
   const [recentOrders, setRecentOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
+        setLoading(true);
         const response = await adminService.getDashboardStats();
-        setStats(response.data.data.stats);
-        setRecentOrders(response.data.data.recent_orders);
+        const statsData = response.data?.data?.stats;
+        
+        if (statsData) {
+            setStats({
+                total_orders: statsData.total_orders ?? 0,
+                orders_growth: statsData.orders_growth ?? 0,
+                total_revenue: statsData.total_revenue ?? 0,
+                revenue_growth: statsData.revenue_growth ?? 0,
+                new_users: statsData.new_users ?? 0,
+                users_growth: statsData.users_growth ?? 0,
+                total_products: statsData.total_products ?? 0,
+                products_growth: statsData.products_growth ?? 0,
+            });
+        }
+        
+        setRecentOrders(response.data?.data?.recent_orders ?? []);
       } catch (err) {
         toast.error('Failed to load dashboard data');
       } finally {
@@ -25,32 +49,32 @@ export default function AdminDashboard() {
   const statCards = [
     { 
       label: 'Total Orders', 
-      value: loading ? '...' : stats?.total_orders ?? 0, 
-      change: loading ? '' : `${stats?.orders_growth >= 0 ? '+' : ''}${stats?.orders_growth}%`, 
+      value: loading ? '...' : (stats.total_orders ?? 0).toLocaleString(), 
+      change: loading ? '' : `${stats.orders_growth >= 0 ? '+' : ''}${stats.orders_growth}%`, 
       color: 'blue' 
     },
     { 
       label: 'Revenue', 
-      value: loading ? '...' : `$${Number(stats?.total_revenue ?? 0).toLocaleString()}`, 
-      change: loading ? '' : `${stats?.revenue_growth >= 0 ? '+' : ''}${stats?.revenue_growth}%`, 
+      value: loading ? '...' : `Rs. ${Number(stats.total_revenue ?? 0).toLocaleString()}`, 
+      change: loading ? '' : `${stats.revenue_growth >= 0 ? '+' : ''}${stats.revenue_growth}%`, 
       color: 'green' 
     },
     { 
       label: 'New Users', 
-      value: loading ? '...' : stats?.new_users ?? 0, 
-      change: loading ? '' : `${stats?.users_growth >= 0 ? '+' : ''}${stats?.users_growth}%`, 
+      value: loading ? '...' : (stats.new_users ?? 0).toLocaleString(), 
+      change: loading ? '' : `${stats.users_growth >= 0 ? '+' : ''}${stats.users_growth}%`, 
       color: 'purple' 
     },
     { 
       label: 'Products', 
-      value: loading ? '...' : stats?.total_products ?? 0, 
-      change: loading ? '' : `${stats?.products_growth >= 0 ? '+' : ''}${stats?.products_growth}%`, 
+      value: loading ? '...' : (stats.total_products ?? 0).toLocaleString(), 
+      change: loading ? '' : `${stats.products_growth >= 0 ? '+' : ''}${stats.products_growth}%`, 
       color: 'orange' 
     }
   ];
 
   const getStatusColor = (status) => {
-    switch (status.toLowerCase()) {
+    switch (status?.toLowerCase()) {
       case 'pending': return 'bg-yellow-50 text-yellow-600 border-yellow-100';
       case 'processing': return 'bg-blue-50 text-blue-600 border-blue-100';
       case 'shipped': return 'bg-purple-50 text-purple-600 border-purple-100';

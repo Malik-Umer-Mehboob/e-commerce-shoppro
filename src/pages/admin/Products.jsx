@@ -1,86 +1,78 @@
 import { useState, useEffect } from 'react';
 import { 
   Package, CheckCircle, Clock, AlertTriangle, 
-  Plus, Search, Eye, EyeOff, Pencil, Trash2 
+  Plus, Search, Pencil, Trash2 
 } from 'lucide-react';
-import { productService } from '../../services/productService';
-import { categoryService } from '../../services/categoryService';
+import api from '../../services/api';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 
 export default function AdminProducts() {
   const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     total: 0,
     published: 0,
     drafts: 0,
-    lowStock: 0
+    low_stock: 0,
   });
+  const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   
   const [filters, setFilters] = useState({
     search: '',
     category_id: '',
     status: '',
-    page: 1
   });
 
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchProducts();
-    fetchCategories();
-  }, [filters.category_id, filters.status, filters.page]);
-
-  const fetchProducts = async () => {
+  const fetchProducts = async (page = 1) => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const response = await productService.getProducts({
-        ...filters,
-        search: filters.search
-      });
-      setProducts(response.data.data);
-      
-      const allRes = await productService.getProducts({ limit: 1000 });
-      const all = allRes.data.data;
-      setStats({
-        total: allRes.data.total,
-        published: all.filter(p => p.status === 'published').length,
-        drafts: all.filter(p => p.status === 'draft').length,
-        lowStock: all.filter(p => p.stock_quantity <= p.low_stock_threshold).length
-      });
-    } catch (error) {
-      toast.error('Failed to fetch products');
+        const params = {
+            page,
+            search: filters.search,
+            category_id: filters.category_id,
+            status: filters.status,
+        };
+
+        const response = await api.get('/products', { params });
+
+        // Read products
+        const productsData = response.data?.data?.products;
+        setProducts(productsData?.data ?? []);
+        setTotalPages(productsData?.last_page ?? 1);
+        setCurrentPage(productsData?.current_page ?? 1);
+
+        // Read stats
+        const statsData = response.data?.data?.stats;
+        setStats({
+            total: statsData?.total ?? 0,
+            published: statsData?.published ?? 0,
+            drafts: statsData?.drafts ?? 0,
+            low_stock: statsData?.low_stock ?? 0,
+        });
+
+    } catch (err) {
+        console.error('Products fetch error:', err);
+        toast.error('Failed to load products');
+        setProducts([]);
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
   };
 
-  const fetchCategories = async () => {
-    try {
-      const response = await categoryService.getCategories();
-      const flattened = [];
-      response.data.categories.forEach(cat => {
-        flattened.push(cat);
-        if (cat.children) {
-          cat.children.forEach(child => {
-            flattened.push({ ...child, name: `— ${child.name}` });
-          });
-        }
-      });
-      setCategories(flattened);
-    } catch (error) {
-      console.error('Failed to fetch categories');
-    }
-  };
+  useEffect(() => {
+    fetchProducts(1);
+  }, [filters.category_id, filters.status]);
 
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
-        await productService.deleteProduct(id);
+        await api.delete(`/products/${id}`);
         toast.success('Product deleted successfully');
-        fetchProducts();
+        fetchProducts(currentPage);
       } catch (error) {
         toast.error('Failed to delete product');
       }
@@ -90,26 +82,11 @@ export default function AdminProducts() {
   const toggleStatus = async (product) => {
     const newStatus = product.status === 'published' ? 'draft' : 'published';
     try {
-      await productService.updateStatus(product.id, newStatus);
+      await api.patch(`/products/${product.id}/status`, { status: newStatus });
       toast.success(`Product ${newStatus === 'published' ? 'published' : 'moved to drafts'}`);
-      fetchProducts();
+      fetchProducts(currentPage);
     } catch (error) {
       toast.error('Failed to update status');
-    }
-  };
-
-  const getStatusBadge = (status, stock) => {
-    if (stock <= 0) return <span className="px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-lg bg-red-100 text-red-700">Out of Stock</span>;
-    
-    switch (status) {
-      case 'published':
-        return <span className="px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-lg bg-green-100 text-green-700">Published</span>;
-      case 'draft':
-        return <span className="px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-lg bg-gray-100 text-gray-500">Draft</span>;
-      case 'archived':
-        return <span className="px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-lg bg-red-100 text-red-600">Archived</span>;
-      default:
-        return <span className="px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-lg bg-gray-100 text-gray-700">{status}</span>;
     }
   };
 
@@ -132,14 +109,17 @@ export default function AdminProducts() {
       {/* Stats Bar */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { icon: Package, label: 'Total Products', value: stats.total, color: 'blue' },
-          { icon: CheckCircle, label: 'Published', value: stats.published, color: 'green' },
-          { icon: Clock, label: 'Drafts', value: stats.drafts, color: 'yellow' },
-          { icon: AlertTriangle, label: 'Low Stock', value: stats.lowStock, color: 'red' }
+          { icon: Package, label: 'Total Products', value: stats.total, color: '#3B82F6', bg: '#EFF6FF' },
+          { icon: CheckCircle, label: 'Published', value: stats.published, color: '#10B981', bg: '#ECFDF5' },
+          { icon: Clock, label: 'Drafts', value: stats.drafts, color: '#F59E0B', bg: '#FFFBEB' },
+          { icon: AlertTriangle, label: 'Low Stock', value: stats.low_stock, color: '#EF4444', bg: '#FEF2F2' }
         ].map((stat, idx) => (
           <div key={idx} className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center space-x-4">
-            <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center">
-              <stat.icon className="w-6 h-6 text-[#F97316]" />
+            <div 
+              className="w-12 h-12 rounded-2xl flex items-center justify-center"
+              style={{ backgroundColor: stat.bg }}
+            >
+              <stat.icon className="w-6 h-6" style={{ color: stat.color }} />
             </div>
             <div>
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{stat.label}</p>
@@ -159,23 +139,13 @@ export default function AdminProducts() {
             className="w-full pl-12 pr-4 py-3 rounded-2xl bg-gray-50 border-none focus:bg-white focus:ring-4 focus:ring-[#F97316]/10 outline-none transition-all font-bold text-[#0F172A]"
             value={filters.search}
             onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-            onKeyDown={(e) => e.key === 'Enter' && fetchProducts()}
+            onKeyDown={(e) => e.key === 'Enter' && fetchProducts(1)}
           />
         </div>
         <select 
           className="px-6 py-3 rounded-2xl bg-gray-50 border-none focus:bg-white focus:ring-4 focus:ring-[#F97316]/10 outline-none transition-all font-bold text-[#0F172A]"
-          value={filters.category_id}
-          onChange={(e) => setFilters({ ...filters, category_id: e.target.value, page: 1 })}
-        >
-          <option value="">All Categories</option>
-          {categories.map(cat => (
-            <option key={cat.id} value={cat.id}>{cat.name}</option>
-          ))}
-        </select>
-        <select 
-          className="px-6 py-3 rounded-2xl bg-gray-50 border-none focus:bg-white focus:ring-4 focus:ring-[#F97316]/10 outline-none transition-all font-bold text-[#0F172A]"
           value={filters.status}
-          onChange={(e) => setFilters({ ...filters, status: e.target.value, page: 1 })}
+          onChange={(e) => setFilters({ ...filters, status: e.target.value })}
         >
           <option value="">All Status</option>
           <option value="published">Published</option>
@@ -200,14 +170,13 @@ export default function AdminProducts() {
             </thead>
             <tbody className="divide-y divide-gray-50">
               {loading ? (
-                <tr>
-                  <td colSpan="6" className="px-8 py-20 text-center">
-                    <div className="flex flex-col items-center">
-                      <div className="w-12 h-12 border-4 border-[#F97316] border-t-transparent rounded-full animate-spin mb-4"></div>
-                      <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Loading products...</p>
-                    </div>
-                  </td>
-                </tr>
+                Array.from({ length: 5 }).map((_, i) => (
+                    <tr key={i}>
+                        <td colSpan={6} className="px-8 py-6">
+                            <div className="h-10 bg-gray-50 rounded-xl animate-pulse" />
+                        </td>
+                    </tr>
+                ))
               ) : products.length === 0 ? (
                 <tr>
                   <td colSpan="6" className="px-8 py-20 text-center">
@@ -220,11 +189,17 @@ export default function AdminProducts() {
                   <td className="px-8 py-6">
                     <div className="flex items-center space-x-4">
                       <div className="w-12 h-12 rounded-2xl bg-gray-50 overflow-hidden flex-shrink-0 border border-gray-100">
-                        <img 
-                          src={product.thumbnail ? `http://localhost:8000/storage/${product.thumbnail}` : 'https://via.placeholder.com/48'} 
-                          alt={product.name}
-                          className="w-full h-full object-cover"
-                        />
+                        {product.thumbnail ? (
+                            <img 
+                                src={`http://localhost:8000/storage/${product.thumbnail}`} 
+                                alt={product.name}
+                                className="w-full h-full object-cover"
+                            />
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-center text-[10px] text-gray-400 font-bold uppercase tracking-tighter text-center leading-none">
+                                No Image
+                            </div>
+                        )}
                       </div>
                       <div>
                         <p className="font-black text-[#0F172A] line-clamp-1">{product.name}</p>
@@ -232,9 +207,11 @@ export default function AdminProducts() {
                       </div>
                     </div>
                   </td>
-                  <td className="px-8 py-6 text-sm font-bold text-gray-500">{product.category?.name}</td>
+                  <td className="px-8 py-6 text-sm font-bold text-gray-500">
+                    {product.category?.name ?? 'Uncategorized'}
+                  </td>
                   <td className="px-8 py-6">
-                    <p className="font-black text-[#0F172A]">Rs. {product.price}</p>
+                    <p className="font-black text-[#0F172A]">Rs. {Number(product.price).toLocaleString()}</p>
                   </td>
                   <td className="px-8 py-6 text-center">
                     <span className={`font-black text-sm ${product.stock_quantity <= product.low_stock_threshold ? 'text-red-500' : 'text-[#0F172A]'}`}>
@@ -243,23 +220,19 @@ export default function AdminProducts() {
                   </td>
                     <td className="px-8 py-6">
                       <div className="flex flex-col space-y-2">
-                        {getStatusBadge(product.status, product.stock_quantity)}
-                        {product.status === 'draft' && (
-                          <button 
+                        <span className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-lg inline-block w-fit ${
+                            product.status === 'published' ? 'bg-green-100 text-green-700' :
+                            product.status === 'draft' ? 'bg-gray-100 text-gray-500' :
+                            'bg-red-100 text-red-600'
+                        }`}>
+                            {product.status}
+                        </span>
+                        <button 
                             onClick={() => toggleStatus(product)}
                             className="text-[10px] font-black text-[#F97316] uppercase tracking-widest hover:underline text-left"
-                          >
-                            Publish
-                          </button>
-                        )}
-                        {product.status === 'published' && (
-                          <button 
-                            onClick={() => toggleStatus(product)}
-                            className="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:underline text-left"
-                          >
-                            Unpublish
-                          </button>
-                        )}
+                        >
+                            {product.status === 'published' ? 'Unpublish' : 'Publish'}
+                        </button>
                       </div>
                     </td>
                     <td className="px-8 py-6">
@@ -283,25 +256,33 @@ export default function AdminProducts() {
             </tbody>
           </table>
         </div>
-        <div className="p-8 bg-gray-50/50 flex items-center justify-between border-t border-gray-50">
-          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Showing {products.length} products</p>
-          <div className="flex space-x-2">
-            <button 
-              disabled={filters.page === 1}
-              onClick={() => setFilters({ ...filters, page: filters.page - 1 })}
-              className="px-6 py-2 rounded-xl bg-white border border-gray-200 text-xs font-black text-[#0F172A] hover:bg-gray-50 disabled:opacity-50 transition-all"
-            >
-              Prev
-            </button>
-            <button 
-              onClick={() => setFilters({ ...filters, page: filters.page + 1 })}
-              className="px-6 py-2 rounded-xl bg-white border border-gray-200 text-xs font-black text-[#0F172A] hover:bg-gray-50 disabled:opacity-50 transition-all"
-            >
-              Next
-            </button>
-          </div>
-        </div>
+        
+        {/* Pagination */}
+        {totalPages > 1 && (
+            <div className="p-8 bg-gray-50/50 flex items-center justify-center border-t border-gray-50 gap-2">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                        key={page}
+                        onClick={() => fetchProducts(page)}
+                        className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
+                            currentPage === page 
+                            ? 'bg-[#F97316] text-white shadow-lg shadow-[#F97316]/20' 
+                            : 'bg-white border border-gray-200 text-[#0F172A] hover:bg-gray-100'
+                        }`}
+                    >
+                        {page}
+                    </button>
+                ))}
+            </div>
+        )}
       </div>
+
+      <style>{`
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+      `}</style>
     </div>
   );
 }

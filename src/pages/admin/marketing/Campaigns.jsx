@@ -30,6 +30,7 @@ export default function Campaigns() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [segments, setSegments] = useState([]);
+  const [loadingSegments, setLoadingSegments] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     subject: '',
@@ -67,11 +68,19 @@ export default function Campaigns() {
   };
 
   const fetchSegments = async () => {
+    setLoadingSegments(true);
     try {
-      const response = await api.get('/admin/user-segments');
-      setSegments(response.data?.data ?? []);
-    } catch (error) {
-      console.error('Error fetching segments:', error);
+        const response = await api.get('/admin/campaigns/segments');
+        setSegments(response.data?.data ?? []);
+    } catch {
+        toast.error('Failed to load segments');
+        // Set default fallback
+        setSegments([
+            { id: 'all_users', name: 'All Users', count: 0 },
+            { id: 'all_customers', name: 'All Customers', count: 0 },
+        ]);
+    } finally {
+        setLoadingSegments(false);
     }
   };
 
@@ -321,13 +330,47 @@ export default function Campaigns() {
                 <div className="space-y-3">
                   <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">User Segment</label>
                   <select
-                    className="w-full px-6 py-4 rounded-2xl bg-gray-50 border-none focus:bg-white focus:ring-4 focus:ring-[#F97316]/10 outline-none transition-all font-bold text-[#0F172A]"
-                    value={formData.segment_id}
-                    onChange={(e) => setFormData({...formData, segment_id: e.target.value})}
+                    value={formData.segment_id ?? ''}
+                    onChange={(e) => setFormData(prev =>
+                        ({ ...prev, segment_id: e.target.value }))}
+                    style={{
+                        width: '100%',
+                        padding: '10px 14px',
+                        border: '1px solid #E2E8F0',
+                        borderRadius: '8px',
+                        fontSize: '14px',
+                        color: '#0F172A',
+                        backgroundColor: 'white',
+                        cursor: 'pointer',
+                        outline: 'none',
+                    }}
                   >
                     <option value="">Select a segment...</option>
-                    {segments.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                    {loadingSegments ? (
+                        <option disabled>Loading segments...</option>
+                    ) : (
+                        segments.map((segment) => (
+                            <option key={segment.id} value={segment.id}>
+                                {segment.name}
+                                {segment.count > 0 ? ` (${segment.count} users)` : ''}
+                            </option>
+                        ))
+                    )}
                   </select>
+                  {formData.segment_id && segments.find(s => s.id === formData.segment_id) && (
+                      <p style={{
+                          fontSize: '12px',
+                          color: '#64748B',
+                          marginTop: '4px',
+                      }}>
+                          {segments.find(s => s.id === formData.segment_id)?.description}
+                          {' — '}
+                          <strong>
+                              {segments.find(s => s.id === formData.segment_id)?.count}
+                          </strong>
+                          {' users will receive this campaign'}
+                      </p>
+                  )}
                 </div>
               </div>
 
