@@ -116,7 +116,7 @@ export default function Warehouses() {
       const res = await api.get(`/admin/warehouses/${selectedWarehouse.id}/available-products`);
       setAvailableProducts(res.data?.data ?? []);
     } catch (error) {
-      console.error('Failed to fetch available products');
+      
     }
   };
 

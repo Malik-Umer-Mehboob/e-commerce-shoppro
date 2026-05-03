@@ -36,7 +36,7 @@ const authSlice = createSlice({
             const { user, token } = action.payload;
 
             if (!user || !token) {
-                console.error('setCredentials: missing user or token', action.payload);
+                
                 return;
             }
 
@@ -50,7 +50,7 @@ const authSlice = createSlice({
                 localStorage.setItem('shoppro_token', token);
                 localStorage.setItem('shoppro_user', JSON.stringify(user));
             } catch (err) {
-                console.error('localStorage save failed:', err);
+                
             }
         },
 

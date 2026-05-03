@@ -58,7 +58,7 @@ export default function Settings() {
       const response = await api.get('/devices');
       setDevices(response.data?.data || []);
     } catch (error) {
-      console.error('Failed to fetch devices:', error);
+      
     } finally {
       setDevicesLoading(false);
     }
@@ -100,7 +100,7 @@ export default function Settings() {
         dispatch(updateUser({ avatar: data.avatar, name: data.name }));
       }
     } catch (error) {
-      console.error('Failed to fetch profile:', error);
+      
     } finally {
       setProfileLoading(false);
     }

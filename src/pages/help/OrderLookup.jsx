@@ -25,7 +25,7 @@ export default function OrderLookup() {
       setOrder(response.data.data);
       toast.success('Order found!');
     } catch (error) {
-      console.error('Order lookup error:', error);
+      
       toast.error(error.response?.data?.message || 'Order not found. Please check your details.');
     } finally {
       setLoading(false);
@@ -148,7 +148,7 @@ export default function OrderLookup() {
                     </div>
                     <div className="pt-4 border-t border-gray-200 flex justify-between items-center">
                       <span className="text-gray-900 font-bold">Grand Total</span>
-                      <span className="text-2xl font-black text-[#F97316]">${order.grand_total}</span>
+                      <span className="text-2xl font-black text-[#F97316]">Rs. {order.grand_total}</span>
                     </div>
                   </div>
                 </div>
@@ -186,7 +186,7 @@ export default function OrderLookup() {
                     <div key={item.id} className="flex items-center bg-white border border-gray-100 p-4 rounded-2xl hover:shadow-md transition-shadow">
                       <div className="w-16 h-16 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
                         <img 
-                          src={item.product?.main_image || 'https://via.placeholder.com/150'} 
+                          src={item.product?.main_image || 'https://placehold.co/150'} 
                           alt={item.product?.name}
                           className="w-full h-full object-cover"
                         />
@@ -198,7 +198,7 @@ export default function OrderLookup() {
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-black text-[#0F172A]">${item.price}</p>
+                        <p className="font-black text-[#0F172A]">Rs. {item.price}</p>
                       </div>
                     </div>
                   ))}

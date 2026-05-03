@@ -9,14 +9,17 @@ import { useQuery } from '@tanstack/react-query';
 import SEOHead from '../../components/SEOHead';
 
 export default function Home() {
-  const { data: productsData, isLoading: loading, error } = useQuery({
+  const { data: productsData, isLoading: loading } = useQuery({
     queryKey: ['products', 'featured'],
     queryFn: async () => {
-      const response = await api.get('/products');
-      return response.data.data?.data || response.data.data || response.data;
+      const response = await api.get('/products', {
+        params: { per_page: 8 }
+      });
+      // The API returns { success: true, data: { products: { data: [...] }, stats: {...} } }
+      return response.data?.data?.products?.data || response.data?.data || [];
     },
-    staleTime: 1000 * 60 * 10, // 10 minutes
-    gcTime: 1000 * 60 * 30, // 30 minutes
+    staleTime: 1000 * 60 * 10,
+    gcTime: 1000 * 60 * 30,
   });
 
   const products = productsData || [];

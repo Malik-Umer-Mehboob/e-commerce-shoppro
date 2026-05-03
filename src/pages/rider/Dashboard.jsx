@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { 
-  LayoutDashboard, 
   Truck, 
-  LogOut, 
   Package, 
   MapPin, 
   Phone, 
@@ -11,19 +9,14 @@ import {
   CheckCircle2, 
   XCircle,
   Menu,
-  ChevronRight,
-  AlertCircle,
-  Settings as SettingsIcon
 } from 'lucide-react';
-import { authService } from '../../services/authService';
-import { logoutUser } from '../../store/authSlice';
-import { useNavigate, NavLink } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import api from '../../services/api';
 import ThemeToggle from '../../components/ThemeToggle';
+import RiderLayout from '../../components/rider/Layout';
 
 export default function RiderDashboard() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   
@@ -45,14 +38,6 @@ export default function RiderDashboard() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await api.post('/auth/logout');
-    } catch {}
-    dispatch(logoutUser());
-    navigate('/login');
   };
 
   const updateDeliveryStatus = async (id, status) => {
@@ -77,100 +62,56 @@ export default function RiderDashboard() {
   const assignments = data?.active_assignments || [];
 
   return (
-    <div className="min-h-screen flex bg-[#F8FAFC]">
-      {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 bg-[#0F172A] w-64 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 ease-in-out z-20 shadow-2xl`}>
-        <div className="flex h-16 items-center px-6 text-white font-black text-xl border-b border-white/5">
-          ShopPro <span className="text-[#F97316] ml-2">Rider</span>
-        </div>
-        <nav className="p-4 space-y-2">
-          <NavLink to="/rider/dashboard" className={({isActive}) => `w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all font-bold ${isActive ? 'bg-[#F97316] text-white shadow-lg shadow-[#F97316]/20' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
-            <LayoutDashboard className="w-5 h-5" />
-            <span>Dashboard</span>
-          </NavLink>
-          <button className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition-all font-bold">
-            <Truck className="w-5 h-5" />
-            <span>My Deliveries</span>
-          </button>
-          <NavLink to="/rider/settings" className={({isActive}) => `w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all font-bold ${isActive ? 'bg-[#F97316] text-white shadow-lg shadow-[#F97316]/20' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
-            <SettingsIcon className="w-5 h-5" />
-            <span>Settings</span>
-          </NavLink>
-        </nav>
-        <div className="absolute bottom-0 w-full p-4 border-t border-white/5">
-          <button onClick={handleLogout} className="w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-xl text-red-400 font-bold hover:bg-red-500/10 transition-all border border-red-500/20">
-            <LogOut className="w-5 h-5" />
-            <span>Logout</span>
-          </button>
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <div className="flex-1 md:ml-64 flex flex-col min-h-screen">
-        <header className="h-16 bg-white shadow-sm flex items-center justify-between px-6 z-10 sticky top-0">
+    <RiderLayout>
+      <div className="flex-1 flex flex-col min-h-screen">
+        <header className="h-16 bg-white shadow-sm flex items-center justify-between px-6 z-10 sticky top-0 border-b border-gray-100">
           <div className="flex items-center space-x-4">
-            <button className="md:hidden text-gray-500" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
-              <Menu className="w-6 h-6" />
-            </button>
-            <div className="hidden md:flex items-center space-x-2">
-              <span className="font-black text-[#0F172A] text-lg">ShopPro</span>
-              <span className="px-2 py-1 bg-[#F97316]/10 text-[#F97316] text-[10px] font-black rounded-lg uppercase tracking-widest">
-                Rider Panel
-              </span>
+            <div className="flex items-center space-x-2">
+              <span className="font-black text-[#0F172A] text-lg uppercase tracking-tight">Overview</span>
+              <div className="w-1.5 h-1.5 rounded-full bg-orange-400"></div>
+              <span className="text-xs font-bold text-gray-400">Today</span>
             </div>
           </div>
           <div className="flex items-center space-x-4 ml-auto">
             <ThemeToggle />
             <div className="text-right">
               <p className="text-sm font-black text-[#0F172A]">{user?.name}</p>
-              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Delivery Rider</p>
+              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Rider Panel</p>
             </div>
-            <div 
-              onClick={() => navigate('/rider/settings')}
-              className="w-10 h-10 rounded-xl bg-[#0F172A] text-white flex items-center justify-center font-black border-2 border-white shadow-lg cursor-pointer overflow-hidden"
-              title="My Profile"
-            >
-              {user?.avatar ? (
-                <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
-              ) : (
-                user?.name?.charAt(0).toUpperCase() ?? 'R'
-              )}
-            </div>
-            <button onClick={() => navigate('/rider/settings')} className="text-gray-500 hover:text-[#F97316] transition-colors" title="Settings">
-              <SettingsIcon className="w-5 h-5" />
-            </button>
-            <button onClick={handleLogout} className="text-gray-500 hover:text-red-500 transition-colors" title="Logout">
-              <LogOut className="w-5 h-5" />
-            </button>
           </div>
         </header>
 
         <main className="p-6 md:p-8 space-y-8 max-w-5xl mx-auto w-full">
-          <div>
-            <h1 className="text-3xl font-black text-[#0F172A]">Welcome, {user?.name.split(' ')[0]}!</h1>
-            <p className="text-gray-500 font-medium mt-1">Your active deliveries for today</p>
+          <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm relative overflow-hidden">
+            <div className="relative z-10">
+              <h1 className="text-3xl font-black text-[#0F172A]">Hi, {user?.name.split(' ')[0]}! 👋</h1>
+              <p className="text-gray-500 font-medium mt-1">You have {assignments.length} pending tasks for today.</p>
+            </div>
+            <div className="absolute right-0 top-0 w-32 h-32 bg-orange-50 rounded-bl-[4rem] flex items-center justify-center">
+                <Truck className="w-12 h-12 text-orange-200" />
+            </div>
           </div>
 
           {/* Stats Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center space-x-4">
+            <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center space-x-4 hover:border-orange-200 transition-all">
               <div className="p-4 bg-blue-50 text-blue-600 rounded-2xl"><CheckCircle2 className="w-6 h-6" /></div>
               <div>
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest text-nowrap">Today's Done</p>
                 <h4 className="text-2xl font-black text-[#0F172A]">{stats.today_deliveries}</h4>
               </div>
             </div>
-            <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center space-x-4">
+            <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center space-x-4 hover:border-orange-200 transition-all">
               <div className="p-4 bg-orange-50 text-orange-600 rounded-2xl"><Clock className="w-6 h-6" /></div>
               <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Active</p>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Active Tasks</p>
                 <h4 className="text-2xl font-black text-[#0F172A]">{stats.active_deliveries}</h4>
               </div>
             </div>
-            <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center space-x-4">
+            <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center space-x-4 hover:border-orange-200 transition-all">
               <div className="p-4 bg-green-50 text-green-600 rounded-2xl"><Package className="w-6 h-6" /></div>
               <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Done</p>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">All Time</p>
                 <h4 className="text-2xl font-black text-[#0F172A]">{stats.total_deliveries}</h4>
               </div>
             </div>
@@ -179,17 +120,37 @@ export default function RiderDashboard() {
           {/* Active Assignments */}
           <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-black text-[#0F172A]">Pending Deliveries</h2>
-              <span className="px-3 py-1 bg-gray-100 text-gray-500 text-[10px] font-black rounded-full uppercase tracking-widest">
-                {assignments.length} Tasks
-              </span>
+              <h2 className="text-xl font-black text-[#0F172A]">Deliveries to Complete</h2>
+              <button 
+                onClick={() => navigate('/rider/deliveries')}
+                style={{
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={e => e.currentTarget.style.color = '#EA6F10'}
+                onMouseLeave={e => e.currentTarget.style.color = '#F97316'}
+                className="text-xs font-black text-orange-600 uppercase tracking-widest hover:underline"
+              >
+                View All History
+              </button>
             </div>
 
             {assignments.length === 0 ? (
               <div className="bg-white rounded-[2rem] border border-dashed border-gray-200 p-12 text-center">
                 <Truck className="w-12 h-12 text-gray-200 mx-auto mb-4" />
-                <p className="text-gray-400 font-bold">No active deliveries assigned to you</p>
-                <button onClick={fetchDashboardData} className="text-[#F97316] font-black text-xs uppercase tracking-widest mt-2 hover:underline">Refresh List</button>
+                <p className="text-gray-400 font-bold">Great job! No active deliveries remaining.</p>
+                <button 
+                    onClick={fetchDashboardData} 
+                    style={{
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.color = '#EA6F10'}
+                    onMouseLeave={e => e.currentTarget.style.color = '#F97316'}
+                    className="text-[#F97316] font-black text-xs uppercase tracking-widest mt-2 hover:underline"
+                >
+                    Refresh
+                </button>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -211,21 +172,19 @@ export default function RiderDashboard() {
                           <div>
                             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Delivery Address</p>
                             <p className="text-xs font-bold text-[#0F172A] mt-0.5 line-clamp-2">
-                              {a.delivery_address.street}, {a.delivery_address.city}
+                                {typeof a.delivery_address === 'string' ? a.delivery_address : (a.delivery_address?.street || 'N/A')}
                             </p>
                           </div>
                         </div>
 
                         <div className="flex items-center space-x-6">
                           <div className="flex items-center space-x-2 text-gray-500">
-                            <div className="p-2 bg-gray-50 rounded-lg text-gray-400"><LayoutDashboard className="w-4 h-4" /></div>
                             <div>
                               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Customer</p>
                               <p className="text-xs font-bold text-[#0F172A]">{a.customer_name}</p>
                             </div>
                           </div>
                           <div className="flex items-center space-x-2 text-gray-500">
-                            <div className="p-2 bg-gray-50 rounded-lg text-gray-400"><Phone className="w-4 h-4" /></div>
                             <div>
                               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Contact</p>
                               <p className="text-xs font-bold text-[#0F172A]">{a.customer_phone}</p>
@@ -235,10 +194,17 @@ export default function RiderDashboard() {
                       </div>
 
                       <div className="pt-4 flex gap-3">
-                        {a.status === 'assigned' ? (
+                        {a.status === 'assigned' || a.status === 'pending' ? (
                           <button 
                             onClick={() => updateDeliveryStatus(a.id, 'picked_up')}
-                            className="flex-1 bg-[#F97316] text-white py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-[#F97316]/20 hover:scale-[1.02] transition-all flex items-center justify-center space-x-2"
+                            style={{
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                backgroundColor: '#F97316',
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.backgroundColor = '#EA6F10'}
+                            onMouseLeave={e => e.currentTarget.style.backgroundColor = '#F97316'}
+                            className="flex-1 text-white py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-[#F97316]/20 hover:scale-[1.02] transition-all flex items-center justify-center space-x-2"
                           >
                             <Package className="w-4 h-4" />
                             <span>Mark Picked Up</span>
@@ -246,13 +212,28 @@ export default function RiderDashboard() {
                         ) : (
                           <button 
                             onClick={() => updateDeliveryStatus(a.id, 'delivered')}
-                            className="flex-1 bg-green-500 text-white py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-green-500/20 hover:scale-[1.02] transition-all flex items-center justify-center space-x-2"
+                            style={{
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                backgroundColor: '#10B981',
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.backgroundColor = '#059669'}
+                            onMouseLeave={e => e.currentTarget.style.backgroundColor = '#10B981'}
+                            className="flex-1 text-white py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-green-500/20 hover:scale-[1.02] transition-all flex items-center justify-center space-x-2"
                           >
                             <CheckCircle2 className="w-4 h-4" />
                             <span>Mark Delivered</span>
                           </button>
                         )}
-                        <button className="p-3 bg-gray-50 text-gray-400 rounded-2xl hover:bg-red-50 hover:text-red-500 transition-all">
+                        <button 
+                            style={{
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.backgroundColor = '#F8FAFC'}
+                            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                            className="p-3 bg-gray-50 text-gray-400 rounded-2xl hover:bg-red-50 hover:text-red-500 transition-all"
+                        >
                           <XCircle className="w-5 h-5" />
                         </button>
                       </div>
@@ -264,6 +245,6 @@ export default function RiderDashboard() {
           </div>
         </main>
       </div>
-    </div>
+    </RiderLayout>
   );
 }

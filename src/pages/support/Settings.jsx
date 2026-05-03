@@ -47,7 +47,7 @@ export default function SupportSettings() {
         dispatch(updateUser({ avatar: data.avatar, name: data.name }));
       }
     } catch (error) {
-      console.error('Failed to fetch profile:', error);
+      
     } finally {
       setProfileLoading(false);
     }
@@ -76,11 +76,15 @@ export default function SupportSettings() {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
-      if (response.data?.success) {
-        const newAvatar = response.data.data.avatar;
-        setAvatar(newAvatar);
-        dispatch(updateUser({ avatar: newAvatar }));
-        toast.success('Avatar updated successfully!');
+      const newAvatarUrl = response.data?.data?.avatar
+        ?? response.data?.avatar
+        ?? null;
+
+      if (newAvatarUrl) {
+        setAvatar(newAvatarUrl);
+        // Update Redux so header updates immediately
+        dispatch(updateUser({ avatar: newAvatarUrl }));
+        toast.success('Profile picture updated!');
       }
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to upload avatar');

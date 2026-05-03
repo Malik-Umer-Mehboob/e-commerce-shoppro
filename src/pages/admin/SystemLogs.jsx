@@ -56,7 +56,7 @@ export default function SystemLogs() {
                 setStats(response.data.data);
             }
         } catch (error) {
-            console.error('Failed to fetch log stats');
+            
         }
     };
 

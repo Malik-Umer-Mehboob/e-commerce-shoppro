@@ -14,7 +14,7 @@ const BlogCategories = () => {
         const response = await api.get('/blog/categories');
         setCategories(response.data);
       } catch (err) {
-        console.error('Failed to fetch categories');
+        
       } finally {
         setLoading(false);
       }

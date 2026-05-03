@@ -91,7 +91,7 @@ const Header = () => {
                   className="flex items-center space-x-2 text-gray-300 hover:text-white border-l border-gray-700 pl-3 focus:outline-none transition-colors"
                 >
                   {user?.avatar ? (
-                    <img src={user.avatar} className="w-8 h-8 rounded-full border border-slate-700 object-cover" alt={user.name} />
+                    <img src={user.avatar.startsWith('http') ? user.avatar : `http://localhost:8000/storage/${user.avatar}`} className="w-8 h-8 rounded-full border border-slate-700 object-cover" alt={user.name} />
                   ) : (
                     <div className="w-8 h-8 rounded-full bg-[#1E293B] flex items-center justify-center border border-slate-700">
                       <User className="w-4 h-4 text-gray-300" />
@@ -116,8 +116,17 @@ const Header = () => {
                     <Link to="/returns" onClick={() => setIsDropdownOpen(false)} className="block px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-[#F97316] transition-colors">
                       My Returns
                     </Link>
-                    <Link to="/wishlist" onClick={() => setIsDropdownOpen(false)} className="block px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-[#F97316] transition-colors border-b border-gray-50 mb-1 pb-3">
+                    <Link to="/wishlist" onClick={() => setIsDropdownOpen(false)} className="block px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-[#F97316] transition-colors">
                       Wishlist
+                    </Link>
+                    <Link to="/compare" onClick={() => setIsDropdownOpen(false)} className="block px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-[#F97316] transition-colors">
+                      Compare
+                    </Link>
+                    <Link to="/help" onClick={() => setIsDropdownOpen(false)} className="block px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-[#F97316] transition-colors">
+                      Help Center
+                    </Link>
+                    <Link to="/help/contact" onClick={() => setIsDropdownOpen(false)} className="block px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-[#F97316] transition-colors border-b border-gray-50 mb-1 pb-3">
+                      Contact Support
                     </Link>
                     
                     <button

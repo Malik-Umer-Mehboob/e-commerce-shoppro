@@ -34,9 +34,9 @@ export default function Login() {
       const { user, token } = response.data?.data ?? response.data ?? {}; // Fallback to response.data just in case authService unwraps it
 
       // Debug: log what we received
-      console.log('Login response user:', user);
-      console.log('Login response token:', token);
-      console.log('User role:', user?.role);
+      
+      
+      
 
       if (!user || !token) {
           toast.error('Login failed: invalid response from server');

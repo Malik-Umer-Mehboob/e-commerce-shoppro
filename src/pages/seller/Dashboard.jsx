@@ -12,7 +12,8 @@ import {
   TrendingUp, 
   DollarSign, 
   AlertCircle,
-  ChevronRight
+  ChevronRight,
+  Tag
 } from 'lucide-react';
 import { authService } from '../../services/authService';
 import { logoutUser } from '../../store/authSlice';
@@ -66,6 +67,7 @@ export default function SellerDashboard() {
     { icon: LayoutDashboard, label: 'Dashboard', path: '/seller/dashboard', end: true },
     { icon: Package, label: 'My Products', path: '/seller/products' },
     { icon: ShoppingCart, label: 'Orders', path: '/seller/orders' },
+    { icon: Tag, label: 'Request Category', path: '/seller/category-request' },
     { icon: BarChart2, label: 'Analytics', path: '/seller/analytics' },
     { icon: Settings, label: 'Settings', path: '/seller/settings' },
   ];
@@ -162,7 +164,7 @@ export default function SellerDashboard() {
         <main className="flex-1 p-8 lg:p-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="mb-10">
             <h1 className="text-3xl font-black text-[#0F172A] mb-2">Welcome back, {user?.name}!</h1>
-            <p className="text-gray-400 font-bold">Here's what's happening with your store today.</p>
+            <p className="text-gray-400 font-bold">Here&apos;s what&apos;s happening with your store today.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">

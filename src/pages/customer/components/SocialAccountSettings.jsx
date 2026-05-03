@@ -12,7 +12,7 @@ const SocialAccountSettings = () => {
       const response = await api.get('/auth/user'); // Assuming this returns social info
       setConnections(response.data.social_accounts || []);
     } catch (err) {
-      console.error('Failed to fetch connections');
+      
     } finally {
       setLoading(false);
     }

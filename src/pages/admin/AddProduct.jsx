@@ -79,25 +79,27 @@ export default function AddProduct() {
       }));
       setVariants(formattedVariants);
     } catch (error) {
-      console.error('Failed to fetch variants');
+      
     }
   };
 
   const fetchCategories = async () => {
     try {
       const response = await categoryService.getCategories();
-      const flattened = [];
-      response.data.categories.forEach(cat => {
-        flattened.push(cat);
-        if (cat.children) {
-          cat.children.forEach(child => {
-            flattened.push({ ...child, name: `— ${child.name}` });
-          });
-        }
-      });
-      setCategories(flattened);
+      
+      // The API now returns { success: true, data: { categories: [...], flat: [...] } }
+      // Or it might be direct if categoryService already unwrapped it
+      const data = response.data || response;
+      
+      const nested = data.categories || [];
+      const flat = data.flat || [];
+      
+      // Prefer nested for grouped display, but keep flat as fallback
+      setCategories(nested.length > 0 ? nested : flat);
     } catch (error) {
+      
       toast.error('Failed to load categories');
+      setCategories([]);
     }
   };
 
@@ -699,10 +701,24 @@ export default function AddProduct() {
                       className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#F97316] outline-none bg-white"
                       value={formData.category_id}
                       onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
+                      style={{ color: formData.category_id ? '#0F172A' : '#94A3B8' }}
                     >
                       <option value="">Select Category</option>
-                      {categories.map(cat => (
-                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                      {categories.map((cat) => (
+                        cat.children && cat.children.length > 0 ? (
+                          <optgroup key={cat.id} label={cat.name}>
+                            <option value={cat.id}>{cat.name} (General)</option>
+                            {cat.children.map((child) => (
+                              <option key={child.id} value={child.id}>
+                                {child.name}
+                              </option>
+                            ))}
+                          </optgroup>
+                        ) : (
+                          <option key={cat.id} value={cat.id}>
+                            {cat.name}
+                          </option>
+                        )
                       ))}
                     </select>
                   </div>

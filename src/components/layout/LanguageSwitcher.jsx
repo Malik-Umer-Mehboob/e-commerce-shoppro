@@ -11,7 +11,7 @@ const LanguageSwitcher = () => {
 
   useEffect(() => {
     dispatch(fetchLanguages());
-  }, [dispatch]);
+  }, []);
 
   const handleLanguageChange = (lang) => {
     i18n.changeLanguage(lang.code);

@@ -9,13 +9,11 @@ import { Link } from 'react-router-dom';
 const ProductComparisonPage = () => {
   const dispatch = useDispatch();
   const { isAuthenticated } = useSelector((state) => state.auth);
-  const { items, loading } = useSelector((state) => state.comparison);
+  const { items, loading, loaded } = useSelector((state) => state.comparison);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      dispatch(fetchComparison());
-    }
-  }, [dispatch, isAuthenticated]);
+    dispatch(fetchComparison());
+  }, []);
 
   if (loading && (items ?? []).length === 0) {
     return (

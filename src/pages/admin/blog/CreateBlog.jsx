@@ -41,7 +41,8 @@ export default function CreateBlog() {
       const response = await api.get('/admin/blog/categories');
       setCategories(response.data?.data ?? []);
     } catch (error) {
-      console.error('Failed to load categories');
+      
+      setCategories([]);
     }
   };
 
@@ -229,14 +230,26 @@ export default function CreateBlog() {
                     <FileText className="w-3 h-3 mr-2" />
                     Category
                   </label>
-                  <select 
-                    className="w-full px-6 py-4 rounded-2xl bg-gray-50 border-none focus:bg-white focus:ring-4 focus:ring-[#F97316]/10 outline-none transition-all font-bold text-[#0F172A]"
-                    value={formData.category_id}
-                    onChange={(e) => setFormData({...formData, category_id: e.target.value})}
+                  <select
+                    value={formData.category_id ?? ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, category_id: e.target.value }))}
+                    style={{
+                      width: '100%',
+                      padding: '10px 14px',
+                      border: '1px solid #E2E8F0',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      color: '#0F172A',
+                      backgroundColor: 'white',
+                      cursor: 'pointer',
+                      outline: 'none',
+                    }}
                   >
-                    <option value="">Uncategorized</option>
-                    {categories.map(cat => (
-                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    <option value="">Select Category</option>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
                     ))}
                   </select>
                 </div>

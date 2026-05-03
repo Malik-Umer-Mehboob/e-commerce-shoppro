@@ -14,7 +14,7 @@ import {
 const SearchResults = () => {
     const dispatch = useDispatch();
     const [searchParams, setSearchParams] = useSearchParams();
-    const { results, pagination, loading, query, sortBy, appliedFilters, availableFilters } = useSelector((state) => state.search);
+    const { results, pagination, loading, query: searchStateQuery, sortBy, appliedFilters, availableFilters } = useSelector((state) => state.search);
     const [showMobileFilters, setShowMobileFilters] = useState(false);
 
     // Find category name if category filter is active
@@ -22,28 +22,13 @@ const SearchResults = () => {
         ? availableFilters.category.find(c => c.id.toString() === appliedFilters.category.toString())
         : null;
 
+    const query = searchParams.get('q') || '';
+
     useEffect(() => {
-        const q = searchParams.get('q') || '';
-        const sort = searchParams.get('sort_by') || 'relevance';
-        const page = parseInt(searchParams.get('page')) || 1;
-        
-        // Extract all known filters from URL
-        const filters = {};
-        ['category', 'brand', 'min_price', 'max_price', 'color', 'size', 'rating', 'discount'].forEach(key => {
-          const val = searchParams.get(key);
-          if (val) filters[key] = val;
-        });
-
-        dispatch(setQuery(q));
-        dispatch(setSortBy(sort));
-        // Reset and set filters
-        dispatch(clearAllFilters());
-        Object.entries(filters).forEach(([key, val]) => {
-          dispatch(setFilter({ key, value: val }));
-        });
-
-        dispatch(searchProducts({ q, ...filters, sort_by: sort, page }));
-    }, [searchParams, dispatch]);
+        if (query) {
+            dispatch(searchProducts({ q: query }));
+        }
+    }, [query, dispatch]);
 
     const syncUrl = useCallback((overrides = {}) => {
         const params = new URLSearchParams();

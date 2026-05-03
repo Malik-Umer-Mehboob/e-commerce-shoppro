@@ -21,7 +21,7 @@ export default function CustomerReturns() {
         setReturns(response.data.data);
       }
     } catch (error) {
-      console.error('Failed to fetch returns:', error);
+      
     } finally {
       setLoading(false);
     }

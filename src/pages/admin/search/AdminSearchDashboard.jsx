@@ -12,7 +12,7 @@ const AdminSearchDashboard = () => {
         const response = await api.get('/admin/search/top?limit=10');
         setStats(response.data);
       } catch (err) {
-        console.error('Failed to fetch search stats');
+        
       } finally {
         setLoading(false);
       }

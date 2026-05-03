@@ -47,8 +47,6 @@ const SearchBar = ({ compact = false }) => {
     const handleSubmit = (e) => {
         e.preventDefault();
         if (localQuery.trim()) {
-            dispatch(setQuery(localQuery.trim()));
-            dispatch(clearSuggestions());
             setShowDropdown(false);
             navigate(`/search?q=${encodeURIComponent(localQuery.trim())}`);
         }

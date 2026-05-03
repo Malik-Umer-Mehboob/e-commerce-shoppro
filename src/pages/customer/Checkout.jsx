@@ -80,7 +80,7 @@ export default function Checkout() {
                 setShippingZones(zonesRes.data.data || []);
                 setSavedAddresses(addressesRes.data?.data || []);
             } catch (error) {
-                console.error('Failed to load checkout data', error);
+                
             }
         };
         loadData();

@@ -97,7 +97,7 @@ const AdminBlogManager = () => {
                     <td className="px-8 py-5">
                       <div className="flex items-center space-x-4">
                         <div className="w-12 h-12 rounded-xl bg-slate-100 overflow-hidden">
-                          <img src={post.featured_image || 'https://via.placeholder.com/100'} className="w-full h-full object-cover" />
+                          <img src={post.featured_image || 'https://placehold.co/100'} className="w-full h-full object-cover" />
                         </div>
                         <div>
                           <div className="font-bold text-slate-900 line-clamp-1">{post.title}</div>

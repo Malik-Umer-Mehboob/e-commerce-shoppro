@@ -32,7 +32,7 @@ const SellerReportsDashboard = () => {
         const response = await reportService.getSellerSales(days);
         setSalesData(response.data);
       } catch (error) {
-        console.error("Failed to fetch seller reports:", error);
+        
       } finally {
         setLoading(false);
       }

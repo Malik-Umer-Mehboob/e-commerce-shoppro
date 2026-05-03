@@ -23,6 +23,7 @@ const Discounts = lazy(() => import('./pages/admin/Discounts'));
 const BulkUpload = lazy(() => import('./pages/admin/BulkUpload'));
 const LowStock = lazy(() => import('./pages/admin/LowStock'));
 const AdminLayout = lazy(() => import('./components/layout/AdminLayout'));
+const CustomerLayout = lazy(() => import('./components/layout/CustomerLayout'));
 const Settings = lazy(() => import('./pages/admin/Settings'));
 const Campaigns = lazy(() => import('./pages/admin/marketing/Campaigns'));
 const Segments = lazy(() => import('./pages/admin/marketing/Segments'));
@@ -40,10 +41,12 @@ const Warehouses = lazy(() => import('./pages/admin/Warehouses'));
 const SystemLogs = lazy(() => import('./pages/admin/SystemLogs'));
 const RiderAssignments = lazy(() => import('./pages/admin/RiderAssignments'));
 const AdminReturns = lazy(() => import('./pages/admin/Returns'));
+const Categories = lazy(() => import('./pages/admin/Categories'));
 
 // Rider Components
 const RiderDashboard = lazy(() => import('./pages/rider/Dashboard'));
 const RiderSettings = lazy(() => import('./pages/rider/Settings'));
+const RiderDeliveries = lazy(() => import('./pages/rider/Deliveries'));
 
 // Seller Components
 const SellerDashboard = lazy(() => import('./pages/seller/Dashboard'));
@@ -52,6 +55,7 @@ const SellerOrders = lazy(() => import('./pages/seller/Orders'));
 const SellerAnalytics = lazy(() => import('./pages/seller/Analytics'));
 const SellerSettings = lazy(() => import('./pages/seller/Settings'));
 const SellerReportsDashboard = lazy(() => import('./pages/seller/SellerReportsDashboard'));
+const CategoryRequest = lazy(() => import('./pages/seller/CategoryRequest'));
 
 // Support Components
 const SupportDashboard = lazy(() => import('./pages/support/Dashboard'));
@@ -87,11 +91,12 @@ const ReferralProgram = lazy(() => import('./pages/customer/ReferralProgram.jsx'
 const BlogHome = lazy(() => import('./pages/blog/BlogHome.jsx'));
 const BlogPostDetail = lazy(() => import('./pages/blog/BlogPostDetail.jsx'));
 const BlogCategories = lazy(() => import('./pages/blog/BlogCategories.jsx'));
-const ProductComparisonPage = lazy(() => import('./pages/customer/ProductComparisonPage.jsx'));
+const ProductComparisonPage = lazy(() => import('./pages/customer/Compare'));
 const SharedWishlistPage = lazy(() => import('./pages/customer/SharedWishlistPage.jsx'));
 const LoyaltyDashboard = lazy(() => import('./pages/loyalty/LoyaltyDashboard.jsx'));
 const GiftCardShop = lazy(() => import('./pages/loyalty/GiftCardShop.jsx'));
 const GiftCardBalance = lazy(() => import('./pages/loyalty/GiftCardBalance.jsx'));
+const Products = lazy(() => import('./pages/customer/Products'));
 const CustomerOrders = lazy(() => import('./pages/customer/Orders'));
 const OrderDetail = lazy(() => import('./pages/customer/OrderDetail'));
 const AdminOrders = lazy(() => import('./pages/admin/Orders'));
@@ -103,11 +108,38 @@ const AffiliateLinkTracker = lazy(() => import('./components/common/AffiliateLin
 const ComparisonSidebar = lazy(() => import('./components/common/ComparisonSidebar.jsx'));
 
 const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-screen bg-slate-50 dark:bg-slate-900">
-    <div className="relative w-16 h-16">
-      <div className="absolute top-0 left-0 w-full h-full border-4 border-indigo-200 dark:border-indigo-900 rounded-full"></div>
-      <div className="absolute top-0 left-0 w-full h-full border-4 border-indigo-600 rounded-full border-t-transparent animate-spin"></div>
+  <div style={{
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: '100vh',
+    backgroundColor: '#F8FAFC',
+  }}>
+    <div style={{
+      textAlign: 'center',
+    }}>
+      <div style={{
+        width: '40px',
+        height: '40px',
+        border: '3px solid #E2E8F0',
+        borderTop: '3px solid #F97316',
+        borderRadius: '50%',
+        animation: 'spin 1s linear infinite',
+        margin: '0 auto 16px',
+      }} />
+      <p style={{
+        color: '#94A3B8',
+        fontSize: '14px',
+      }}>
+        Loading...
+      </p>
     </div>
+    <style>{`
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+    `}</style>
   </div>
 );
 
@@ -151,6 +183,7 @@ function App() {
               <WishlistPage />
             </ProtectedRoute>
           } />
+          <Route path="/products" element={<Products />} />
           <Route path="/products/:id" element={<ProductDetail />} />
           <Route path="/search" element={<SearchResults />} />
           <Route path="/compare" element={<ProductComparisonPage />} />
@@ -172,10 +205,26 @@ function App() {
           } />
 
           {/* Help Center Routes */}
-          <Route path="/help" element={<HelpCenter />} />
-          <Route path="/help/article/:slug" element={<ArticleDetail />} />
-          <Route path="/help/contact" element={<ContactForm />} />
-          <Route path="/help/order-lookup" element={<OrderLookup />} />
+          <Route path="/help" element={
+            <CustomerLayout>
+              <HelpCenter />
+            </CustomerLayout>
+          } />
+          <Route path="/help/article/:slug" element={
+            <CustomerLayout>
+              <ArticleDetail />
+            </CustomerLayout>
+          } />
+          <Route path="/help/contact" element={
+            <CustomerLayout>
+              <ContactForm />
+            </CustomerLayout>
+          } />
+          <Route path="/help/order-lookup" element={
+            <CustomerLayout>
+              <OrderLookup />
+            </CustomerLayout>
+          } />
 
           {/* Blog Routes */}
           <Route path="/blog" element={<BlogHome />} />
@@ -438,6 +487,14 @@ function App() {
             </ProtectedRoute>
           } />
 
+          <Route path="/admin/categories" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminLayout>
+                <Categories />
+              </AdminLayout>
+            </ProtectedRoute>
+          } />
+
           {/* Rider Routes */}
           <Route path="/rider/dashboard" element={
             <ProtectedRoute allowedRoles={['rider']}>
@@ -447,6 +504,11 @@ function App() {
           <Route path="/rider/settings" element={
             <ProtectedRoute allowedRoles={['rider']}>
               <RiderSettings />
+            </ProtectedRoute>
+          } />
+          <Route path="/rider/deliveries" element={
+            <ProtectedRoute allowedRoles={['rider']}>
+              <RiderDeliveries />
             </ProtectedRoute>
           } />
           
@@ -474,6 +536,11 @@ function App() {
               <AddProduct />
             </ProtectedRoute>
           } />
+          <Route path="/seller/products/edit/:id" element={
+            <ProtectedRoute allowedRoles={['seller']}>
+              <AddProduct />
+            </ProtectedRoute>
+          } />
           <Route path="/seller/orders" element={
             <ProtectedRoute allowedRoles={['seller']}>
               <SellerOrders />
@@ -492,6 +559,12 @@ function App() {
           <Route path="/seller/reports" element={
             <ProtectedRoute allowedRoles={['seller']}>
               <SellerReportsDashboard />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/seller/category-request" element={
+            <ProtectedRoute allowedRoles={['seller']}>
+              <CategoryRequest />
             </ProtectedRoute>
           } />
 

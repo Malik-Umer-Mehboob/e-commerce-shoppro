@@ -32,10 +32,11 @@ const AdminPostEditor = () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await api.get('/blog/categories');
-      setCategories(response.data);
+      const response = await api.get('/admin/blog/categories');
+      setCategories(response.data?.data ?? []);
     } catch (err) {
       toast.error('Failed to load categories');
+      setCategories([]);
     }
   };
 
@@ -151,7 +152,7 @@ const AdminPostEditor = () => {
                 <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Category</label>
                 <select 
                   className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500 text-sm font-medium"
-                  value={post.category_id}
+                  value={post.category_id ?? ''}
                   onChange={(e) => setPost({ ...post, category_id: e.target.value })}
                 >
                   <option value="">Select Category</option>

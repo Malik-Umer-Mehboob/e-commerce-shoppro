@@ -29,7 +29,7 @@ export default function HelpCenter() {
       setPopularArticles(response.data.data.slice(0, 5));
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching articles:', error);
+      
       setLoading(false);
     }
   };
@@ -112,7 +112,7 @@ export default function HelpCenter() {
       </section>
 
       {/* Still Need Help */}
-      <section className="max-w-4xl mx-auto py-20 px-4">
+      <section className="max-w-4xl mx-auto py-20 px-4 mb-12">
         <div className="bg-[#F97316] rounded-3xl p-10 text-white flex flex-col md:flex-row items-center justify-between shadow-2xl shadow-[#F97316]/20">
           <div className="mb-8 md:mb-0 text-center md:text-left">
             <h2 className="text-3xl font-bold mb-2">Still need help?</h2>
@@ -134,16 +134,6 @@ export default function HelpCenter() {
           </div>
         </div>
       </section>
-
-      {/* Live Chat Trigger (Simplified for now) */}
-      <div className="fixed bottom-8 right-8 z-50">
-        <button className="bg-[#0F172A] text-white p-4 rounded-full shadow-2xl hover:scale-110 transition-transform group flex items-center space-x-2">
-          <MessageCircle className="w-6 h-6" />
-          <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-500 ease-in-out whitespace-nowrap font-bold">
-            Chat with us
-          </span>
-        </button>
-      </div>
     </div>
   );
 }

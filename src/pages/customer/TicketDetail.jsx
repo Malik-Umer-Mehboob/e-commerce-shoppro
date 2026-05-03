@@ -33,7 +33,7 @@ export default function TicketDetail() {
       setTicket(response.data.data);
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching ticket:', error);
+      
       toast.error('Could not load ticket');
       navigate('/customer/tickets');
     }

@@ -18,6 +18,8 @@ import { toast } from 'react-hot-toast';
 
 export default function KBManagement() {
   const [articles, setArticles] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredArticles, setFilteredArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingArticle, setEditingArticle] = useState(null);
@@ -32,10 +34,26 @@ export default function KBManagement() {
     fetchArticles();
   }, []);
 
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredArticles(articles);
+      return;
+    }
+
+    const query = searchQuery.toLowerCase();
+    const filtered = articles.filter(article =>
+      article.title?.toLowerCase().includes(query) ||
+      article.content?.toLowerCase().includes(query) ||
+      article.category?.toLowerCase().includes(query)
+    );
+    setFilteredArticles(filtered);
+  }, [searchQuery, articles]);
+
   const fetchArticles = async () => {
     try {
       const response = await api.get(`/kb`);
       setArticles(response.data.data);
+      setFilteredArticles(response.data.data);
       setLoading(false);
     } catch (error) {
       toast.error('Failed to load articles');
@@ -109,6 +127,8 @@ export default function KBManagement() {
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
           <input
             type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search articles by title or content..."
             className="w-full pl-12 pr-4 py-4 rounded-3xl border border-gray-100 shadow-sm outline-none focus:ring-4 focus:ring-[#F97316]/10 focus:border-[#F97316] transition-all"
           />
@@ -126,12 +146,11 @@ export default function KBManagement() {
         </div>
       </div>
 
-      {/* Articles Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {loading ? (
           [1, 2, 3, 4].map(n => <div key={n} className="h-48 bg-white animate-pulse rounded-3xl border border-gray-100"></div>)
-        ) : articles.length > 0 ? (
-          articles.map((article) => (
+        ) : filteredArticles.length > 0 ? (
+          filteredArticles.map((article) => (
             <div key={article.id} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all group border-l-4 border-l-transparent hover:border-l-[#F97316]">
               <div className="flex justify-between items-start mb-4">
                 <span className="bg-[#F97316]/10 text-[#F97316] px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
@@ -182,10 +201,16 @@ export default function KBManagement() {
               </div>
             </div>
           ))
+        ) : searchQuery ? (
+          <div className="col-span-full py-20 text-center bg-white rounded-3xl border border-dashed border-gray-200">
+            <Search className="w-16 h-16 text-gray-200 mx-auto mb-4" />
+            <h3 className="text-xl font-bold text-gray-900 mb-2">No articles found for "{searchQuery}"</h3>
+            <p className="text-gray-500 max-w-sm mx-auto">Try adjusting your search terms to find what you're looking for.</p>
+          </div>
         ) : (
           <div className="col-span-full py-20 text-center bg-white rounded-3xl border border-dashed border-gray-200">
             <Book className="w-16 h-16 text-gray-200 mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-gray-900 mb-2">No articles found</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">No articles yet</h3>
             <p className="text-gray-500 max-w-sm mx-auto">Start by creating your first help article to assist your customers.</p>
           </div>
         )}

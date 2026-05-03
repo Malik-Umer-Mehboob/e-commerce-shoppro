@@ -43,7 +43,7 @@ export default function ChatWidget() {
         });
         setSessionId(response.data.session_id);
       } catch (error) {
-        console.error('Error starting chat:', error);
+        
       }
     }
   };

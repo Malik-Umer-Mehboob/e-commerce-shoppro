@@ -14,34 +14,44 @@ import api from '../../services/api';
 
 export default function SupportDashboard() {
   const { user } = useSelector(state => state.auth);
-  const [metrics, setMetrics] = useState({
+  const [stats, setStats] = useState({
+    shift_progress: 0,
     open_tickets: 0,
     pending_tickets: 0,
     resolved_today: 0,
-    active_chats: 0
+    total_today: 0,
+    active_chats: 0,
   });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchMetrics();
+    fetchStats();
   }, []);
 
-  const fetchMetrics = async () => {
+  const fetchStats = async () => {
     try {
-      const response = await api.get(`/support/metrics`);
-      setMetrics(response.data.data);
+      const response = await api.get('/support/dashboard');
+      const data = response.data?.data;
+      setStats({
+        shift_progress: data?.shift_progress ?? 0,
+        open_tickets: data?.open_tickets ?? 0,
+        pending_tickets: data?.pending_tickets ?? 0,
+        resolved_today: data?.resolved_today ?? 0,
+        total_today: data?.total_today ?? 0,
+        active_chats: data?.active_chats ?? 0,
+      });
     } catch (error) {
-      console.error('Error fetching metrics:', error);
+      
     } finally {
       setLoading(false);
     }
   };
 
-  const stats = [
-    { label: 'Open Tickets', value: metrics.open_tickets, icon: MessageSquare, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { label: 'Pending', value: metrics.pending_tickets, icon: Clock, color: 'text-yellow-600', bg: 'bg-yellow-50' },
-    { label: 'Resolved Today', value: metrics.resolved_today, icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50' },
-    { label: 'Active Chats', value: metrics.active_chats, icon: TrendingUp, color: 'text-purple-600', bg: 'bg-purple-50' },
+  const statCards = [
+    { label: 'Open Tickets', value: stats.open_tickets, icon: MessageSquare, color: 'text-blue-600', bg: 'bg-blue-50' },
+    { label: 'Pending', value: stats.pending_tickets, icon: Clock, color: 'text-yellow-600', bg: 'bg-yellow-50' },
+    { label: 'Resolved Today', value: stats.resolved_today, icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50' },
+    { label: 'Active Chats', value: stats.active_chats, icon: TrendingUp, color: 'text-purple-600', bg: 'bg-purple-50' },
   ];
 
   return (
@@ -57,17 +67,17 @@ export default function SupportDashboard() {
         <div className="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm flex items-center space-x-4">
           <div className="text-right">
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Shift Progress</p>
-            <p className="text-sm font-bold text-[#0F172A]">65% Complete</p>
+            <p className="text-sm font-bold text-[#0F172A]">{stats.shift_progress}% Complete</p>
           </div>
           <div className="w-16 h-2 bg-gray-100 rounded-full overflow-hidden">
-            <div className="w-[65%] h-full bg-[#F97316]"></div>
+            <div className="h-full bg-[#F97316]" style={{ width: `${stats.shift_progress}%` }}></div>
           </div>
         </div>
       </div>
 
       {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-        {stats.map((stat, idx) => (
+        {statCards.map((stat, idx) => (
           <div key={idx} className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col transition-all hover:shadow-xl hover:-translate-y-1 group">
             <div className={`w-14 h-14 ${stat.bg} rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
               <stat.icon className={`w-7 h-7 ${stat.color}`} />

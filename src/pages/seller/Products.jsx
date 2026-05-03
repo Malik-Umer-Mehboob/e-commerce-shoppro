@@ -4,7 +4,7 @@ import {
   Menu, LogOut, Package, ShoppingCart, 
   BarChart2, Settings, Plus, Search, 
   Pencil, Trash2, Eye, EyeOff, CheckCircle, 
-  Clock, AlertTriangle
+  Clock, AlertTriangle, Tag
 } from 'lucide-react';
 import { authService } from '../../services/authService';
 import { productService } from '../../services/productService';
@@ -17,11 +17,12 @@ export default function SellerProducts() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [totalPages, setTotalPages] = useState(1);
   const [stats, setStats] = useState({
     total: 0,
     published: 0,
     drafts: 0,
-    lowStock: 0
+    low_stock: 0
   });
   
   const [filters, setFilters] = useState({
@@ -41,19 +42,23 @@ export default function SellerProducts() {
   const fetchProducts = async () => {
     try {
       setLoading(true);
+      // productService returns response.data (axios-unwrapped)
+      // Backend shape: { success, data: { products: { data:[...], last_page }, stats:{...} } }
       const response = await productService.getProducts({
         ...filters,
         search: filters.search
       });
-      setProducts(response.data.data);
-      
-      // Calculate stats for current seller
-      const all = response.data.data; // Note: This is only the current page, ideally backend should return total stats
+
+      const productsData = response?.data?.products;
+      const statsData   = response?.data?.stats;
+
+      setProducts(productsData?.data ?? []);
+      setTotalPages(productsData?.last_page ?? 1);
       setStats({
-        total: response.data.total,
-        published: all.filter(p => p.status === 'published').length,
-        drafts: all.filter(p => p.status === 'draft').length,
-        lowStock: all.filter(p => p.stock_quantity <= p.low_stock_threshold).length
+        total:     statsData?.total     ?? 0,
+        published: statsData?.published ?? 0,
+        drafts:    statsData?.drafts    ?? 0,
+        low_stock: statsData?.low_stock ?? 0,
       });
     } catch (error) {
       toast.error('Failed to fetch products');
@@ -96,6 +101,7 @@ export default function SellerProducts() {
   const navItems = [
     { icon: Package, label: 'My Products', path: '/seller/products', active: true },
     { icon: ShoppingCart, label: 'Orders', path: '/seller/orders', active: false },
+    { icon: Tag, label: 'Request Category', path: '/seller/category-request', active: false },
     { icon: BarChart2, label: 'Analytics', path: '/seller/analytics', active: false },
     { icon: Settings, label: 'Settings', path: '/seller/settings', active: false },
   ];
@@ -157,7 +163,7 @@ export default function SellerProducts() {
             </div>
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
               <div className="p-3 bg-red-50 text-red-600 rounded-lg"><AlertTriangle className="w-6 h-6" /></div>
-              <div><p className="text-sm text-gray-500">Low Stock</p><p className="text-2xl font-bold text-[#0F172A]">{stats.lowStock}</p></div>
+              <div><p className="text-sm text-gray-500">Low Stock</p><p className="text-2xl font-bold text-[#0F172A]">{stats.low_stock}</p></div>
             </div>
           </div>
 
@@ -202,7 +208,7 @@ export default function SellerProducts() {
                   <tr key={product.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <img src={product.thumbnail ? `http://localhost:8000/storage/${product.thumbnail}` : 'https://via.placeholder.com/40'} className="w-10 h-10 rounded-lg object-cover" />
+                        <img src={product.thumbnail ? `http://localhost:8000/storage/${product.thumbnail}` : 'https://placehold.co/40'} className="w-10 h-10 rounded-lg object-cover" />
                         <div><p className="font-semibold text-[#0F172A]">{product.name}</p><p className="text-xs text-gray-500">{product.sku}</p></div>
                       </div>
                     </td>
@@ -237,7 +243,7 @@ export default function SellerProducts() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <button onClick={() => navigate(`/admin/products/edit/${product.id}`)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg">
+                        <button onClick={() => navigate(`/seller/products/edit/${product.id}`)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg">
                           <Pencil className="w-5 h-5" />
                         </button>
                         <button onClick={() => handleDelete(product.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg">
@@ -250,6 +256,29 @@ export default function SellerProducts() {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-6">
+              <button
+                onClick={() => setFilters(f => ({ ...f, page: Math.max(1, f.page - 1) }))}
+                disabled={filters.page === 1}
+                className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium disabled:opacity-40 hover:bg-gray-50"
+              >
+                Previous
+              </button>
+              <span className="text-sm text-gray-600">
+                Page {filters.page} of {totalPages}
+              </span>
+              <button
+                onClick={() => setFilters(f => ({ ...f, page: Math.min(totalPages, f.page + 1) }))}
+                disabled={filters.page === totalPages}
+                className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium disabled:opacity-40 hover:bg-gray-50"
+              >
+                Next
+              </button>
+            </div>
+          )}
         </main>
       </div>
     </div>

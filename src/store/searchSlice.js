@@ -72,11 +72,15 @@ const searchSlice = createSlice({
       })
       .addCase(searchProducts.fulfilled, (state, action) => {
         state.loading = false;
-        state.results = action.payload.results;
-        state.pagination = action.payload.pagination;
-        state.availableFilters = action.payload.available_filters;
-        state.query = action.payload.query;
-        state.sortBy = action.payload.sort_by;
+        const data = action.payload.data?.products || action.payload.results || {};
+        state.results = data.data || action.payload.results || [];
+        state.pagination = {
+          current_page: data.current_page || 1,
+          last_page: data.last_page || 1,
+          per_page: data.per_page || 15,
+          total: data.total || 0
+        };
+        state.availableFilters = action.payload.data?.available_filters || action.payload.available_filters || state.availableFilters;
       })
       .addCase(searchProducts.rejected, (state, action) => {
         state.loading = false;

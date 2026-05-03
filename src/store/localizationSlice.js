@@ -14,8 +14,8 @@ const localizationSlice = createSlice({
   initialState: {
     languages: [],
     currentLanguage: localStorage.getItem('i18nextLng') || 'en',
-    currentCurrency: localStorage.getItem('currency') || 'USD',
-    currencySymbol: localStorage.getItem('currencySymbol') || '$',
+    currentCurrency: localStorage.getItem('currency') || 'PKR',
+    currencySymbol: localStorage.getItem('currencySymbol') || 'Rs.',
     exchangeRate: parseFloat(localStorage.getItem('exchangeRate')) || 1.0,
     direction: localStorage.getItem('direction') || 'ltr',
     loading: false,

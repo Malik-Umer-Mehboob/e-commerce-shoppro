@@ -7,27 +7,18 @@ import {
   Camera, 
   Eye, 
   EyeOff, 
-  LayoutDashboard,
-  Truck,
-  LogOut,
-  Settings as SettingsIcon,
-  Menu
 } from 'lucide-react';
 import api from '../../services/api';
-import { updateUser, logoutUser } from '../../store/authSlice';
-import { authService } from '../../services/authService';
+import { updateUser } from '../../store/authSlice';
 import { toast } from 'react-hot-toast';
-import { NavLink, useNavigate } from 'react-router-dom';
 import ThemeToggle from '../../components/ThemeToggle';
+import RiderLayout from '../../components/rider/Layout';
 
 export default function RiderSettings() {
   const { user } = useSelector(state => state.auth);
   const dispatch = useDispatch();
-  const navigate = useNavigate();
   const fileInputRef = useRef(null);
   
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
   const [name, setName] = useState(user?.name ?? '');
   const [avatar, setAvatar] = useState(user?.avatar ?? null);
   const [profileLoading, setProfileLoading] = useState(false);
@@ -58,7 +49,7 @@ export default function RiderSettings() {
         dispatch(updateUser({ avatar: data.avatar, name: data.name }));
       }
     } catch (error) {
-      console.error('Failed to fetch profile:', error);
+      
     } finally {
       setProfileLoading(false);
     }
@@ -159,57 +150,19 @@ export default function RiderSettings() {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await authService.logout();
-      dispatch(logoutUser());
-      navigate('/login');
-    } catch (error) {}
-  };
-
   return (
-    <div className="min-h-screen flex bg-[#F8FAFC]">
-      {/* Sidebar - Same as Dashboard */}
-      <aside className={`fixed inset-y-0 left-0 bg-[#0F172A] w-64 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 ease-in-out z-20 shadow-2xl`}>
-        <div className="flex h-16 items-center px-6 text-white font-black text-xl border-b border-white/5">
-          ShopPro <span className="text-[#F97316] ml-2">Rider</span>
-        </div>
-        <nav className="p-4 space-y-2">
-          <NavLink to="/rider/dashboard" className={({isActive}) => `w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all font-bold ${isActive ? 'bg-[#F97316] text-white shadow-lg shadow-[#F97316]/20' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
-            <LayoutDashboard className="w-5 h-5" />
-            <span>Dashboard</span>
-          </NavLink>
-          <button className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition-all font-bold">
-            <Truck className="w-5 h-5" />
-            <span>My Deliveries</span>
-          </button>
-          <NavLink to="/rider/settings" className={({isActive}) => `w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all font-bold ${isActive ? 'bg-[#F97316] text-white shadow-lg shadow-[#F97316]/20' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
-            <SettingsIcon className="w-5 h-5" />
-            <span>Settings</span>
-          </NavLink>
-        </nav>
-        <div className="absolute bottom-0 w-full p-4 border-t border-white/5">
-          <button onClick={handleLogout} className="w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-xl text-red-400 font-bold hover:bg-red-500/10 transition-all border border-red-500/20">
-            <LogOut className="w-5 h-5" />
-            <span>Logout</span>
-          </button>
-        </div>
-      </aside>
-
-      {/* Main Content Area */}
-      <div className="flex-1 md:ml-64 flex flex-col min-h-screen">
+    <RiderLayout>
+      <div className="flex-1 flex flex-col min-h-screen">
         <header className="h-16 bg-white shadow-sm flex items-center justify-between px-6 z-10 sticky top-0">
-          <button className="md:hidden text-gray-500" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
-            <Menu className="w-6 h-6" />
-          </button>
+          <div className="flex items-center space-x-2">
+            <span className="font-black text-[#0F172A] text-lg uppercase tracking-tight">Settings</span>
+            <div className="w-1.5 h-1.5 rounded-full bg-orange-400"></div>
+          </div>
           <div className="flex items-center space-x-4 ml-auto">
             <ThemeToggle />
             <div className="text-right">
               <p className="text-sm font-black text-[#0F172A]">{user?.name}</p>
-              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Delivery Rider</p>
-            </div>
-            <div className="w-10 h-10 rounded-xl bg-[#0F172A] text-white flex items-center justify-center font-black border-2 border-white shadow-lg overflow-hidden">
-              {avatar ? <img src={avatar} alt="Avatar" className="w-full h-full object-cover" /> : user?.name?.charAt(0)}
+              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Account Security</p>
             </div>
           </div>
         </header>
@@ -217,18 +170,18 @@ export default function RiderSettings() {
         <main className="flex-1 p-6 md:p-8 max-w-5xl mx-auto w-full">
           <div className="mb-8">
             <h1 className="text-3xl font-black text-[#0F172A]">Account Settings</h1>
-            <p className="text-gray-500 font-medium mt-1">Manage your rider profile</p>
+            <p className="text-gray-500 font-medium mt-1">Manage your rider profile and security</p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-8">
               {/* Profile Settings Card */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 md:p-8">
+              <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-6 md:p-8">
                 <div className="flex flex-col sm:flex-row items-center gap-8 mb-8">
                   <div className="relative">
-                    <div className="w-20 h-20 rounded-full border-4 border-white shadow-xl overflow-hidden bg-[#0F172A] text-white flex items-center justify-center font-bold text-[28px]">
+                    <div className="w-24 h-24 rounded-3xl border-4 border-white shadow-xl overflow-hidden bg-[#0F172A] text-white flex items-center justify-center font-bold text-[32px]">
                       {uploadingAvatar ? (
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
                       ) : avatar ? (
                         <img src={avatar} alt="Profile" className="w-full h-full object-cover" />
                       ) : (
@@ -237,10 +190,16 @@ export default function RiderSettings() {
                     </div>
                     <button 
                       onClick={() => fileInputRef.current?.click()}
-                      className="absolute bottom-0 right-0 p-2 bg-[#F97316] text-white rounded-full shadow-lg hover:bg-orange-600 transition-colors disabled:opacity-50"
+                      style={{
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.backgroundColor = '#EA6F10'}
+                      onMouseLeave={e => e.currentTarget.style.backgroundColor = '#F97316'}
+                      className="absolute bottom-[-10px] right-[-10px] p-3 bg-[#F97316] text-white rounded-2xl shadow-lg hover:bg-orange-600 transition-colors disabled:opacity-50"
                       disabled={uploadingAvatar}
                     >
-                      <Camera className="w-4 h-4" />
+                      <Camera className="w-5 h-5" />
                     </button>
                     <input 
                       type="file" 
@@ -258,123 +217,157 @@ export default function RiderSettings() {
 
                 <div className="space-y-6">
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">Full Name</label>
+                    <label className="block text-sm font-black text-gray-700 mb-2 uppercase tracking-widest text-[10px]">Full Name</label>
                     <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <User className="w-5 h-5 text-gray-400" />
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <User className="w-5 h-5 text-gray-300" />
                       </div>
                       <input 
                         type="text" 
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#F97316] focus:border-[#F97316] outline-none transition-all text-sm font-medium"
-                        placeholder="John Doe"
+                        className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-[#F97316]/30 focus:ring-4 focus:ring-[#F97316]/5 outline-none transition-all text-sm font-bold"
+                        placeholder="Your full name"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">Email Address</label>
+                    <label className="block text-sm font-black text-gray-700 mb-2 uppercase tracking-widest text-[10px]">Email Address</label>
                     <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Mail className="w-5 h-5 text-gray-400" />
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <Mail className="w-5 h-5 text-gray-300" />
                       </div>
                       <input 
                         type="email" 
                         value={user?.email || ''}
                         disabled
-                        className="w-full pl-10 pr-10 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-400 cursor-not-allowed outline-none text-sm font-medium"
+                        className="w-full pl-12 pr-12 py-4 bg-gray-100/50 border border-transparent rounded-2xl text-gray-400 cursor-not-allowed outline-none text-sm font-bold"
                       />
-                      <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                        <Lock className="w-4 h-4 text-gray-400" />
+                      <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                        <Lock className="w-4 h-4 text-gray-300" />
                       </div>
                     </div>
-                    <p className="text-xs text-gray-500 mt-2 font-medium">Email cannot be changed</p>
+                    <p className="text-[10px] text-gray-400 mt-2 font-black uppercase tracking-widest pl-2">Email cannot be changed for security</p>
                   </div>
 
                   <button 
                     onClick={handleSaveProfile}
                     disabled={savingProfile}
-                    className="w-full bg-[#F97316] hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                    style={{
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = 'black'}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = '#0F172A'}
+                    className="w-full bg-[#0F172A] hover:bg-black text-white font-black text-xs uppercase tracking-widest py-4 px-6 rounded-2xl transition-all flex items-center justify-center space-x-2 shadow-lg shadow-gray-200"
                   >
                     {savingProfile ? (
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                     ) : (
-                      <span>Save Changes</span>
+                      <span>Update Profile Info</span>
                     )}
                   </button>
                 </div>
               </div>
 
               {/* Password Card */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 md:p-8">
-                <h2 className="text-xl font-black text-[#0F172A] mb-1">Change Password</h2>
-                <p className="text-sm text-gray-500 font-medium mb-6">Update your account password</p>
+              <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-6 md:p-8">
+                <div className="flex items-center space-x-3 mb-6">
+                  <div className="p-3 bg-red-50 text-red-500 rounded-xl"><Lock className="w-5 h-5" /></div>
+                  <div>
+                    <h2 className="text-xl font-black text-[#0F172A]">Security Settings</h2>
+                    <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Change your password</p>
+                  </div>
+                </div>
                 
                 {passwordError && (
-                  <div className="p-3 bg-red-50 text-red-500 text-sm rounded-lg mb-6 font-medium">
+                  <div className="p-4 bg-red-50 text-red-500 text-xs rounded-xl mb-6 font-black uppercase tracking-widest">
                     {passwordError}
                   </div>
                 )}
 
                 <div className="space-y-5">
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">Current Password</label>
+                    <label className="block text-sm font-black text-gray-700 mb-2 uppercase tracking-widest text-[10px]">Current Password</label>
                     <div className="relative">
                       <input 
                         type={showCurrent ? "text" : "password"} 
                         value={currentPassword}
                         onChange={(e) => setCurrentPassword(e.target.value)}
-                        className="w-full pl-4 pr-10 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#F97316] outline-none text-sm"
-                        placeholder="Enter current password"
+                        className="w-full px-6 py-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-[#F97316]/30 focus:ring-4 focus:ring-[#F97316]/5 outline-none text-sm font-bold"
+                        placeholder="••••••••"
                       />
-                      <button type="button" onClick={() => setShowCurrent(!showCurrent)} className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
+                      <button 
+                        type="button" 
+                        onClick={() => setShowCurrent(!showCurrent)} 
+                        style={{ cursor: 'pointer', transition: 'all 0.2s ease' }}
+                        className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-300 hover:text-gray-600"
+                      >
                         {showCurrent ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                       </button>
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">New Password</label>
-                    <div className="relative">
-                      <input 
-                        type={showNew ? "text" : "password"} 
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        className="w-full pl-4 pr-10 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#F97316] outline-none text-sm"
-                        placeholder="Enter new password"
-                      />
-                      <button type="button" onClick={() => setShowNew(!showNew)} className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
-                        {showNew ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                      </button>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                      <label className="block text-sm font-black text-gray-700 mb-2 uppercase tracking-widest text-[10px]">New Password</label>
+                      <div className="relative">
+                        <input 
+                          type={showNew ? "text" : "password"} 
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          className="w-full px-6 py-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-[#F97316]/30 focus:ring-4 focus:ring-[#F97316]/5 outline-none text-sm font-bold"
+                          placeholder="••••••••"
+                        />
+                        <button 
+                          type="button" 
+                          onClick={() => setShowNew(!showNew)} 
+                          style={{ cursor: 'pointer', transition: 'all 0.2s ease' }}
+                          className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-300 hover:text-gray-600"
+                        >
+                          {showNew ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                        </button>
+                      </div>
                     </div>
-                  </div>
 
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">Confirm New Password</label>
-                    <div className="relative">
-                      <input 
-                        type={showConfirm ? "text" : "password"} 
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="w-full pl-4 pr-10 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#F97316] outline-none text-sm"
-                        placeholder="Confirm new password"
-                      />
-                      <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
-                        {showConfirm ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                      </button>
+                    <div>
+                      <label className="block text-sm font-black text-gray-700 mb-2 uppercase tracking-widest text-[10px]">Confirm New</label>
+                      <div className="relative">
+                        <input 
+                          type={showConfirm ? "text" : "password"} 
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          className="w-full px-6 py-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-[#F97316]/30 focus:ring-4 focus:ring-[#F97316]/5 outline-none text-sm font-bold"
+                          placeholder="••••••••"
+                        />
+                        <button 
+                          type="button" 
+                          onClick={() => setShowConfirm(!showConfirm)} 
+                          style={{ cursor: 'pointer', transition: 'all 0.2s ease' }}
+                          className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-300 hover:text-gray-600"
+                        >
+                          {showConfirm ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                        </button>
+                      </div>
                     </div>
                   </div>
 
                   <button 
                     onClick={handleSavePassword}
                     disabled={savingPassword}
-                    className="w-full bg-[#F97316] hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2 mt-2"
+                    style={{
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = '#EA6F10'}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = '#F97316'}
+                    className="w-full bg-[#F97316] hover:bg-orange-600 text-white font-black text-xs uppercase tracking-widest py-4 px-6 rounded-2xl transition-all flex items-center justify-center space-x-2 mt-2 shadow-lg shadow-orange-100"
                   >
                     {savingPassword ? (
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                     ) : (
-                      <span>Change Password</span>
+                      <span>Update Password</span>
                     )}
                   </button>
                 </div>
@@ -383,40 +376,50 @@ export default function RiderSettings() {
 
             {/* Account Info Card */}
             <div className="lg:col-span-1">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 md:p-8 sticky top-24">
-                <h3 className="text-lg font-black text-[#0F172A] mb-6">Account Information</h3>
+              <div className="bg-[#0F172A] rounded-[2.5rem] p-8 sticky top-24 shadow-2xl shadow-blue-900/20 text-white">
+                <h3 className="text-xl font-black mb-8 border-b border-white/5 pb-4">Rider Status</h3>
                 
-                <div className="space-y-6">
-                  <div>
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Role</p>
-                    <div className="inline-flex items-center space-x-2 bg-orange-50 px-3 py-1.5 rounded-lg">
-                      <div className="w-2 h-2 rounded-full bg-[#F97316]"></div>
-                      <span className="text-sm font-black text-orange-600">Delivery Rider</span>
+                <div className="space-y-8">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-12 h-12 rounded-2xl bg-orange-500/10 flex items-center justify-center border border-orange-500/20">
+                      <div className="w-3 h-3 rounded-full bg-orange-500 animate-pulse"></div>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Role</p>
+                      <p className="text-sm font-black text-white uppercase tracking-tight">Delivery Professional</p>
                     </div>
                   </div>
                   
-                  <div>
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Member Since</p>
-                    <p className="text-sm font-bold text-[#0F172A]">{user?.created_at ? new Date(user.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}</p>
-                  </div>
-                  
-                  <div>
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Account Status</p>
-                    <div className="inline-flex items-center space-x-2">
-                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                      <span className="text-sm font-bold text-[#0F172A]">Active</span>
+                  <div className="flex items-center space-x-4">
+                    <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10">
+                      <User className="w-5 h-5 text-gray-400" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Member Since</p>
+                      <p className="text-sm font-black text-white">{user?.created_at ? new Date(user.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}</p>
                     </div>
                   </div>
+                  
+                  <div className="flex items-center space-x-4">
+                    <div className="w-12 h-12 rounded-2xl bg-green-500/10 flex items-center justify-center border border-green-500/20">
+                      <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Account Status</p>
+                      <p className="text-sm font-black text-green-400 uppercase tracking-widest">Active & Verified</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-12 p-6 bg-white/5 rounded-3xl border border-white/5">
+                    <p className="text-[10px] font-black text-orange-400 uppercase tracking-widest mb-2">Need help?</p>
+                    <p className="text-xs text-gray-400 font-medium leading-relaxed">If you're having trouble with your rider account, contact our fleet support team.</p>
                 </div>
               </div>
             </div>
           </div>
         </main>
       </div>
-
-      {isSidebarOpen && (
-        <div className="fixed inset-0 bg-[#0F172A]/60 z-10 md:hidden backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setIsSidebarOpen(false)}></div>
-      )}
-    </div>
+    </RiderLayout>
   );
 }

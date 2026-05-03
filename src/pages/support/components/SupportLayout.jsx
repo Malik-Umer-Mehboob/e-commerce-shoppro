@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { 
   Menu, 
@@ -10,13 +10,15 @@ import {
   ChevronRight,
   Settings,
   Bell,
-  Search
+  Search,
+  Users
 } from 'lucide-react';
 import { authService } from '../../../services/authService.js';
 import { logoutUser } from '../../../store/authSlice.js';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import ThemeToggle from '../../../components/ThemeToggle';
+import api from '../../../services/api';
 
 export default function SupportLayout({ children }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -24,6 +26,49 @@ export default function SupportLayout({ children }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Search State
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const debounceRef = useRef(null);
+
+  // Global Search Logic
+  useEffect(() => {
+    if (!query.trim() || query.length < 2) {
+      setResults([]);
+      setIsOpen(false);
+      return;
+    }
+
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const response = await api.get('/support/search', { params: { q: query } });
+        setResults(response.data?.data ?? []);
+        setIsOpen(true);
+      } catch {
+        setResults([]);
+      } finally {
+        setLoading(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(debounceRef.current);
+  }, [query]);
+
+  // Close search on outside click
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (!e.target.closest('.support-search-container')) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -41,7 +86,6 @@ export default function SupportLayout({ children }) {
     { icon: Home, label: 'Dashboard', path: '/support/dashboard' },
     { icon: MessageSquare, label: 'Tickets', path: '/support/tickets' },
     { icon: Book, label: 'Knowledge Base', path: '/support/kb' },
-    { icon: ShoppingBag, label: 'Store Front', path: '/home' },
     { icon: Settings, label: 'Settings', path: '/support/settings' },
   ];
 
@@ -78,9 +122,17 @@ export default function SupportLayout({ children }) {
 
         <div className="p-6 border-t border-white/5 space-y-4">
           <div className="bg-white/5 rounded-2xl p-4 flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#F97316] to-orange-400 flex items-center justify-center font-black text-white shadow-lg">
-              {user?.name?.[0]}
-            </div>
+            {user?.avatar ? (
+              <img 
+                src={user.avatar} 
+                alt={user.name} 
+                className="w-10 h-10 rounded-xl object-cover shadow-lg"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#F97316] to-orange-400 flex items-center justify-center font-black text-white shadow-lg">
+                {user?.name?.[0]}
+              </div>
+            )}
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-white truncate">{user?.name}</p>
               <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">{user?.role} Mode</p>
@@ -104,9 +156,64 @@ export default function SupportLayout({ children }) {
             <button className="md:hidden p-2 text-gray-500 hover:bg-gray-100 rounded-xl" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
               <Menu className="w-6 h-6" />
             </button>
-            <div className="hidden lg:flex items-center bg-gray-50 px-4 py-2 rounded-2xl border border-gray-100 focus-within:ring-2 focus-within:ring-[#F97316]/20 transition-all w-80">
+            <div className="hidden lg:flex items-center bg-gray-50 px-4 py-2 rounded-2xl border border-gray-100 focus-within:ring-2 focus-within:ring-[#F97316]/20 transition-all w-80 relative support-search-container">
               <Search className="w-4 h-4 text-gray-400 mr-2" />
-              <input type="text" placeholder="Search anything..." className="bg-transparent text-sm font-medium outline-none w-full" />
+              <input 
+                type="text" 
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setIsOpen(true);
+                }}
+                placeholder="Search tickets, customers..." 
+                className="bg-transparent text-sm font-medium outline-none w-full" 
+              />
+
+              {isOpen && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50 min-w-[320px] animate-in fade-in slide-in-from-top-2 duration-200">
+                  {loading ? (
+                    <div className="p-4 text-center text-sm font-bold text-gray-400">
+                      <div className="flex items-center justify-center space-x-2">
+                        <div className="w-2 h-2 bg-[#F97316] rounded-full animate-bounce"></div>
+                        <div className="w-2 h-2 bg-[#F97316] rounded-full animate-bounce [animation-delay:-.3s]"></div>
+                        <div className="w-2 h-2 bg-[#F97316] rounded-full animate-bounce [animation-delay:-.5s]"></div>
+                      </div>
+                      <p className="mt-2">Searching...</p>
+                    </div>
+                  ) : results.length === 0 ? (
+                    <div className="p-4 text-center text-sm font-bold text-gray-400">
+                      No results for "{query}"
+                    </div>
+                  ) : (
+                    <div className="max-h-[400px] overflow-y-auto">
+                      {results.map((result, idx) => (
+                        <div
+                          key={idx}
+                          onClick={() => {
+                            navigate(result.url);
+                            setQuery('');
+                            setIsOpen(false);
+                          }}
+                          className="p-4 hover:bg-gray-50 cursor-pointer border-b border-gray-50 last:border-0 transition-colors flex items-center space-x-3 group"
+                        >
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform ${
+                            result.type === 'ticket' ? 'bg-blue-50 text-blue-600' : 
+                            result.type === 'customer' ? 'bg-green-50 text-green-600' : 'bg-purple-50 text-purple-600'
+                          }`}>
+                            {result.type === 'ticket' ? <MessageSquare className="w-5 h-5" /> : 
+                             result.type === 'customer' ? <Users className="w-5 h-5" /> : <Book className="w-5 h-5" />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-bold text-[#0F172A] truncate">{result.title}</p>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{result.subtitle}</p>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-[#F97316] transition-colors" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
           
@@ -125,9 +232,35 @@ export default function SupportLayout({ children }) {
                 <p className="text-sm font-black text-[#0F172A]">{user?.name}</p>
                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Support Agent</p>
               </div>
-              <div className="w-10 h-10 rounded-2xl bg-[#0F172A] text-white flex items-center justify-center font-black border-2 border-white shadow-lg">
-                {user?.name?.[0]}
-              </div>
+              {user?.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt={user.name}
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '50%',
+                    objectFit: 'cover',
+                    border: '2px solid rgba(255,255,255,0.3)',
+                  }}
+                />
+              ) : (
+                <div style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
+                  backgroundColor: '#0F172A',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'white',
+                  fontWeight: 'bold',
+                  fontSize: '14px',
+                  border: '2px solid rgba(255,255,255,0.3)',
+                }}>
+                  {user?.name?.charAt(0).toUpperCase() ?? 'S'}
+                </div>
+              )}
             </div>
           </div>
         </header>

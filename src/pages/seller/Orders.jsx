@@ -12,7 +12,8 @@ import {
   ChevronRight,
   Search,
   Filter,
-  Download
+  Download,
+  Tag
 } from 'lucide-react';
 import { authService } from '../../services/authService';
 import { logoutUser } from '../../store/authSlice';
@@ -66,6 +67,7 @@ export default function SellerOrders() {
     { icon: LayoutDashboard, label: 'Dashboard', path: '/seller/dashboard', end: true },
     { icon: Package, label: 'My Products', path: '/seller/products' },
     { icon: ShoppingCart, label: 'Orders', path: '/seller/orders' },
+    { icon: Tag, label: 'Request Category', path: '/seller/category-request' },
     { icon: BarChart2, label: 'Analytics', path: '/seller/analytics' },
     { icon: Settings, label: 'Settings', path: '/seller/settings' },
   ];

@@ -64,7 +64,7 @@ export default function Discounts() {
       setCategories(flatCategories);
       setProducts(prodRes.data.data || []);
     } catch (error) {
-      console.error('Failed to load filter options', error);
+      
     }
   };
 

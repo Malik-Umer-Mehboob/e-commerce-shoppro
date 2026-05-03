@@ -69,7 +69,7 @@ const SharedWishlistPage = () => {
             <div key={item.id} className="group bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2">
               <div className="relative aspect-square overflow-hidden bg-slate-50">
                 <img 
-                  src={item.product?.thumbnail || 'https://via.placeholder.com/400'} 
+                  src={item.product?.thumbnail || 'https://placehold.co/400'} 
                   alt={item.product?.name} 
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
                 />

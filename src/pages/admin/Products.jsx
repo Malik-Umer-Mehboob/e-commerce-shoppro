@@ -55,7 +55,7 @@ export default function AdminProducts() {
         });
 
     } catch (err) {
-        console.error('Products fetch error:', err);
+        
         toast.error('Failed to load products');
         setProducts([]);
     } finally {

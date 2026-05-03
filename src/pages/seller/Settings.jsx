@@ -20,7 +20,8 @@ import {
   BarChart2,
   Settings as SettingsIcon,
   Globe,
-  ChevronRight
+  ChevronRight,
+  Tag
 } from 'lucide-react';
 import api from '../../services/api';
 import { updateUser, logoutUser } from '../../store/authSlice';
@@ -65,7 +66,7 @@ export default function SellerSettings() {
         dispatch(updateUser({ avatar: data.avatar, name: data.name }));
       }
     } catch (error) {
-      console.error('Failed to fetch profile:', error);
+      
     } finally {
       setProfileLoading(false);
     }
@@ -168,6 +169,7 @@ export default function SellerSettings() {
     { icon: LayoutDashboard, label: 'Dashboard', path: '/seller/dashboard', end: true },
     { icon: Package, label: 'My Products', path: '/seller/products' },
     { icon: ShoppingCart, label: 'Orders', path: '/seller/orders' },
+    { icon: Tag, label: 'Request Category', path: '/seller/category-request' },
     { icon: BarChart2, label: 'Analytics', path: '/seller/analytics' },
     { icon: SettingsIcon, label: 'Settings', path: '/seller/settings' },
   ];

@@ -86,7 +86,7 @@ const ProductDetail = () => {
           <div className="space-y-4">
             <div className="aspect-square rounded-3xl overflow-hidden bg-gray-50 border border-gray-100 shadow-sm">
               <img 
-                src={product.thumbnail || 'https://via.placeholder.com/600'} 
+                src={product.thumbnail || 'https://placehold.co/600'} 
                 alt={product.name} 
                 className="w-full h-full object-cover transition-transform hover:scale-105 duration-500"
               />
@@ -95,7 +95,7 @@ const ProductDetail = () => {
             <div className="grid grid-cols-4 gap-4">
               {[1, 2, 3, 4].map((i) => (
                 <div key={i} className="aspect-square rounded-xl bg-gray-50 border border-gray-100 cursor-pointer overflow-hidden opacity-50 hover:opacity-100 transition-all hover:shadow-md">
-                  <img src={product.thumbnail || 'https://via.placeholder.com/150'} alt="" className="w-full h-full object-cover" />
+                  <img src={product.thumbnail || 'https://placehold.co/150'} alt="" className="w-full h-full object-cover" />
                 </div>
               ))}
             </div>
@@ -122,9 +122,9 @@ const ProductDetail = () => {
             </div>
 
             <div className="flex items-center gap-4 mb-8">
-              <span className="text-4xl font-black text-orange-500">${currentPrice}</span>
+              <span className="text-4xl font-black text-orange-500">Rs. {currentPrice}</span>
               {(product.sale_price || (selectedVariant && selectedVariant.price < product.price)) && (
-                <span className="text-xl text-gray-400 line-through">${product.price}</span>
+                <span className="text-xl text-gray-400 line-through">Rs. {product.price}</span>
               )}
               <span className="bg-orange-100 text-orange-600 px-3 py-1 rounded-full text-sm font-bold">
                 SAVE 20%

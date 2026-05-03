@@ -46,7 +46,7 @@ const OrderDetail = () => {
       setCanCancel(response.data.data.can_cancel);
       setCancelInfo(response.data.data);
     } catch (error) {
-      console.error('Error checking cancellation', error);
+      
     }
   };
 
@@ -177,7 +177,7 @@ const OrderDetail = () => {
                 {order.items.map((item) => (
                   <div key={item.id} className="p-6 flex gap-4">
                     <div className="w-20 h-20 bg-slate-50 rounded-xl overflow-hidden flex-shrink-0 border border-slate-100">
-                      <img src={item.product?.thumbnail || 'https://via.placeholder.com/150'} alt={item.name} className="w-full h-full object-cover" />
+                      <img src={item.product?.thumbnail || 'https://placehold.co/150'} alt={item.name} className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-1">
                       <h3 className="font-bold text-slate-900">{item.name}</h3>

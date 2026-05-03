@@ -23,7 +23,7 @@ export default function ArticleDetail() {
       setArticle(response.data.data);
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching article:', error);
+      
       toast.error('Article not found');
       navigate('/help');
     }

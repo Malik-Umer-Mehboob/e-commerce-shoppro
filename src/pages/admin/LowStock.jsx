@@ -35,7 +35,7 @@ export default function LowStock() {
         total: data?.stats?.total ?? 0,
       });
     } catch (err) {
-      console.error('Low stock fetch error:', err);
+      
       toast.error('Failed to load low stock data');
       setProducts([]);
       setStats({ out_of_stock: 0, below_threshold: 0, total: 0 });

@@ -42,13 +42,10 @@ const NotificationBell = () => {
     const [showDropdown, setShowDropdown] = useState(false);
     const dropdownRef = useRef(null);
 
-    // Fetch unread count periodically
+    // Fetch unread count once
     useEffect(() => {
-        if (!isAuthenticated) return;
         dispatch(fetchUnreadCount());
-        const interval = setInterval(() => dispatch(fetchUnreadCount()), 30000);
-        return () => clearInterval(interval);
-    }, [dispatch, isAuthenticated]);
+    }, []);
 
     // Close dropdown on outside click
     useEffect(() => {

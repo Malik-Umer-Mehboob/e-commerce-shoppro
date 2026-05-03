@@ -61,6 +61,7 @@ export default function AdminLayout({ children }) {
         { icon: ShoppingCart, label: 'Orders', path: '/admin/orders' },
         { icon: RotateCcw, label: 'Returns', path: '/admin/returns' },
         { icon: Package, label: 'Products', path: '/admin/products' },
+        { icon: Tag, label: 'Categories', path: '/admin/categories' },
         { icon: Tag, label: 'Discounts', path: '/admin/discounts' },
         { icon: BarChart2, label: 'Reports', path: '/admin/reports' },
         { icon: Truck, label: 'Rider Assignments', path: '/admin/rider-assignments' },

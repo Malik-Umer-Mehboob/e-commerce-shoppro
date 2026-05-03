@@ -26,7 +26,7 @@ export default function MyTickets() {
       setTickets(response.data.data);
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching tickets:', error);
+      
       toast.error('Failed to load tickets. Please log in.');
       navigate('/login');
     }

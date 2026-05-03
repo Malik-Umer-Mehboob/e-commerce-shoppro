@@ -34,7 +34,7 @@ export default function ReturnRequest() {
       setOrders(eligible);
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching orders:', error);
+      
       toast.error('Failed to load orders');
       setLoading(false);
     }

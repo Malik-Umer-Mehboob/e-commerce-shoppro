@@ -1,10 +1,8 @@
 import { useState } from 'react';
 import { Send, User, Mail, MessageSquare, Paperclip, ChevronLeft, CheckCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../services/api';
 import { toast } from 'react-hot-toast';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
 export default function ContactForm() {
   const [formData, setFormData] = useState({
@@ -23,21 +21,17 @@ export default function ContactForm() {
     setLoading(true);
 
     try {
-      // In a real app, use FormData for attachments
-      await axios.post(`${API_URL}/tickets`, {
+      // Use centralized api instance which handles tokens automatically
+      await api.post('/tickets', {
         subject: formData.subject,
         message: `[Contact Form Submission from ${formData.name}]\n\n${formData.message}`,
         category: formData.category,
-      }, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
       });
 
       setSubmitted(true);
       toast.success('Message sent successfully!');
     } catch (error) {
-      console.error('Error sending message:', error);
+      
       toast.error('Failed to send message. Please log in first.');
     } finally {
       setLoading(false);

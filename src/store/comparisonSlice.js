@@ -1,93 +1,62 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import api from '../services/api';
-import { toast } from 'react-hot-toast';
+import { createSlice } from '@reduxjs/toolkit';
 
-export const fetchComparison = createAsyncThunk(
-  'comparison/fetchComparison',
-  async (_, { rejectWithValue }) => {
+const getInitialComparison = () => {
     try {
-      const response = await api.get('/comparison');
-      // The API returns data directly or inside a data wrapper
-      return response.data?.data ?? response.data ?? [];
-    } catch (err) {
-      return rejectWithValue(err.response?.data || 'Failed to load comparison');
+        const saved = localStorage.getItem('shoppro_comparison');
+        return saved ? JSON.parse(saved) : [];
+    } catch {
+        return [];
     }
-  }
-);
-
-export const addToComparison = createAsyncThunk(
-  'comparison/addToComparison',
-  async (productId, { rejectWithValue, dispatch }) => {
-    try {
-      const response = await api.post('/comparison', { product_id: productId });
-      toast.success(response.data?.message || 'Added to comparison!');
-      dispatch(fetchComparison());
-      return response.data;
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to add to comparison');
-      return rejectWithValue(err.response?.data);
-    }
-  }
-);
-
-export const removeFromComparison = createAsyncThunk(
-  'comparison/removeFromComparison',
-  async (productId, { rejectWithValue }) => {
-    try {
-      await api.delete(`/comparison/${productId}`);
-      toast.success('Removed from comparison');
-      return productId;
-    } catch (err) {
-      toast.error('Failed to remove from comparison');
-      return rejectWithValue(err.response?.data);
-    }
-  }
-);
-
-export const clearComparison = createAsyncThunk(
-  'comparison/clearComparison',
-  async (_, { rejectWithValue }) => {
-    try {
-      await api.delete('/comparison');
-      toast.success('Comparison list cleared');
-      return null;
-    } catch (err) {
-      toast.error('Failed to clear comparison');
-      return rejectWithValue(err.response?.data);
-    }
-  }
-);
+};
 
 const comparisonSlice = createSlice({
-  name: 'comparison',
-  initialState: {
-    items: [],
-    loading: false,
-    error: null,
-  },
-  reducers: {},
-  extraReducers: (builder) => {
-    builder
-      .addCase(fetchComparison.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchComparison.fulfilled, (state, action) => {
-        state.loading = false;
-        state.items = Array.isArray(action.payload) ? action.payload : [];
-      })
-      .addCase(fetchComparison.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-        state.items = []; // Reset on error to avoid crashing
-      })
-      .addCase(removeFromComparison.fulfilled, (state, action) => {
-        state.items = state.items.filter(item => item.id !== action.payload);
-      })
-      .addCase(clearComparison.fulfilled, (state) => {
-        state.items = [];
-      });
-  },
+    name: 'comparison',
+    initialState: {
+        items: getInitialComparison(),
+        loading: false,
+        loaded: true,
+        error: null
+    },
+    reducers: {
+        addToComparison: (state, action) => {
+            const product = action.payload;
+            const exists = state.items.find(
+                p => p.id === product.id
+            );
+            if (!exists) {
+                if (state.items.length >= 4) {
+                    return;
+                }
+                state.items.push(product);
+                localStorage.setItem(
+                    'shoppro_comparison',
+                    JSON.stringify(state.items)
+                );
+            }
+        },
+        removeFromComparison: (state, action) => {
+            state.items = state.items.filter(
+                p => p.id !== action.payload
+            );
+            localStorage.setItem(
+                'shoppro_comparison',
+                JSON.stringify(state.items)
+            );
+        },
+        clearComparison: (state) => {
+            state.items = [];
+            localStorage.removeItem('shoppro_comparison');
+        },
+    },
 });
+
+export const {
+    addToComparison,
+    removeFromComparison,
+    clearComparison,
+} = comparisonSlice.actions;
+
+// Keep fetchComparison for compatibility if needed, but it does nothing now
+export const fetchComparison = () => (dispatch) => {};
 
 export default comparisonSlice.reducer;

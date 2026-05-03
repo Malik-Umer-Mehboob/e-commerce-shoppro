@@ -160,7 +160,7 @@ const BlogPostDetail = () => {
                 <Link key={post.id} to={`/blog/${post.slug}`} className="group bg-white rounded-[2rem] overflow-hidden shadow-sm hover:shadow-xl transition-all border border-slate-100">
                   <div className="aspect-video overflow-hidden">
                     <img 
-                      src={post.featured_image || 'https://via.placeholder.com/400'} 
+                      src={post.featured_image || 'https://placehold.co/400'} 
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                       alt={post.title}
                     />

@@ -38,7 +38,7 @@ export default function ReturnRequestModal({ isOpen, onClose, onSuccess }) {
         setOrders(delivered);
       }
     } catch (error) {
-      console.error('Failed to fetch orders:', error);
+      
     } finally {
       setLoadingOrders(false);
     }
