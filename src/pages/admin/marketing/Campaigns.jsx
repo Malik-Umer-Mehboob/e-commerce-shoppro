@@ -92,7 +92,7 @@ export default function Campaigns() {
       setShowModal(false);
       fetchData();
     } catch (error) {
-      toast.error('Failed to create campaign');
+      toast.error(error.response?.data?.message || 'Failed to create campaign');
     }
   };
 
@@ -103,7 +103,7 @@ export default function Campaigns() {
       toast.success('Campaign is being sent!');
       fetchData();
     } catch (error) {
-      toast.error('Failed to send campaign');
+      toast.error(error.response?.data?.message || 'Failed to send campaign');
     }
   };
 

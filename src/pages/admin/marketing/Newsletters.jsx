@@ -79,7 +79,7 @@ export default function Newsletters() {
       setFormData({ subject: '', content: '', scheduled_at: '', status: 'draft' });
       fetchNewsletters();
     } catch (error) {
-      toast.error('Failed to create newsletter');
+      toast.error(error.response?.data?.message || 'Failed to create newsletter');
     }
   };
 

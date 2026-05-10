@@ -1,37 +1,6 @@
 @import "tailwindcss";
 
-html.dark {
-    color-scheme: dark;
-}
 
-html.dark body {
-    background-color: #0F172A;
-    color: #F8FAFC;
-}
-
-html.dark .bg-white {
-    background-color: #1E293B !important;
-}
-
-html.dark .bg-gray-50,
-html.dark .bg-\[\#F8FAFC\] {
-    background-color: #1E293B !important;
-}
-
-html.dark .text-gray-600,
-html.dark .text-gray-700,
-html.dark .text-gray-800 {
-    color: #CBD5E1 !important;
-}
-
-html.dark .border-gray-200,
-html.dark .border-gray-100 {
-    border-color: #334155 !important;
-}
-
-html.dark .shadow {
-    box-shadow: 0 1px 3px rgba(0,0,0,0.5) !important;
-}
 
 button, 
 a, 

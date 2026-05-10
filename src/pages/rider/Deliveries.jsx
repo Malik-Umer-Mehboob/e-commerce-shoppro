@@ -5,7 +5,6 @@ import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import RiderLayout from '../../components/rider/Layout';
 import { ArrowLeft, Phone, User, MapPin } from 'lucide-react';
-import ThemeToggle from '../../components/ThemeToggle';
 
 export default function RiderDeliveries() {
     const [assignments, setAssignments] = useState([]);
@@ -156,7 +155,6 @@ export default function RiderDeliveries() {
                         </div>
                     </div>
                     <div className="flex items-center space-x-4 ml-auto">
-                        <ThemeToggle />
                         <div className="text-right">
                             <p className="text-sm font-black text-[#0F172A]">{user?.name}</p>
                             <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Rider Panel</p>

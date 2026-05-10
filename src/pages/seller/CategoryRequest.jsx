@@ -11,7 +11,6 @@ import { useNavigate, NavLink } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { authService } from '../../services/authService';
 import { logoutUser } from '../../store/authSlice';
-import ThemeToggle from '../../components/ThemeToggle';
 
 const INITIAL_FORM = {
   request_type: 'main',
@@ -210,7 +209,6 @@ export default function CategoryRequest() {
           </button>
 
           <div className="ml-auto flex items-center space-x-6">
-            <ThemeToggle />
             <div className="text-right hidden sm:block">
               <p className="text-sm font-black text-[#0F172A]">{user?.name}</p>
               <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">

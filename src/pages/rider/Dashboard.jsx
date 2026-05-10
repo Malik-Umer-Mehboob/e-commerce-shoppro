@@ -13,7 +13,6 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import api from '../../services/api';
-import ThemeToggle from '../../components/ThemeToggle';
 import RiderLayout from '../../components/rider/Layout';
 
 export default function RiderDashboard() {
@@ -73,7 +72,6 @@ export default function RiderDashboard() {
             </div>
           </div>
           <div className="flex items-center space-x-4 ml-auto">
-            <ThemeToggle />
             <div className="text-right">
               <p className="text-sm font-black text-[#0F172A]">{user?.name}</p>
               <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Rider Panel</p>

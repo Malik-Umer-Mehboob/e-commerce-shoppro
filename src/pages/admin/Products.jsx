@@ -29,6 +29,7 @@ export default function AdminProducts() {
 
   const fetchProducts = async (page = 1) => {
     setLoading(true);
+    setProducts([]); // Clear existing products before fetching fresh data
     try {
         const params = {
             page,
@@ -41,7 +42,7 @@ export default function AdminProducts() {
 
         // Read products
         const productsData = response.data?.data?.products;
-        setProducts(productsData?.data ?? []);
+        setProducts(productsData?.data ?? []); // Always replace state
         setTotalPages(productsData?.last_page ?? 1);
         setCurrentPage(productsData?.current_page ?? 1);
 
@@ -55,17 +56,16 @@ export default function AdminProducts() {
         });
 
     } catch (err) {
-        
         toast.error('Failed to load products');
-        setProducts([]);
+        setProducts([]); // Clear on error
     } finally {
         setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchProducts(1);
-  }, [filters.category_id, filters.status]);
+    fetchProducts(currentPage);
+  }, [filters.category_id, filters.status, filters.search, currentPage]);
 
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
@@ -191,8 +191,12 @@ export default function AdminProducts() {
                       <div className="w-12 h-12 rounded-2xl bg-gray-50 overflow-hidden flex-shrink-0 border border-gray-100">
                         {product.thumbnail ? (
                             <img 
-                                src={`http://localhost:8000/storage/${product.thumbnail}`} 
+                                src={product.thumbnail?.trim().startsWith('http') 
+                                    ? product.thumbnail.trim() 
+                                    : `http://localhost:8000/storage/${product.thumbnail?.trim()}`} 
                                 alt={product.name}
+                                loading="lazy"
+                                decoding="async"
                                 className="w-full h-full object-cover"
                             />
                         ) : (

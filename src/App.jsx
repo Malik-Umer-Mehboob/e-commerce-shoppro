@@ -3,7 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import ProtectedRoute from './components/ProtectedRoute';
 import { Toaster } from 'react-hot-toast';
-import SplashPage from './pages/SplashPage';
+const SplashPage = lazy(() => import('./pages/SplashPage'));
 
 // Auth Components
 const Login = lazy(() => import('./pages/auth/Login'));
@@ -107,47 +107,46 @@ const ChatWidget = lazy(() => import('./components/common/ChatWidget'));
 const AffiliateLinkTracker = lazy(() => import('./components/common/AffiliateLinkTracker.jsx'));
 const ComparisonSidebar = lazy(() => import('./components/common/ComparisonSidebar.jsx'));
 
-const LoadingFallback = () => (
-  <div style={{
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: '100vh',
-    backgroundColor: '#F8FAFC',
-  }}>
+const LoadingSpinner = () => (
     <div style={{
-      textAlign: 'center',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '100vh',
+        backgroundColor: '#F8FAFC',
+        flexDirection: 'column',
+        gap: '16px',
     }}>
-      <div style={{
-        width: '40px',
-        height: '40px',
-        border: '3px solid #E2E8F0',
-        borderTop: '3px solid #F97316',
-        borderRadius: '50%',
-        animation: 'spin 1s linear infinite',
-        margin: '0 auto 16px',
-      }} />
-      <p style={{
-        color: '#94A3B8',
-        fontSize: '14px',
-      }}>
-        Loading...
-      </p>
+        <div style={{
+            width: '44px',
+            height: '44px',
+            border: '3px solid #E2E8F0',
+            borderTop: '3px solid #F97316',
+            borderRadius: '50%',
+            animation: 'spin 0.8s linear infinite',
+        }} />
+        <p style={{
+            color: '#94A3B8',
+            fontSize: '14px',
+            fontWeight: '500',
+        }}>
+            Loading...
+        </p>
+        <style>{`
+            @keyframes spin {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+            }
+        `}</style>
     </div>
-    <style>{`
-      @keyframes spin {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
-      }
-    `}</style>
-  </div>
 );
 
 function App() {
-  const { isAuthenticated, role } = useSelector(state => state.auth);
+  const { isAuthenticated, user } = useSelector(state => state.auth);
 
   const getDefaultRoute = () => {
     if (!isAuthenticated) return '/login';
+    const role = user?.role ?? user?.roles?.[0]?.name ?? user?.roles?.[0];
     if (role === 'admin') return '/admin/dashboard';
     if (role === 'seller') return '/seller/dashboard';
     if (role === 'support') return '/support/dashboard';
@@ -157,17 +156,17 @@ function App() {
 
   return (
     <>
-      <Suspense fallback={<LoadingFallback />}>
+      <Suspense fallback={<LoadingSpinner />}>
         <AffiliateLinkTracker />
         <ComparisonSidebar />
         <Routes>
-          <Route path="/" element={<SplashPage />} />
-          <Route path="/home" element={
+          <Route path="/" element={<Navigate to="/home" replace />} />
+          <Route path="/home" element={<Home />} />
+          <Route path="/cart" element={
             <ProtectedRoute allowedRoles={['customer']}>
-              <Home />
+              <CartPage />
             </ProtectedRoute>
           } />
-          <Route path="/cart" element={<CartPage />} />
           <Route path="/checkout" element={
             <ProtectedRoute allowedRoles={['customer']}>
               <Checkout />
@@ -602,7 +601,7 @@ function App() {
             </ProtectedRoute>
           } />
 
-          <Route path="*" element={<Navigate to={getDefaultRoute()} replace />} />
+          <Route path="*" element={<Navigate to="/home" replace />} />
         </Routes>
         <ChatWidget />
       </Suspense>

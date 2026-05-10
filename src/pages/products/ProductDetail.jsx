@@ -88,6 +88,8 @@ const ProductDetail = () => {
               <img 
                 src={product.thumbnail || 'https://placehold.co/600'} 
                 alt={product.name} 
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover transition-transform hover:scale-105 duration-500"
               />
             </div>
@@ -95,7 +97,7 @@ const ProductDetail = () => {
             <div className="grid grid-cols-4 gap-4">
               {[1, 2, 3, 4].map((i) => (
                 <div key={i} className="aspect-square rounded-xl bg-gray-50 border border-gray-100 cursor-pointer overflow-hidden opacity-50 hover:opacity-100 transition-all hover:shadow-md">
-                  <img src={product.thumbnail || 'https://placehold.co/150'} alt="" className="w-full h-full object-cover" />
+                  <img src={product.thumbnail || 'https://placehold.co/150'} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
                 </div>
               ))}
             </div>

@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
 import api from '../../../services/api';
 import { toast } from 'react-hot-toast';
 import { Save, ArrowLeft, Image as ImageIcon, Settings, Eye } from 'lucide-react';
@@ -24,6 +22,19 @@ const AdminPostEditor = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showMediaLibrary, setShowMediaLibrary] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+
+  const insertTag = (tag) => {
+    const textarea = document.getElementById('blog-content');
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selected = post.content.substring(start, end);
+    const newContent = post.content.substring(0, start)
+        + `<${tag}>${selected}</${tag}>`
+        + post.content.substring(end);
+    setPost({ ...post, content: newContent });
+  };
 
   useEffect(() => {
     fetchCategories();
@@ -43,9 +54,18 @@ const AdminPostEditor = () => {
   const fetchPost = async () => {
     try {
       const response = await api.get(`/admin/blog/posts/${id}`);
-      setPost(response.data);
+      const postData = response.data?.data || response.data;
+      setPost({
+        title: postData.title ?? '',
+        content: postData.content ?? '',
+        excerpt: postData.excerpt ?? '',
+        status: postData.status ?? 'draft',
+        category_id: postData.category_id ?? '',
+        featured_image: postData.featured_image ?? '',
+      });
     } catch (err) {
       toast.error('Failed to load post');
+      navigate('/admin/blog');
     }
   };
 
@@ -68,15 +88,7 @@ const AdminPostEditor = () => {
     }
   };
 
-  const quillModules = {
-    toolbar: [
-      [{ 'header': [1, 2, 3, false] }],
-      ['bold', 'italic', 'underline', 'strike', 'blockquote'],
-      [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-      ['link', 'image', 'video'],
-      ['clean']
-    ],
-  };
+
 
   return (
     <div className="max-w-6xl mx-auto animate-in fade-in duration-500">
@@ -114,15 +126,90 @@ const AdminPostEditor = () => {
               onChange={(e) => setPost({ ...post, title: e.target.value })}
             />
             
-            <div className="prose-editor">
-              <ReactQuill 
-                theme="snow"
-                value={post.content}
-                onChange={(val) => setPost({ ...post, content: val })}
-                modules={quillModules}
-                placeholder="Write your story here..."
-                className="h-[500px] mb-12"
-              />
+            <div className="prose-editor mb-12">
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
+                <button 
+                  onClick={() => setShowPreview(!showPreview)}
+                  className="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold rounded-lg transition-colors"
+                >
+                  {showPreview ? 'Edit' : 'Preview'}
+                </button>
+              </div>
+
+              {!showPreview ? (
+                <>
+                  <div style={{
+                      display: 'flex',
+                      gap: '6px',
+                      padding: '8px 12px',
+                      backgroundColor: '#F8FAFC',
+                      border: '1px solid #E2E8F0',
+                      borderBottom: 'none',
+                      borderRadius: '8px 8px 0 0',
+                      flexWrap: 'wrap',
+                  }}>
+                      {[
+                          { label: 'B', tag: 'strong', style: { fontWeight: 'bold' } },
+                          { label: 'I', tag: 'em', style: { fontStyle: 'italic' } },
+                          { label: 'H2', tag: 'h2', style: {} },
+                          { label: 'H3', tag: 'h3', style: {} },
+                          { label: 'UL', tag: 'ul', style: {} },
+                          { label: 'OL', tag: 'ol', style: {} },
+                          { label: 'P', tag: 'p', style: {} },
+                      ].map((btn) => (
+                          <button
+                              key={btn.tag}
+                              type="button"
+                              onClick={() => insertTag(btn.tag)}
+                              style={{
+                                  padding: '4px 10px',
+                                  border: '1px solid #E2E8F0',
+                                  borderRadius: '4px',
+                                  backgroundColor: 'white',
+                                  cursor: 'pointer',
+                                  fontSize: '13px',
+                                  fontWeight: '600',
+                                  ...btn.style,
+                              }}
+                          >
+                              {btn.label}
+                          </button>
+                      ))}
+                  </div>
+
+                  <textarea
+                      id="blog-content"
+                      value={post.content}
+                      onChange={(e) => setPost({ ...post, content: e.target.value })}
+                      placeholder="Write your article content here... (HTML supported)"
+                      rows={20}
+                      style={{
+                          width: '100%',
+                          padding: '16px',
+                          border: '1px solid #E2E8F0',
+                          borderRadius: '0 0 8px 8px',
+                          fontSize: '14px',
+                          fontFamily: 'monospace',
+                          resize: 'vertical',
+                          outline: 'none',
+                          boxSizing: 'border-box',
+                          lineHeight: '1.6',
+                          minHeight: '400px',
+                      }}
+                  />
+                </>
+              ) : (
+                <div
+                    style={{
+                        padding: '16px',
+                        border: '1px solid #E2E8F0',
+                        borderRadius: '8px',
+                        minHeight: '400px',
+                        backgroundColor: 'white',
+                    }}
+                    dangerouslySetInnerHTML={{ __html: post.content }}
+                />
+              )}
             </div>
           </div>
         </div>

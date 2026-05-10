@@ -11,7 +11,6 @@ import { productService } from '../../services/productService';
 import { logoutUser } from '../../store/authSlice';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import ThemeToggle from '../../components/ThemeToggle';
 
 export default function SellerProducts() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -129,7 +128,6 @@ export default function SellerProducts() {
           </button>
           <div className="md:hidden font-bold text-[#0F172A] text-lg">ShopPro</div>
           <div className="ml-auto flex items-center space-x-4">
-            <ThemeToggle />
             <span className="text-sm font-medium text-[#0F172A] hidden sm:block">{user?.name}</span>
             <div className="w-8 h-8 rounded-full bg-[#0F172A] text-white flex items-center justify-center font-bold">
               {user?.name?.charAt(0)}
@@ -208,7 +206,11 @@ export default function SellerProducts() {
                   <tr key={product.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <img src={product.thumbnail ? `http://localhost:8000/storage/${product.thumbnail}` : 'https://placehold.co/40'} className="w-10 h-10 rounded-lg object-cover" />
+                        <img src={product.thumbnail 
+                          ? (product.thumbnail.trim().startsWith('http') ? product.thumbnail.trim() : `http://localhost:8000/storage/${product.thumbnail.trim()}`)
+                          : 'https://placehold.co/40'} 
+                          className="w-10 h-10 rounded-lg object-cover" 
+                        />
                         <div><p className="font-semibold text-[#0F172A]">{product.name}</p><p className="text-xs text-gray-500">{product.sku}</p></div>
                       </div>
                     </td>

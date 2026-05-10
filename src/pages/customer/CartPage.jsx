@@ -92,7 +92,7 @@ const CartPage = () => {
               <div key={item.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex flex-col sm:flex-row gap-4">
                 {/* Product Image */}
                 <div className="w-full sm:w-32 h-32 bg-gray-50 rounded-xl overflow-hidden flex-shrink-0">
-                  <img src={item.product?.thumbnail || 'https://placehold.co/150'} alt={item.product?.name || 'Unknown Product'} className="w-full h-full object-cover" />
+                  <img src={item.product?.thumbnail || 'https://placehold.co/150'} alt={item.product?.name || 'Unknown Product'} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                 </div>
                 
                 {/* Details */}

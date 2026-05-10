@@ -31,7 +31,6 @@ import { authService } from '../../services/authService';
 import { logoutUser } from '../../store/authSlice';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import ThemeToggle from '../ThemeToggle';
 import GlobalSearch from '../admin/GlobalSearch';
 
 export default function AdminLayout({ children }) {
@@ -180,7 +179,6 @@ export default function AdminLayout({ children }) {
             </button>
             <div className="h-8 w-px bg-gray-100 mx-2"></div>
             <div className="flex items-center space-x-3">
-              <ThemeToggle />
               <div className="text-right hidden sm:block">
                 <p className="text-sm font-black text-[#0F172A]">{user?.name}</p>
                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Administrator</p>

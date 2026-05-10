@@ -295,7 +295,11 @@ export default function Warehouses() {
                       <div className="flex items-center space-x-4">
                         <div className="w-10 h-10 rounded-xl bg-gray-50 overflow-hidden flex-shrink-0 border border-gray-100">
                           {p.thumbnail ? (
-                            <img src={p.thumbnail} alt="" className="w-full h-full object-cover" />
+                            <img 
+                              src={p.thumbnail?.trim().startsWith('http') ? p.thumbnail.trim() : `http://localhost:8000/storage/${p.thumbnail?.trim()}`} 
+                              alt="" 
+                              className="w-full h-full object-cover" 
+                            />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center bg-gray-50 text-[8px] font-black text-gray-300">NO IMG</div>
                           )}

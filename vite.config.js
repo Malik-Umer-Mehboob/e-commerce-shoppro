@@ -7,19 +7,43 @@ export default defineConfig({
         react(),
         tailwindcss(),
     ],
+    server: {
+        port: 5173,
+        hmr: true,
+    },
     build: {
         rollupOptions: {
             output: {
                 manualChunks: {
-                    vendor: ['react', 'react-dom', 'react-router-dom'],
-                    redux: ['@reduxjs/toolkit', 'react-redux'],
-                    ui: ['lucide-react'],
+                    'react-vendor': [
+                        'react',
+                        'react-dom',
+                        'react-router-dom',
+                    ],
+                    'redux-vendor': [
+                        '@reduxjs/toolkit',
+                        'react-redux',
+                    ],
+                    'ui-vendor': [
+                        'lucide-react',
+                        'react-hot-toast',
+                    ],
                 },
             },
         },
-        chunkSizeWarningLimit: 1000,
+        chunkSizeWarningLimit: 1500,
+        sourcemap: false,
+        minify: 'esbuild',
     },
     optimizeDeps: {
-        include: ['react', 'react-dom', 'react-router-dom'],
+        include: [
+            'react',
+            'react-dom',
+            'react-router-dom',
+            '@reduxjs/toolkit',
+            'react-redux',
+            'axios',
+            'lucide-react',
+        ],
     },
 });

@@ -168,7 +168,9 @@ export default function LowStock() {
                         <div className="w-12 h-12 rounded-2xl bg-gray-50 overflow-hidden flex-shrink-0 border border-gray-100 flex items-center justify-center">
                           {product.thumbnail ? (
                             <img 
-                              src={product.thumbnail} 
+                              src={product.thumbnail?.trim().startsWith('http') 
+                                ? product.thumbnail.trim() 
+                                : `http://localhost:8000/storage/${product.thumbnail?.trim()}`} 
                               alt={product.name}
                               className="w-full h-full object-cover"
                             />

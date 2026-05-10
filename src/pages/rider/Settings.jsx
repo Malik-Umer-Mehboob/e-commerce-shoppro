@@ -11,7 +11,6 @@ import {
 import api from '../../services/api';
 import { updateUser } from '../../store/authSlice';
 import { toast } from 'react-hot-toast';
-import ThemeToggle from '../../components/ThemeToggle';
 import RiderLayout from '../../components/rider/Layout';
 
 export default function RiderSettings() {
@@ -159,7 +158,6 @@ export default function RiderSettings() {
             <div className="w-1.5 h-1.5 rounded-full bg-orange-400"></div>
           </div>
           <div className="flex items-center space-x-4 ml-auto">
-            <ThemeToggle />
             <div className="text-right">
               <p className="text-sm font-black text-[#0F172A]">{user?.name}</p>
               <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Account Security</p>

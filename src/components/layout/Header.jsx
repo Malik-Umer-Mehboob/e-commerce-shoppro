@@ -12,7 +12,6 @@ import SearchBar from '../search/SearchBar';
 import NotificationBell from '../notifications/NotificationBell';
 import LanguageSwitcher from './LanguageSwitcher';
 import CurrencySwitcher from './CurrencySwitcher';
-import ThemeToggle from '../ThemeToggle';
 import { useState, useRef, useEffect } from 'react';
 
 const Header = () => {
@@ -82,7 +81,6 @@ const Header = () => {
 
             <NotificationBell />
             <CartIcon />
-            <ThemeToggle />
 
             {isAuthenticated ? (
               <div className="relative" ref={dropdownRef}>

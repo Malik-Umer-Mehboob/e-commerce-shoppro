@@ -49,11 +49,6 @@ export default function Login() {
       dispatch(fetchWishlist());
       toast.success('Logged in successfully');
 
-      // Verify it was saved
-      console.log('localStorage after save:',
-          localStorage.getItem('shoppro_token'),
-          localStorage.getItem('shoppro_user')
-      );
 
       // Redirect based on role
       const role = user.role;

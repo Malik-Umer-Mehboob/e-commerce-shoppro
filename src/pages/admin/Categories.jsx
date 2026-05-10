@@ -26,6 +26,9 @@ export default function Categories() {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(null);
   const [expandedCategories, setExpandedCategories] = useState({});
+  const [subForms, setSubForms] = useState([
+    { name: '', description: '' }
+  ]);
 
   const fetchCategories = async () => {
     setLoading(true);
@@ -70,6 +73,7 @@ export default function Categories() {
       is_active: true,
       order: 0,
     });
+    setSubForms([{ name: '', description: '' }]);
     setShowModal(true);
   };
 
@@ -77,13 +81,32 @@ export default function Categories() {
     setEditingCategory(category);
     setParentId(category.parent_id);
     setForm({
-      name: category.name,
+      name: category.name || '',
       description: category.description ?? '',
       parent_id: category.parent_id,
       is_active: category.is_active,
-      order: category.order,
+      order: category.order ?? 0,
     });
     setShowModal(true);
+  };
+
+  const addSubField = () => {
+    if (subForms.length >= 10) return; // max 10
+    setSubForms(prev => [
+      ...prev,
+      { name: '', description: '' }
+    ]);
+  };
+
+  const removeSubField = (index) => {
+    if (subForms.length === 1) return; // keep at least 1
+    setSubForms(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const updateSubField = (index, field, value) => {
+    setSubForms(prev => prev.map((item, i) =>
+      i === index ? { ...item, [field]: value } : item
+    ));
   };
 
   const handleSave = async (e) => {
@@ -105,6 +128,49 @@ export default function Categories() {
       fetchCategories();
     } catch (err) {
       toast.error(err.response?.data?.message ?? 'Failed to save');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveMultipleSubs = async () => {
+    // Filter out empty ones
+    const validSubs = subForms.filter(s => s.name.trim());
+
+    if (validSubs.length === 0) {
+      toast.error('Please enter at least one name');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      // Save all at once using Promise.all
+      await Promise.all(
+        validSubs.map(sub =>
+          api.post('/admin/categories', {
+            name: sub.name.trim(),
+            description: sub.description?.trim()
+              || null,
+            parent_id: parentId,
+            is_active: true,
+            order: 0,
+          })
+        )
+      );
+
+      toast.success(
+        validSubs.length === 1
+          ? 'Subcategory created!'
+          : `${validSubs.length} subcategories created!`
+      );
+      setShowModal(false);
+      setSubForms([{ name: '', description: '' }]);
+      fetchCategories();
+    } catch (err) {
+      toast.error(
+        err.response?.data?.message
+          ?? 'Failed to save'
+      );
     } finally {
       setSaving(false);
     }
@@ -167,6 +233,7 @@ export default function Categories() {
   };
 
   const pendingRequests = requests.filter(r => r.status === 'pending').length;
+  const parentCategory = categories.find(c => c.id === parentId);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -465,7 +532,7 @@ export default function Categories() {
                   </h3>
                   {parentId && !editingCategory && (
                     <p className="text-xs text-orange-500 font-bold mt-1 uppercase tracking-widest">
-                      Adding to: {categories.find(c => c.id === parentId)?.name}
+                      Adding to: {parentCategory?.name}
                     </p>
                   )}
                 </div>
@@ -474,87 +541,296 @@ export default function Categories() {
                 </button>
               </div>
 
-              <form onSubmit={handleSave} className="space-y-6">
+              {parentId && !editingCategory ? (
+                /* Multiple Subcategory Form */
                 <div>
-                  <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Category Name</label>
-                  <input
-                    required
-                    value={form.name}
-                    onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                    placeholder="e.g. Electronics, Fashion..."
-                    className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 font-black text-[#0F172A] focus:ring-2 focus:ring-orange-500/20 outline-none transition-all"
-                  />
-                </div>
+                  <p style={{ color: '#64748B', fontSize: '13px', marginBottom: '20px' }}>
+                    You can add multiple subcategories at once
+                  </p>
 
-                {!parentId && !editingCategory && (
-                  <div>
-                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Parent Category</label>
-                    <select
-                      value={form.parent_id || ''}
-                      onChange={e => setForm(f => ({ ...f, parent_id: e.target.value || null }))}
-                      className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 font-bold text-[#0F172A] focus:ring-2 focus:ring-orange-500/20 outline-none"
+                  {/* Subcategory fields */}
+                  {subForms.map((sub, index) => (
+                    <div key={index} style={{
+                      backgroundColor: '#F8FAFC',
+                      borderRadius: '10px',
+                      padding: '16px',
+                      marginBottom: '12px',
+                      border: '1px solid #E2E8F0',
+                      position: 'relative',
+                    }}>
+                      {/* Field number */}
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        marginBottom: '10px',
+                      }}>
+                        <span style={{
+                          fontSize: '12px',
+                          fontWeight: '600',
+                          color: '#F97316',
+                          backgroundColor: '#FFF7ED',
+                          padding: '2px 8px',
+                          borderRadius: '10px',
+                        }}>
+                          Subcategory {index + 1}
+                        </span>
+
+                        {/* Remove button - only if more than 1 */}
+                        {subForms.length > 1 && (
+                          <button
+                            onClick={() => removeSubField(index)}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: '#EF4444',
+                              cursor: 'pointer',
+                              fontSize: '18px',
+                              padding: '0',
+                              lineHeight: 1,
+                            }}
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Name field */}
+                      <div style={{ marginBottom: '8px' }}>
+                        <label style={{
+                          fontSize: '12px',
+                          fontWeight: '600',
+                          color: '#374151',
+                          display: 'block',
+                          marginBottom: '4px',
+                        }}>
+                          Name *
+                        </label>
+                        <input
+                          type="text"
+                          value={sub.name || ''}
+                          onChange={(e) => updateSubField(
+                            index, 'name', e.target.value
+                          )}
+                          placeholder="e.g. Mobile Phones"
+                          style={{
+                            width: '100%',
+                            padding: '8px 12px',
+                            border: '1px solid #E2E8F0',
+                            borderRadius: '8px',
+                            fontSize: '14px',
+                            outline: 'none',
+                            boxSizing: 'border-box',
+                            backgroundColor: 'white',
+                          }}
+                          autoFocus={index === 0}
+                        />
+                      </div>
+
+                      {/* Description field (optional) */}
+                      <div>
+                        <label style={{
+                          fontSize: '12px',
+                          fontWeight: '600',
+                          color: '#374151',
+                          display: 'block',
+                          marginBottom: '4px',
+                        }}>
+                          Description (optional)
+                        </label>
+                        <input
+                          type="text"
+                          value={sub.description || ''}
+                          onChange={(e) => updateSubField(
+                            index, 'description', e.target.value
+                          )}
+                          placeholder="Brief description..."
+                          style={{
+                            width: '100%',
+                            padding: '8px 12px',
+                            border: '1px solid #E2E8F0',
+                            borderRadius: '8px',
+                            fontSize: '14px',
+                            outline: 'none',
+                            boxSizing: 'border-box',
+                            backgroundColor: 'white',
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Add Another button */}
+                  {subForms.length < 10 && (
+                    <button
+                      onClick={addSubField}
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        border: '2px dashed #E2E8F0',
+                        borderRadius: '10px',
+                        backgroundColor: 'transparent',
+                        color: '#64748B',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        marginBottom: '16px',
+                        transition: 'all 0.2s',
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.borderColor = '#F97316';
+                        e.currentTarget.style.color = '#F97316';
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.borderColor = '#E2E8F0';
+                        e.currentTarget.style.color = '#64748B';
+                      }}
                     >
-                      <option value="">None (Main Category)</option>
-                      {categories.filter(c => c.id !== editingCategory?.id).map(c => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
-                      ))}
-                    </select>
+                      + Add Another Subcategory
+                    </button>
+                  )}
+
+                  {/* Summary */}
+                  {subForms.length > 1 && (
+                    <p style={{
+                      fontSize: '12px',
+                      color: '#94A3B8',
+                      textAlign: 'center',
+                      marginBottom: '16px',
+                    }}>
+                      {subForms.filter(s => s.name.trim()).length}
+                      {' of '}
+                      {subForms.length} subcategories ready to save
+                    </p>
+                  )}
+
+                  {/* Buttons */}
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                      onClick={() => setShowModal(false)}
+                      style={{
+                        flex: 1,
+                        padding: '10px',
+                        border: '1px solid #E2E8F0',
+                        borderRadius: '8px',
+                        backgroundColor: 'white',
+                        cursor: 'pointer',
+                        fontWeight: '500',
+                      }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSaveMultipleSubs}
+                      disabled={saving}
+                      style={{
+                        flex: 2,
+                        padding: '10px',
+                        border: 'none',
+                        borderRadius: '8px',
+                        backgroundColor: '#F97316',
+                        color: 'white',
+                        cursor: saving ? 'not-allowed' : 'pointer',
+                        fontWeight: '600',
+                        opacity: saving ? 0.7 : 1,
+                      }}
+                    >
+                      {saving
+                        ? 'Saving...'
+                        : subForms.length === 1
+                          ? 'Save Subcategory'
+                          : `Save All ${subForms.length} Subcategories`}
+                    </button>
                   </div>
-                )}
-
-                <div>
-                  <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Description</label>
-                  <textarea
-                    value={form.description}
-                    onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                    placeholder="Briefly describe this category..."
-                    rows="3"
-                    className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 font-medium text-[#0F172A] focus:ring-2 focus:ring-orange-500/20 outline-none resize-none"
-                  ></textarea>
                 </div>
-
-                <div className="grid grid-cols-2 gap-4">
+              ) : (
+                /* Original Single Category Form (Main or Edit) */
+                <form onSubmit={handleSave} className="space-y-6">
                   <div>
-                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Display Order</label>
+                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Category Name</label>
                     <input
-                      type="number"
-                      value={form.order}
-                      onChange={e => setForm(f => ({ ...f, order: e.target.value }))}
-                      className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 font-bold text-[#0F172A] focus:ring-2 focus:ring-orange-500/20 outline-none"
+                      required
+                      value={form.name || ''}
+                      onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                      placeholder="e.g. Electronics, Fashion..."
+                      className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 font-black text-[#0F172A] focus:ring-2 focus:ring-orange-500/20 outline-none transition-all"
                     />
-                    <p className="text-[10px] text-gray-400 font-bold mt-1.5 ml-1 uppercase tracking-widest">Lower = Shown First</p>
                   </div>
-                  <div className="flex flex-col justify-center pt-6">
-                    <label className="relative inline-flex items-center cursor-pointer group">
-                      <input 
-                        type="checkbox" 
-                        className="sr-only peer"
-                        checked={form.is_active}
-                        onChange={e => setForm(f => ({ ...f, is_active: e.target.checked }))}
-                      />
-                      <div className="w-14 h-8 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-1 after:left-1 after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-orange-500 shadow-sm"></div>
-                      <span className="ml-3 text-sm font-black text-gray-500 uppercase tracking-widest group-hover:text-[#0F172A] transition-colors">Active Status</span>
-                    </label>
-                  </div>
-                </div>
 
-                <div className="flex gap-4 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowModal(false)}
-                    className="flex-1 py-4 rounded-2xl border-2 border-slate-100 font-black text-gray-400 hover:bg-slate-50 hover:text-gray-600 transition-all"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={saving}
-                    className="flex-1 py-4 rounded-2xl bg-[#0F172A] text-white font-black hover:bg-black transition-all shadow-xl shadow-[#0F172A]/20 disabled:opacity-50"
-                  >
-                    {saving ? 'Saving...' : editingCategory ? 'Update Category' : 'Save Category'}
-                  </button>
-                </div>
-              </form>
+                  {!parentId && !editingCategory && (
+                    <div>
+                      <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Parent Category</label>
+                      <select
+                        value={form.parent_id || ''}
+                        onChange={e => setForm(f => ({ ...f, parent_id: e.target.value || null }))}
+                        className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 font-bold text-[#0F172A] focus:ring-2 focus:ring-orange-500/20 outline-none"
+                      >
+                        <option value="">None (Main Category)</option>
+                        {categories.filter(c => c.id !== editingCategory?.id).map(c => (
+                          <option key={c.id} value={c.id}>{c.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Description</label>
+                    <textarea
+                      value={form.description || ''}
+                      onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                      placeholder="Briefly describe this category..."
+                      rows="3"
+                      className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 font-medium text-[#0F172A] focus:ring-2 focus:ring-orange-500/20 outline-none resize-none"
+                    ></textarea>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Display Order</label>
+                      <input
+                        type="number"
+                        value={form.order ?? 0}
+                        onChange={e => setForm(f => ({ ...f, order: e.target.value }))}
+                        className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 font-bold text-[#0F172A] focus:ring-2 focus:ring-orange-500/20 outline-none"
+                      />
+                      <p className="text-[10px] text-gray-400 font-bold mt-1.5 ml-1 uppercase tracking-widest">Lower = Shown First</p>
+                    </div>
+                    <div className="flex flex-col justify-center pt-6">
+                      <label className="relative inline-flex items-center cursor-pointer group">
+                        <input 
+                          type="checkbox" 
+                          className="sr-only peer"
+                          checked={form.is_active}
+                          onChange={e => setForm(f => ({ ...f, is_active: e.target.checked }))}
+                        />
+                        <div className="w-14 h-8 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-1 after:left-1 after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-orange-500 shadow-sm"></div>
+                        <span className="ml-3 text-sm font-black text-gray-500 uppercase tracking-widest group-hover:text-[#0F172A] transition-colors">Active Status</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => setShowModal(false)}
+                      className="flex-1 py-4 rounded-2xl border-2 border-slate-100 font-black text-gray-400 hover:bg-slate-50 hover:text-gray-600 transition-all"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={saving}
+                      className="flex-1 py-4 rounded-2xl bg-[#0F172A] text-white font-black hover:bg-black transition-all shadow-xl shadow-[#0F172A]/20 disabled:opacity-50"
+                    >
+                      {saving ? 'Saving...' : editingCategory ? 'Update Category' : 'Save Category'}
+                    </button>
+                  </div>
+                </form>
+              )}
             </div>
           </div>
         </div>

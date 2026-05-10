@@ -39,6 +39,10 @@ export default function Discounts() {
     is_active: true,
   });
 
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingDiscount, setEditingDiscount] = useState(null);
+  const [editForm, setEditForm] = useState({});
+
   useEffect(() => {
     fetchDiscounts();
     fetchCoupons();
@@ -162,6 +166,38 @@ export default function Discounts() {
     }
   };
 
+  const handleEdit = (discount) => {
+      setEditingDiscount(discount);
+      setEditForm({
+          name: discount.name ?? '',
+          type: discount.type ?? 'percentage',
+          value: discount.value ?? '',
+          start_date: discount.starts_at
+              ? discount.starts_at.split('T')[0] : '',
+          end_date: discount.ends_at
+              ? discount.ends_at.split('T')[0] : '',
+          is_active: discount.is_active ?? true,
+      });
+      setShowEditModal(true);
+  };
+
+  const handleUpdate = async () => {
+      try {
+          await api.put(
+              `/admin/discounts/${editingDiscount.id}`,
+              editForm
+          );
+          toast.success('Discount updated!');
+          setShowEditModal(false);
+          fetchDiscounts();
+      } catch (err) {
+          toast.error(
+              err.response?.data?.message
+                  ?? 'Failed to update'
+          );
+      }
+  };
+
   return (
     <div className="space-y-12 animate-in fade-in duration-500">
       {/* --- Product Discounts Section --- */}
@@ -260,8 +296,20 @@ export default function Discounts() {
                     </td>
                     <td className="px-8 py-6">
                       <div className="flex items-center justify-end space-x-2">
-                        <button className="p-2.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all">
-                          <Pencil className="w-5 h-5" />
+                        <button
+                            onClick={() => handleEdit(d)}
+                            style={{
+                                backgroundColor: '#3B82F6',
+                                color: 'white',
+                                border: 'none',
+                                padding: '6px 12px',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                fontSize: '12px',
+                                fontWeight: '500',
+                            }}
+                        >
+                            ✏️ Edit
                         </button>
                         <button onClick={() => handleDelete(d.id)} className="p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all">
                           <Trash2 className="w-5 h-5" />
@@ -650,6 +698,251 @@ export default function Discounts() {
             </div>
           </div>
         </div>
+      )}
+
+      {showEditModal && editingDiscount && (
+          <div style={{
+              position: 'fixed',
+              inset: 0,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 9999,
+          }}>
+              <div style={{
+                  backgroundColor: 'white',
+                  borderRadius: '16px',
+                  padding: '24px',
+                  width: '500px',
+                  maxWidth: '90vw',
+                  maxHeight: '90vh',
+                  overflowY: 'auto',
+              }}>
+                  <h3 style={{
+                      margin: '0 0 20px',
+                      fontSize: '18px',
+                      fontWeight: '700',
+                      color: '#0F172A',
+                  }}>
+                      Edit Discount
+                  </h3>
+
+                  {/* Name */}
+                  <div style={{ marginBottom: '16px' }}>
+                      <label style={{
+                          fontSize: '13px',
+                          fontWeight: '600',
+                          color: '#374151',
+                          display: 'block',
+                          marginBottom: '6px',
+                      }}>
+                          Discount Name
+                      </label>
+                      <input
+                          value={editForm.name}
+                          onChange={e => setEditForm(p =>
+                              ({ ...p, name: e.target.value }))}
+                          style={{
+                              width: '100%',
+                              padding: '10px 12px',
+                              border: '1px solid #E2E8F0',
+                              borderRadius: '8px',
+                              fontSize: '14px',
+                              boxSizing: 'border-box',
+                          }}
+                      />
+                  </div>
+
+                  {/* Type + Value */}
+                  <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 1fr',
+                      gap: '12px',
+                      marginBottom: '16px',
+                  }}>
+                      <div>
+                          <label style={{
+                              fontSize: '13px',
+                              fontWeight: '600',
+                              color: '#374151',
+                              display: 'block',
+                              marginBottom: '6px',
+                          }}>
+                              Type
+                          </label>
+                          <select
+                              value={editForm.type}
+                              onChange={e => setEditForm(p =>
+                                  ({ ...p, type: e.target.value }))}
+                              style={{
+                                  width: '100%',
+                                  padding: '10px 12px',
+                                  border: '1px solid #E2E8F0',
+                                  borderRadius: '8px',
+                                  fontSize: '14px',
+                              }}
+                          >
+                              <option value="percentage">
+                                  Percentage %
+                              </option>
+                              <option value="fixed">
+                                  Fixed Amount Rs.
+                              </option>
+                          </select>
+                      </div>
+                      <div>
+                          <label style={{
+                              fontSize: '13px',
+                              fontWeight: '600',
+                              color: '#374151',
+                              display: 'block',
+                              marginBottom: '6px',
+                          }}>
+                              Value
+                          </label>
+                          <input
+                              type="number"
+                              value={editForm.value}
+                              onChange={e => setEditForm(p =>
+                                  ({ ...p, value: e.target.value }))}
+                              style={{
+                                  width: '100%',
+                                  padding: '10px 12px',
+                                  border: '1px solid #E2E8F0',
+                                  borderRadius: '8px',
+                                  fontSize: '14px',
+                                  boxSizing: 'border-box',
+                              }}
+                          />
+                      </div>
+                  </div>
+
+                  {/* Dates */}
+                  <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 1fr',
+                      gap: '12px',
+                      marginBottom: '16px',
+                  }}>
+                      <div>
+                          <label style={{
+                              fontSize: '13px',
+                              fontWeight: '600',
+                              color: '#374151',
+                              display: 'block',
+                              marginBottom: '6px',
+                          }}>
+                              Start Date
+                          </label>
+                          <input
+                              type="date"
+                              value={editForm.start_date}
+                              onChange={e => setEditForm(p =>
+                                  ({ ...p,
+                                     start_date: e.target.value }))}
+                              style={{
+                                  width: '100%',
+                                  padding: '10px 12px',
+                                  border: '1px solid #E2E8F0',
+                                  borderRadius: '8px',
+                                  fontSize: '14px',
+                                  boxSizing: 'border-box',
+                              }}
+                          />
+                      </div>
+                      <div>
+                          <label style={{
+                              fontSize: '13px',
+                              fontWeight: '600',
+                              color: '#374151',
+                              display: 'block',
+                              marginBottom: '6px',
+                          }}>
+                              End Date
+                          </label>
+                          <input
+                              type="date"
+                              value={editForm.end_date}
+                              onChange={e => setEditForm(p =>
+                                  ({ ...p,
+                                     end_date: e.target.value }))}
+                              style={{
+                                  width: '100%',
+                                  padding: '10px 12px',
+                                  border: '1px solid #E2E8F0',
+                                  borderRadius: '8px',
+                                  fontSize: '14px',
+                                  boxSizing: 'border-box',
+                              }}
+                          />
+                      </div>
+                  </div>
+
+                  {/* Active toggle */}
+                  <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      marginBottom: '20px',
+                  }}>
+                      <label style={{
+                          fontSize: '13px',
+                          fontWeight: '600',
+                          color: '#374151',
+                      }}>
+                          Active
+                      </label>
+                      <input
+                          type="checkbox"
+                          checked={editForm.is_active}
+                          onChange={e => setEditForm(p =>
+                              ({ ...p,
+                                 is_active: e.target.checked }))}
+                          style={{
+                              width: '18px',
+                              height: '18px',
+                              cursor: 'pointer',
+                          }}
+                      />
+                  </div>
+
+                  {/* Buttons */}
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                          onClick={() => setShowEditModal(false)}
+                          style={{
+                              flex: 1,
+                              padding: '10px',
+                              border: '1px solid #E2E8F0',
+                              borderRadius: '8px',
+                              backgroundColor: 'white',
+                              cursor: 'pointer',
+                              fontWeight: '500',
+                              fontSize: '14px',
+                          }}
+                      >
+                          Cancel
+                      </button>
+                      <button
+                          onClick={handleUpdate}
+                          style={{
+                              flex: 2,
+                              padding: '10px',
+                              border: 'none',
+                              borderRadius: '8px',
+                              backgroundColor: '#F97316',
+                              color: 'white',
+                              cursor: 'pointer',
+                              fontWeight: '600',
+                              fontSize: '14px',
+                          }}
+                      >
+                          Save Changes
+                      </button>
+                  </div>
+              </div>
+          </div>
       )}
     </div>
   );

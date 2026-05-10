@@ -21,7 +21,6 @@ import { logoutUser } from '../../store/authSlice';
 import { useNavigate, NavLink } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import api from '../../services/api';
-import ThemeToggle from '../../components/ThemeToggle';
 import { 
   BarChart, 
   Bar, 
@@ -150,7 +149,6 @@ export default function SellerAnalytics() {
           </button>
           
           <div className="ml-auto flex items-center space-x-6">
-            <ThemeToggle />
             <div className="text-right hidden sm:block">
               <p className="text-sm font-black text-[#0F172A]">{user?.name}</p>
               <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Seller Panel</p>

@@ -22,6 +22,7 @@ export default function AddProduct() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(isEdit);
+  const [thresholdError, setThresholdError] = useState('');
   
   const [formData, setFormData] = useState({
     name: '',
@@ -108,20 +109,24 @@ export default function AddProduct() {
       const response = await productService.getProduct(id);
       const p = response.data;
       setFormData({
-        name: p.name,
+        name: p.name || '',
         short_description: p.short_description || '',
         description: p.description || '',
-        price: p.price,
-        sale_price: p.sale_price || '',
-        category_id: p.category_id,
-        stock_quantity: p.stock_quantity,
-        low_stock_threshold: p.low_stock_threshold,
-        status: p.status,
-        is_featured: p.is_featured,
-        tags: p.tags?.map(t => t.name).join(', ') || ''
+        price: p.price ?? '',
+        sale_price: p.sale_price ?? '',
+        category_id: p.category_id ?? '',
+        stock_quantity: p.stock_quantity ?? '',
+        low_stock_threshold: p.low_stock_threshold ?? '5',
+        status: p.status || 'draft',
+        is_featured: p.is_featured ?? false,
+        tags: Array.isArray(p.tags)
+          ? p.tags.map(t => (typeof t === 'object' ? t.name : t)).join(', ')
+          : ''
       });
       if (p.thumbnail) {
-        setThumbnailPreview(`http://localhost:8000/storage/${p.thumbnail}`);
+        setThumbnailPreview(p.thumbnail.startsWith('http')
+          ? p.thumbnail
+          : `http://localhost:8000/storage/${p.thumbnail}`);
       }
       setExistingImages(p.images || []);
     } catch (error) {
@@ -196,6 +201,15 @@ export default function AddProduct() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const stock = Number(formData.stock_quantity);
+    const threshold = Number(formData.low_stock_threshold);
+    if (formData.low_stock_threshold !== '' && threshold >= stock) {
+      toast.error('Low stock threshold must be less than stock quantity');
+      setThresholdError('Must be less than stock quantity');
+      return;
+    }
+
     setLoading(true);
 
     const dataToSubmit = {
@@ -397,11 +411,34 @@ export default function AddProduct() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Low Stock Threshold</label>
                     <input 
                       type="number" 
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#F97316] outline-none"
+                      className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#F97316] outline-none ${thresholdError ? 'border-red-400' : 'border-gray-200'}`}
                       placeholder="5"
                       value={formData.low_stock_threshold}
-                      onChange={(e) => setFormData({ ...formData, low_stock_threshold: e.target.value })}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setFormData({ ...formData, low_stock_threshold: val });
+                        const stock = Number(formData.stock_quantity);
+                        if (val !== '' && Number(val) >= stock) {
+                          setThresholdError('Must be less than stock quantity');
+                        } else {
+                          setThresholdError('');
+                        }
+                      }}
                     />
+                    {thresholdError ? (
+                      <p style={{ fontSize: '12px', color: '#EF4444', marginTop: '4px' }}>
+                        {thresholdError}
+                      </p>
+                    ) : (
+                      <p style={{
+                        fontSize: '12px',
+                        color: Number(formData.low_stock_threshold) >= Number(formData.stock_quantity) && formData.low_stock_threshold !== ''
+                          ? '#EF4444' : '#94A3B8',
+                        marginTop: '4px',
+                      }}>
+                        Must be less than stock quantity ({formData.stock_quantity || 0})
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
