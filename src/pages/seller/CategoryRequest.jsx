@@ -17,6 +17,7 @@ const INITIAL_FORM = {
   name: '',
   subcategory_name: '',
   parent_id: '',
+  category_id: '',
   description: '',
   reason: '',
 };
@@ -82,22 +83,34 @@ export default function CategoryRequest() {
   ];
 
   const handleSubmit = async () => {
-    if (!form.name.trim()) {
-      toast.error('Category name is required');
+    // 1. Validate based on request type
+    if (form.request_type !== 'access' && !form.name.trim()) {
+      toast.error('Name is required');
       return;
     }
+    
     if (form.request_type === 'both' && !form.subcategory_name.trim()) {
       toast.error('Subcategory name is required');
       return;
     }
+
     if (form.request_type === 'sub' && !form.parent_id) {
       toast.error('Please select a parent category');
       return;
     }
 
+    if (form.request_type === 'access' && !form.category_id) {
+      toast.error('Please select a category to join');
+      return;
+    }
+
     setSubmitting(true);
     try {
-      await api.post('/seller/category-requests', form);
+      const payload = { ...form };
+      if (form.request_type === 'access') {
+          payload.name = categories.find(c => String(c.id) === String(form.category_id))?.name || 'Access Request';
+      }
+      await api.post('/seller/category-requests', payload);
       toast.success('Request sent to admin!');
       setForm(INITIAL_FORM);
       fetchMyRequests();
@@ -115,6 +128,7 @@ export default function CategoryRequest() {
       request_type: type,
       subcategory_name: type !== 'both' ? '' : prev.subcategory_name,
       parent_id: type !== 'sub' ? '' : prev.parent_id,
+      category_id: type !== 'access' ? '' : prev.category_id,
     }));
   };
 
@@ -142,431 +156,397 @@ export default function CategoryRequest() {
   });
 
   return (
-    <div className="min-h-screen flex bg-[#F8FAFC]">
-      {/* ── Sidebar ── */}
-      <aside
-        className={`fixed inset-y-0 left-0 bg-[#0F172A] w-72 transform ${
-          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } md:translate-x-0 transition-transform duration-300 ease-in-out z-30 shadow-2xl shadow-black/50 overflow-y-auto custom-scrollbar`}
-      >
-        <div className="flex h-20 items-center px-8 text-white font-black text-2xl border-b border-white/5 sticky top-0 bg-[#0F172A] z-10">
-          <div className="w-10 h-10 bg-[#F97316] rounded-xl flex items-center justify-center mr-3 shadow-lg shadow-[#F97316]/20">
-            <Globe className="w-6 h-6 text-white" />
-          </div>
-          <span className="tracking-tighter">
-            ShopPro <span className="text-[#F97316]">Seller</span>
-          </span>
-        </div>
+    <>
+      {/* Page title */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-black text-[#0F172A]">Request New Category</h1>
+        <p className="text-gray-500 font-medium">
+          Submit a request to admin — Main only, Subcategory only, or both together
+        </p>
+      </div>
 
-        <nav className="p-6 space-y-1">
-          {navItems.map((item, idx) => (
-            <NavLink
-              key={idx}
-              to={item.path}
-              end={item.end}
-              className={({ isActive }) =>
-                `w-full flex items-center justify-between px-4 py-3 rounded-2xl transition-all group ${
-                  isActive
-                    ? 'bg-[#F97316] text-white shadow-xl shadow-[#F97316]/20'
-                    : 'text-gray-400 hover:bg-white/5 hover:text-white'
-                }`
-              }
-              onClick={() => setIsSidebarOpen(false)}
-            >
-              {({ isActive }) => (
-                <>
-                  <div className="flex items-center space-x-3">
-                    <item.icon className="w-5 h-5 transition-colors" />
-                    <span className="font-bold text-sm">{item.label}</span>
-                  </div>
-                  {isActive && <ChevronRight className="w-4 h-4 animate-in slide-in-from-left-2" />}
-                </>
-              )}
-            </NavLink>
-          ))}
-        </nav>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* ── Form ── */}
+        <div className="lg:col-span-1">
+          <div className="bg-white rounded-[2.5rem] border border-gray-100 p-8 shadow-sm space-y-6">
+            {/* Title */}
+            <div className="flex items-center space-x-3">
+              <div className="p-3 bg-orange-50 rounded-2xl text-orange-600">
+                <Send className="w-6 h-6" />
+              </div>
+              <h3 className="text-xl font-black text-[#0F172A]">New Request</h3>
+            </div>
 
-        <div className="p-6 border-t border-white/5 mt-auto">
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-2xl text-red-400 font-bold hover:bg-red-500/10 transition-all border border-red-500/20"
-          >
-            <LogOut className="w-5 h-5" />
-            <span>Logout</span>
-          </button>
-        </div>
-      </aside>
-
-      {/* ── Main ── */}
-      <div className="flex-1 md:ml-72 flex flex-col min-h-screen transition-all duration-300">
-        {/* Header */}
-        <header className="h-20 bg-white/80 backdrop-blur-md sticky top-0 flex items-center justify-between px-8 z-20 border-b border-gray-100">
-          <button
-            className="md:hidden p-2 text-gray-500 hover:bg-gray-100 rounded-xl"
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          >
-            <Menu className="w-6 h-6" />
-          </button>
-
-          <div className="ml-auto flex items-center space-x-6">
-            <div className="text-right hidden sm:block">
-              <p className="text-sm font-black text-[#0F172A]">{user?.name}</p>
-              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
-                Seller Panel
+            {/* ── Step 1: Request Type ── */}
+            <div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-1">
+                Request Type
               </p>
-            </div>
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#0F172A] to-slate-800 text-white flex items-center justify-center font-black border-2 border-white shadow-lg overflow-hidden">
-              {user?.avatar ? (
-                <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
-              ) : (
-                user?.name?.[0] || 'S'
-              )}
-            </div>
-          </div>
-        </header>
-
-        <main className="flex-1 p-8 lg:p-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          {/* Page title */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-black text-[#0F172A]">Request New Category</h1>
-            <p className="text-gray-500 font-medium">
-              Submit a request to admin — Main only, Subcategory only, or both together
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* ── Form ── */}
-            <div className="lg:col-span-1">
-              <div className="bg-white rounded-[2.5rem] border border-gray-100 p-8 shadow-sm space-y-6">
-                {/* Title */}
-                <div className="flex items-center space-x-3">
-                  <div className="p-3 bg-orange-50 rounded-2xl text-orange-600">
-                    <Send className="w-6 h-6" />
-                  </div>
-                  <h3 className="text-xl font-black text-[#0F172A]">New Request</h3>
-                </div>
-
-                {/* ── Step 1: Request Type ── */}
-                <div>
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-1">
-                    Request Type
-                  </p>
-                  <div style={{ display: 'flex', gap: '10px' }}>
-                    {/* Main Only */}
-                    <label style={typeCard('main')} onClick={() => setType('main')}>
-                      <input
-                        type="radio"
-                        value="main"
-                        checked={form.request_type === 'main'}
-                        onChange={() => setType('main')}
-                        style={{ display: 'none' }}
-                        readOnly
-                      />
-                      <div style={{ fontSize: '22px' }}>📁</div>
-                      <div style={{ fontWeight: 700, fontSize: '13px', marginTop: '4px', color: '#0F172A' }}>
-                        Main Only
-                      </div>
-                      <div style={{ fontSize: '11px', color: '#64748B', marginTop: '2px' }}>
-                        e.g. Electronics
-                      </div>
-                    </label>
-
-                    {/* Main + Sub */}
-                    <label style={typeCard('both')} onClick={() => setType('both')}>
-                      <input
-                        type="radio"
-                        value="both"
-                        checked={form.request_type === 'both'}
-                        onChange={() => setType('both')}
-                        style={{ display: 'none' }}
-                        readOnly
-                      />
-                      <div style={{ fontSize: '22px' }}>📁📂</div>
-                      <div style={{ fontWeight: 700, fontSize: '13px', marginTop: '4px', color: '#0F172A' }}>
-                        Main + Sub
-                      </div>
-                      <div style={{ fontSize: '11px', color: '#64748B', marginTop: '2px' }}>
-                        Both at once
-                      </div>
-                    </label>
-
-                    {/* Sub Only */}
-                    <label style={typeCard('sub')} onClick={() => setType('sub')}>
-                      <input
-                        type="radio"
-                        value="sub"
-                        checked={form.request_type === 'sub'}
-                        onChange={() => setType('sub')}
-                        style={{ display: 'none' }}
-                        readOnly
-                      />
-                      <div style={{ fontSize: '22px' }}>📂</div>
-                      <div style={{ fontWeight: 700, fontSize: '13px', marginTop: '4px', color: '#0F172A' }}>
-                        Sub Only
-                      </div>
-                      <div style={{ fontSize: '11px', color: '#64748B', marginTop: '2px' }}>
-                        Under existing
-                      </div>
-                    </label>
-                  </div>
-                </div>
-
-                {/* ── Step 2: Fields ── */}
-
-                {/* Main Category Name (always visible) */}
-                <div>
-                  <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
-                    {form.request_type === 'sub' ? 'Subcategory Name' : 'Main Category Name'} *
-                  </label>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                {/* Main Only */}
+                <label style={typeCard('main')} onClick={() => setType('main')}>
                   <input
-                    value={form.name}
-                    onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-                    placeholder={form.request_type === 'sub' ? 'e.g. Smart Watches' : 'e.g. Gaming'}
-                    className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 font-black text-[#0F172A] focus:ring-2 focus:ring-orange-500/20 outline-none"
+                    type="radio"
+                    value="main"
+                    checked={form.request_type === 'main'}
+                    onChange={() => setType('main')}
+                    style={{ display: 'none' }}
+                    readOnly
                   />
-                </div>
-
-                {/* Subcategory Name — only when type === 'both' */}
-                {form.request_type === 'both' && (
-                  <div>
-                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
-                      Subcategory Name *
-                    </label>
-                    <input
-                      value={form.subcategory_name}
-                      onChange={(e) =>
-                        setForm((prev) => ({ ...prev, subcategory_name: e.target.value }))
-                      }
-                      placeholder="e.g. Gaming Headsets"
-                      className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 font-black text-[#0F172A] focus:ring-2 focus:ring-orange-500/20 outline-none"
-                    />
-                    <p className="text-xs text-gray-400 mt-1 ml-1">
-                      Will be created inside the main category
-                    </p>
+                  <div style={{ fontSize: '22px' }}>📁</div>
+                  <div style={{ fontWeight: 700, fontSize: '13px', marginTop: '4px', color: '#0F172A' }}>
+                    Main Only
                   </div>
-                )}
-
-                {/* Parent Category — only when type === 'sub' */}
-                {form.request_type === 'sub' && (
-                  <div>
-                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
-                      Parent Category *
-                    </label>
-                    <select
-                      value={form.parent_id}
-                      onChange={(e) =>
-                        setForm((prev) => ({ ...prev, parent_id: e.target.value }))
-                      }
-                      className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 font-bold text-[#0F172A] focus:ring-2 focus:ring-orange-500/20 outline-none"
-                    >
-                      <option value="">Select Parent Category...</option>
-                      {categories.map((cat) => (
-                        <option key={cat.id} value={cat.id}>
-                          {cat.name}
-                        </option>
-                      ))}
-                    </select>
+                  <div style={{ fontSize: '11px', color: '#64748B', marginTop: '2px' }}>
+                    e.g. Electronics
                   </div>
-                )}
+                </label>
 
-                {/* Preview box */}
-                {(form.name || form.subcategory_name) && (
-                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
-                      Preview
-                    </p>
-                    {form.request_type === 'sub' ? (
-                      <div className="flex items-center gap-2 flex-wrap text-sm font-bold">
-                        <span className="text-slate-400">{parentName ?? 'Parent Category'}</span>
-                        {form.name && (
-                          <>
-                            <span className="text-slate-400">→</span>
-                            <strong className="text-[#0F172A]">{form.name}</strong>
-                          </>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2 flex-wrap text-sm font-bold">
-                        {form.name && <strong className="text-[#0F172A]">{form.name}</strong>}
-                        {form.subcategory_name && (
-                          <>
-                            <span className="text-slate-400">→</span>
-                            <strong className="text-[#F97316]">{form.subcategory_name}</strong>
-                          </>
-                        )}
-                      </div>
+                {/* Main + Sub */}
+                <label style={typeCard('both')} onClick={() => setType('both')}>
+                  <input
+                    type="radio"
+                    value="both"
+                    checked={form.request_type === 'both'}
+                    onChange={() => setType('both')}
+                    style={{ display: 'none' }}
+                    readOnly
+                  />
+                  <div style={{ fontSize: '22px' }}>📁📂</div>
+                  <div style={{ fontWeight: 700, fontSize: '13px', marginTop: '4px', color: '#0F172A' }}>
+                    Main + Sub
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#64748B', marginTop: '2px' }}>
+                    Both at once
+                  </div>
+                </label>
+
+                {/* Sub Only */}
+                <label style={typeCard('sub')} onClick={() => setType('sub')}>
+                  <input
+                    type="radio"
+                    value="sub"
+                    checked={form.request_type === 'sub'}
+                    onChange={() => setType('sub')}
+                    style={{ display: 'none' }}
+                    readOnly
+                  />
+                  <div style={{ fontSize: '22px' }}>📂</div>
+                  <div style={{ fontWeight: 700, fontSize: '13px', marginTop: '4px', color: '#0F172A' }}>
+                    Sub Only
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#64748B', marginTop: '2px' }}>
+                    Under existing
+                  </div>
+                </label>
+
+                {/* Join Existing */}
+                <label style={typeCard('access')} onClick={() => setType('access')}>
+                  <input
+                    type="radio"
+                    value="access"
+                    checked={form.request_type === 'access'}
+                    onChange={() => setType('access')}
+                    style={{ display: 'none' }}
+                    readOnly
+                  />
+                  <div style={{ fontSize: '22px' }}>✅</div>
+                  <div style={{ fontWeight: 700, fontSize: '13px', marginTop: '4px', color: '#0F172A' }}>
+                    Join
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#64748B', marginTop: '2px' }}>
+                    Existing
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            {/* ── Step 2: Fields ── */}
+
+            {/* Main Category Name (always visible except for 'access') */}
+            {form.request_type !== 'access' && (
+              <div>
+                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
+                  {form.request_type === 'sub' ? 'Subcategory Name' : 'Main Category Name'} *
+                </label>
+                <input
+                  value={form.name}
+                  onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
+                  placeholder={form.request_type === 'sub' ? 'e.g. Smart Watches' : 'e.g. Gaming'}
+                  className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 font-black text-[#0F172A] focus:ring-2 focus:ring-orange-500/20 outline-none"
+                />
+              </div>
+            )}
+
+            {/* Category ID (only when type === 'access') */}
+            {form.request_type === 'access' && (
+              <div>
+                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
+                  Select Category *
+                </label>
+                <select
+                  value={form.category_id}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, category_id: e.target.value }))
+                  }
+                  className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 font-bold text-[#0F172A] focus:ring-2 focus:ring-orange-500/20 outline-none"
+                >
+                  <option value="">Select Category to join...</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Subcategory Name — only when type === 'both' */}
+            {form.request_type === 'both' && (
+              <div>
+                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
+                  Subcategory Name *
+                </label>
+                <input
+                  value={form.subcategory_name}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, subcategory_name: e.target.value }))
+                  }
+                  placeholder="e.g. Gaming Headsets"
+                  className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 font-black text-[#0F172A] focus:ring-2 focus:ring-orange-500/20 outline-none"
+                />
+                <p className="text-xs text-gray-400 mt-1 ml-1">
+                  Will be created inside the main category
+                </p>
+              </div>
+            )}
+
+            {/* Parent Category — only when type === 'sub' */}
+            {form.request_type === 'sub' && (
+              <div>
+                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
+                  Parent Category *
+                </label>
+                <select
+                  value={form.parent_id}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, parent_id: e.target.value }))
+                  }
+                  className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 font-bold text-[#0F172A] focus:ring-2 focus:ring-orange-500/20 outline-none"
+                >
+                  <option value="">Select Parent Category...</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Preview box */}
+            {(form.name || form.subcategory_name || form.category_id) && (
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                  Preview
+                </p>
+                {form.request_type === 'access' ? (
+                   <div className="flex items-center gap-2 flex-wrap text-sm font-bold">
+                    <span className="text-slate-400">Apply to join:</span>
+                    <strong className="text-[#F97316]">
+                      {categories.find(c => String(c.id) === String(form.category_id))?.name || 'Select a category'}
+                    </strong>
+                  </div>
+                ) : form.request_type === 'sub' ? (
+                  <div className="flex items-center gap-2 flex-wrap text-sm font-bold">
+                    <span className="text-slate-400">{parentName ?? 'Parent Category'}</span>
+                    {form.name && (
+                      <>
+                        <span className="text-slate-400">→</span>
+                        <strong className="text-[#0F172A]">{form.name}</strong>
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 flex-wrap text-sm font-bold">
+                    {form.name && <strong className="text-[#0F172A]">{form.name}</strong>}
+                    {form.subcategory_name && (
+                      <>
+                        <span className="text-slate-400">→</span>
+                        <strong className="text-[#F97316]">{form.subcategory_name}</strong>
+                      </>
                     )}
                   </div>
                 )}
-
-                {/* Reason */}
-                <div>
-                  <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
-                    Why is this needed?
-                  </label>
-                  <textarea
-                    value={form.reason}
-                    onChange={(e) => setForm((prev) => ({ ...prev, reason: e.target.value }))}
-                    placeholder="Explain why this category is needed..."
-                    rows={3}
-                    className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 font-medium text-[#0F172A] focus:ring-2 focus:ring-orange-500/20 outline-none resize-none"
-                  />
-                </div>
-
-                {/* Info */}
-                <div className="bg-blue-50 p-4 rounded-2xl flex items-start space-x-3">
-                  <Info className="w-5 h-5 text-blue-500 mt-0.5 shrink-0" />
-                  <p className="text-[10px] text-blue-700 font-bold uppercase tracking-wider leading-relaxed">
-                    Requests are usually reviewed within 24–48 hours. You'll be notified once approved.
-                  </p>
-                </div>
-
-                {/* Submit */}
-                <button
-                  type="button"
-                  onClick={handleSubmit}
-                  disabled={submitting}
-                  className="w-full bg-[#F97316] text-white py-4 rounded-2xl font-black hover:bg-orange-600 transition-all shadow-xl shadow-orange-500/20 disabled:opacity-50"
-                >
-                  {submitting ? 'Sending...' : 'Submit Request'}
-                </button>
               </div>
+            )}
+
+            {/* Reason */}
+            <div>
+              <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
+                Why is this needed?
+              </label>
+              <textarea
+                value={form.reason}
+                onChange={(e) => setForm((prev) => ({ ...prev, reason: e.target.value }))}
+                placeholder="Explain why this category is needed..."
+                rows={3}
+                className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 font-medium text-[#0F172A] focus:ring-2 focus:ring-orange-500/20 outline-none resize-none"
+              />
             </div>
 
-            {/* ── Request History ── */}
-            <div className="lg:col-span-2">
-              <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
-                <div className="p-8 border-b border-gray-50 flex items-center space-x-3">
-                  <div className="p-3 bg-slate-100 rounded-2xl text-[#0F172A]">
-                    <History className="w-6 h-6" />
-                  </div>
-                  <h3 className="text-xl font-black text-[#0F172A]">Request History</h3>
-                </div>
+            {/* Info */}
+            <div className="bg-blue-50 p-4 rounded-2xl flex items-start space-x-3">
+              <Info className="w-5 h-5 text-blue-500 mt-0.5 shrink-0" />
+              <p className="text-[10px] text-blue-700 font-bold uppercase tracking-wider leading-relaxed">
+                Requests are usually reviewed within 24–48 hours. You'll be notified once approved.
+              </p>
+            </div>
 
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left">
-                    <thead>
-                      <tr className="bg-gray-50/50">
-                        <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
-                          Category
-                        </th>
-                        <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
-                          Type
-                        </th>
-                        <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
-                          Status
-                        </th>
-                        <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
-                          Date
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-50">
-                      {loading ? (
-                        <tr>
-                          <td colSpan="4" className="px-8 py-20 text-center">
-                            <div className="w-12 h-12 border-4 border-[#F97316] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                            <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">
-                              Loading requests...
-                            </p>
-                          </td>
-                        </tr>
-                      ) : myRequests.length === 0 ? (
-                        <tr>
-                          <td colSpan="4" className="px-8 py-20 text-center">
-                            <AlertCircle className="w-12 h-12 text-gray-200 mx-auto mb-4" />
-                            <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">
-                              No requests yet
-                            </p>
-                          </td>
-                        </tr>
-                      ) : (
-                        myRequests.map((req) => (
-                          <tr
-                            key={req.id}
-                            className="hover:bg-gray-50/50 transition-colors group"
-                          >
-                            {/* Name / preview */}
-                            <td className="px-8 py-6">
-                              <div className="flex items-center space-x-3">
-                                <div className="p-2 bg-slate-100 rounded-xl">
-                                  <Layers className="w-4 h-4 text-[#0F172A]" />
-                                </div>
-                                <div>
-                                  <p className="font-black text-[#0F172A]">
-                                    {requestLabel(req)}
-                                  </p>
-                                  {req.rejection_reason && (
-                                    <p className="text-[10px] text-red-500 font-bold mt-0.5">
-                                      Reason: {req.rejection_reason}
-                                    </p>
-                                  )}
-                                </div>
-                              </div>
-                            </td>
+            {/* Submit */}
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={submitting}
+              className="w-full bg-[#F97316] text-white py-4 rounded-2xl font-black hover:bg-orange-600 transition-all shadow-xl shadow-orange-500/20 disabled:opacity-50"
+            >
+              {submitting ? 'Sending...' : 'Submit Request'}
+            </button>
+          </div>
+        </div>
 
-                            {/* Type badge */}
-                            <td className="px-8 py-6">
-                              <span
-                                className={`inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${
-                                  req.type === 'both'
-                                    ? 'bg-purple-100 text-purple-700'
-                                    : req.type === 'sub'
-                                    ? 'bg-blue-100 text-blue-700'
-                                    : 'bg-slate-100 text-slate-600'
-                                }`}
-                              >
-                                {req.type === 'both'
-                                  ? '📁📂 Main+Sub'
-                                  : req.type === 'sub'
-                                  ? '📂 Sub'
-                                  : '📁 Main'}
-                              </span>
-                            </td>
-
-                            {/* Status */}
-                            <td className="px-8 py-6">
-                              {req.status === 'pending' ? (
-                                <div className="flex items-center space-x-2 text-orange-600">
-                                  <Clock className="w-4 h-4" />
-                                  <span className="text-[10px] font-black uppercase tracking-widest">
-                                    Pending
-                                  </span>
-                                </div>
-                              ) : req.status === 'approved' ? (
-                                <div className="flex items-center space-x-2 text-green-600">
-                                  <CheckCircle2 className="w-4 h-4" />
-                                  <span className="text-[10px] font-black uppercase tracking-widest">
-                                    Approved
-                                  </span>
-                                </div>
-                              ) : (
-                                <div className="flex items-center space-x-2 text-red-600">
-                                  <XCircle className="w-4 h-4" />
-                                  <span className="text-[10px] font-black uppercase tracking-widest">
-                                    Rejected
-                                  </span>
-                                </div>
-                              )}
-                            </td>
-
-                            {/* Date */}
-                            <td className="px-8 py-6">
-                              <span className="text-sm font-bold text-gray-500">
-                                {new Date(req.created_at).toLocaleDateString()}
-                              </span>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+        {/* ── Request History ── */}
+        <div className="lg:col-span-2">
+          <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
+            <div className="p-8 border-b border-gray-50 flex items-center space-x-3">
+              <div className="p-3 bg-slate-100 rounded-2xl text-[#0F172A]">
+                <History className="w-6 h-6" />
               </div>
+              <h3 className="text-xl font-black text-[#0F172A]">Request History</h3>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="bg-gray-50/50">
+                    <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+                      Category
+                    </th>
+                    <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+                      Type
+                    </th>
+                    <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+                      Status
+                    </th>
+                    <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+                      Date
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {loading ? (
+                    <tr>
+                      <td colSpan="4" className="px-8 py-20 text-center">
+                        <div className="w-12 h-12 border-4 border-[#F97316] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                        <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">
+                          Loading requests...
+                        </p>
+                      </td>
+                    </tr>
+                  ) : myRequests.length === 0 ? (
+                    <tr>
+                      <td colSpan="4" className="px-8 py-20 text-center">
+                        <AlertCircle className="w-12 h-12 text-gray-200 mx-auto mb-4" />
+                        <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">
+                          No requests yet
+                        </p>
+                      </td>
+                    </tr>
+                  ) : (
+                    myRequests.map((req) => (
+                      <tr
+                        key={req.id}
+                        className="hover:bg-gray-50/50 transition-colors group"
+                      >
+                        {/* Name / preview */}
+                        <td className="px-8 py-6">
+                          <div className="flex items-center space-x-3">
+                            <div className="p-2 bg-slate-100 rounded-xl">
+                              <Layers className="w-4 h-4 text-[#0F172A]" />
+                            </div>
+                            <div>
+                              <p className="font-black text-[#0F172A]">
+                                {requestLabel(req)}
+                              </p>
+                              {req.rejection_reason && (
+                                <p className="text-[10px] text-red-500 font-bold mt-0.5">
+                                  Reason: {req.rejection_reason}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Type badge */}
+                        <td className="px-8 py-6">
+                          <span
+                            className={`inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${
+                              req.type === 'both'
+                                ? 'bg-purple-100 text-purple-700'
+                                : req.type === 'sub'
+                                ? 'bg-blue-100 text-blue-700'
+                                : 'bg-slate-100 text-slate-600'
+                            }`}
+                          >
+                            {req.type === 'both'
+                              ? '📁📂 Main+Sub'
+                              : req.type === 'sub'
+                              ? '📂 Sub'
+                              : '📁 Main'}
+                          </span>
+                        </td>
+
+                        {/* Status */}
+                        <td className="px-8 py-6">
+                          {req.status === 'pending' ? (
+                            <div className="flex items-center space-x-2 text-orange-600">
+                              <Clock className="w-4 h-4" />
+                              <span className="text-[10px] font-black uppercase tracking-widest">
+                                Pending
+                              </span>
+                            </div>
+                          ) : req.status === 'approved' ? (
+                            <div className="flex items-center space-x-2 text-green-600">
+                              <CheckCircle2 className="w-4 h-4" />
+                              <span className="text-[10px] font-black uppercase tracking-widest">
+                                Approved
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center space-x-2 text-red-600">
+                              <XCircle className="w-4 h-4" />
+                              <span className="text-[10px] font-black uppercase tracking-widest">
+                                Rejected
+                              </span>
+                            </div>
+                          )}
+                        </td>
+
+                        {/* Date */}
+                        <td className="px-8 py-6">
+                          <span className="text-sm font-bold text-gray-500">
+                            {new Date(req.created_at).toLocaleDateString()}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
-        </main>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

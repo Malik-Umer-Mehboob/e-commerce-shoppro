@@ -26,10 +26,40 @@ const AdminOrders = () => {
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [riders, setRiders] = useState([]);
   const [assigning, setAssigning] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [processingId, setProcessingId] = useState(null);
 
   useEffect(() => {
     fetchOrders();
   }, [page, status]);
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const response = await api.get('/orders/export', {
+        params: { status, search },
+        responseType: 'blob',
+        headers: {
+          'Accept': 'text/csv'
+        }
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      const date = new Date().toISOString().split('T')[0];
+      link.setAttribute('download', `orders-report-${date}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success('Export completed');
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Failed to export CSV');
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -51,12 +81,16 @@ const AdminOrders = () => {
   };
 
   const handleMarkPaid = async (orderId) => {
+    if (processingId) return;
+    setProcessingId(orderId);
     try {
-      await api.post(`/orders/${orderId}/payment/mark-paid`);
+      await api.post(`/admin/orders/${orderId}/payment/mark-paid`);
       toast.success('Order marked as paid');
       fetchOrders();
     } catch (error) {
       toast.error('Failed to update payment status');
+    } finally {
+      setProcessingId(null);
     }
   };
 
@@ -64,12 +98,16 @@ const AdminOrders = () => {
     const reason = window.prompt('Reason for refund:');
     if (reason === null) return;
 
+    if (processingId) return;
+    setProcessingId(orderId);
     try {
-      await api.post(`/orders/${orderId}/payment/refund`, { reason });
+      await api.post(`/admin/orders/${orderId}/payment/refund`, { reason });
       toast.success('Refund processed');
       fetchOrders();
     } catch (error) {
       toast.error('Failed to process refund');
+    } finally {
+      setProcessingId(null);
     }
   };
 
@@ -128,8 +166,13 @@ const AdminOrders = () => {
           <p className="text-slate-500 text-sm">Monitor and manage customer orders, payments and shipping.</p>
         </div>
         <div className="flex gap-2">
-          <button className="flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-sm">
-            <Download size={18} /> Export CSV
+          <button 
+            onClick={handleExport}
+            disabled={isExporting}
+            className="flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Download size={18} className={isExporting ? 'animate-bounce' : ''} />
+            {isExporting ? 'Exporting...' : 'Export CSV'}
           </button>
         </div>
       </div>
@@ -222,22 +265,24 @@ const AdminOrders = () => {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end gap-2">
-                        {order.payment_status === 'pending' && order.payment_method === 'bank_transfer' && (
+                        {order.payment_status === 'pending' && (
                           <button 
                             onClick={() => handleMarkPaid(order.id)}
-                            className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                            disabled={processingId === order.id}
+                            className={`p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors ${processingId === order.id ? 'opacity-50 cursor-not-allowed' : ''}`}
                             title="Mark as Paid"
                           >
-                            <CheckCircle size={18} />
+                            <CheckCircle size={18} className={processingId === order.id ? 'animate-spin' : ''} />
                           </button>
                         )}
                         {order.payment_status === 'paid' && (
                           <button 
                             onClick={() => handleRefund(order.id)}
-                            className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                            disabled={processingId === order.id}
+                            className={`p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors ${processingId === order.id ? 'opacity-50 cursor-not-allowed' : ''}`}
                             title="Refund"
                           >
-                            <RefreshCcw size={18} />
+                            <RefreshCcw size={18} className={processingId === order.id ? 'animate-spin' : ''} />
                           </button>
                         )}
                         {(order.status === 'pending' || order.status === 'processing') && (

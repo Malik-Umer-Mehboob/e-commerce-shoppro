@@ -97,6 +97,35 @@ const cartSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
+      .addCase(updateCartItem.pending, (state, action) => {
+        const { itemId, quantity } = action.meta.arg;
+        if (state.cart && state.cart.items) {
+          const item = state.cart.items.find(i => i.id === itemId);
+          if (item) {
+            const oldQty = item.quantity;
+            const diff = quantity - oldQty;
+            item.quantity = quantity;
+            
+            // Optimistically update summary stats
+            const price = parseFloat(item.price);
+            const newSubtotal = parseFloat(state.cart.subtotal) + (diff * price);
+            state.cart.subtotal = newSubtotal.toFixed(2);
+            
+            state.cart.total_quantity = (state.cart.total_quantity || 0) + diff;
+            
+            const taxRate = 0.10;
+            state.cart.tax_amount = (newSubtotal * taxRate).toFixed(2);
+            state.cart.shipping_amount = state.cart.total_quantity > 0 ? "10.00" : "0.00";
+            
+            state.cart.total = (
+              newSubtotal + 
+              parseFloat(state.cart.tax_amount) + 
+              parseFloat(state.cart.shipping_amount) - 
+              parseFloat(state.cart.discount_amount || 0)
+            ).toFixed(2);
+          }
+        }
+      })
       .addMatcher(
         (action) => action.type.endsWith('/fulfilled') && action.type.startsWith('cart/'),
         (state, action) => {

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
@@ -54,6 +54,8 @@ const ProductCard = ({ product }) => {
                         alt={product.name} 
                         loading="lazy"
                         decoding="async"
+                        width="300"
+                        height="300"
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
                     />
                 </Link>
@@ -110,4 +112,4 @@ const ProductCard = ({ product }) => {
     );
 };
 
-export default ProductCard;
+export default memo(ProductCard);

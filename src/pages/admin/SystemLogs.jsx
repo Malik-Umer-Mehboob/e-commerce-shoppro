@@ -6,6 +6,7 @@ import {
     ChevronLeft, ChevronRight, AlertCircle, Info
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import Pagination from '../../components/shared/Pagination';
 
 export default function SystemLogs() {
     const [logs, setLogs] = useState([]);
@@ -68,6 +69,8 @@ export default function SystemLogs() {
     const handleFilterChange = (e) => {
         const { name, value } = e.target;
         setFilters(prev => ({ ...prev, [name]: value }));
+        // Automatically reset the current page to Page 1 when filters change
+        setPagination(prev => ({ ...prev, current_page: 1 }));
     };
 
     const applyFilters = () => {
@@ -322,40 +325,13 @@ export default function SystemLogs() {
 
                 {/* Pagination */}
                 {!loading && pagination.last_page > 1 && (
-                    <div className="px-6 py-6 border-t border-slate-100 flex items-center justify-between">
-                        <p className="text-xs font-bold text-gray-400">
-                            Showing <span className="text-[#0F172A]">{logs.length}</span> of <span className="text-[#0F172A]">{pagination.total}</span> logs
-                        </p>
-                        <div className="flex items-center space-x-2">
-                            <button 
-                                onClick={() => fetchLogs(pagination.current_page - 1)}
-                                disabled={pagination.current_page === 1}
-                                className="p-2 rounded-xl border border-slate-100 text-gray-400 hover:text-orange-500 disabled:opacity-50 transition-all"
-                            >
-                                <ChevronLeft className="w-5 h-5" />
-                            </button>
-                            {Array.from({ length: pagination.last_page }).map((_, i) => (
-                                <button 
-                                    key={i + 1}
-                                    onClick={() => fetchLogs(i + 1)}
-                                    className={`w-9 h-9 rounded-xl text-xs font-black transition-all ${
-                                        pagination.current_page === i + 1 
-                                            ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20' 
-                                            : 'text-gray-400 hover:text-[#0F172A] border border-slate-100'
-                                    }`}
-                                >
-                                    {i + 1}
-                                </button>
-                            ))}
-                            <button 
-                                onClick={() => fetchLogs(pagination.current_page + 1)}
-                                disabled={pagination.current_page === pagination.last_page}
-                                className="p-2 rounded-xl border border-slate-100 text-gray-400 hover:text-orange-500 disabled:opacity-50 transition-all"
-                            >
-                                <ChevronRight className="w-5 h-5" />
-                            </button>
-                        </div>
-                    </div>
+                    <Pagination 
+                        currentPage={pagination.current_page}
+                        lastPage={pagination.last_page}
+                        total={pagination.total}
+                        itemCount={logs.length}
+                        onPageChange={(page) => fetchLogs(page)}
+                    />
                 )}
             </div>
         </div>

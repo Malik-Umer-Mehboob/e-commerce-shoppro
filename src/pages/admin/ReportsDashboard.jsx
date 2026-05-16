@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchAdminSales, fetchAdminInventory } from '../../store/slices/reportSlice';
 import reportService from '../../services/reportService';
+import toast from 'react-hot-toast';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -28,14 +29,24 @@ const ReportsDashboard = () => {
   const dispatch = useDispatch();
   const { salesData, inventoryData, loading } = useSelector((state) => state.reports);
   const [days, setDays] = useState(30);
+  const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
     dispatch(fetchAdminSales(days));
     dispatch(fetchAdminInventory());
   }, [dispatch, days]);
 
-  const handleExport = (type) => {
-    reportService.exportReport(type, days);
+  const handleExport = async (type) => {
+    setIsExporting(true);
+    try {
+      await reportService.exportReport(type, days);
+      toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} report downloaded`);
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error(`Failed to export ${type} report`);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const paymentData = {
@@ -80,9 +91,15 @@ const ReportsDashboard = () => {
           </select>
           <button 
             onClick={() => handleExport('sales')}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
+            disabled={isExporting}
+            className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2"
           >
-            Export Sales
+            {isExporting ? (
+              <>
+                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                Exporting...
+              </>
+            ) : 'Export Sales'}
           </button>
         </div>
       </div>

@@ -148,13 +148,11 @@ export default function Users() {
       </div>
 
       {/* Stats Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
           { label: 'Total Users', value: stats.total ?? 0, icon: UsersIcon, color: '#0F172A', bg: '#F1F5F9' },
           { label: 'Customers', value: stats.customers ?? 0, icon: ShoppingBag, color: '#1E40AF', bg: '#DBEAFE' },
           { label: 'Sellers', value: stats.sellers ?? 0, icon: Store, color: '#F97316', bg: '#FED7AA' },
-          { label: 'Support', value: stats.support ?? 0, icon: Headphones, color: '#5B21B6', bg: '#EDE9FE' },
-          { label: 'Riders', value: stats.riders ?? 0, icon: Truck, color: '#10B981', bg: '#D1FAE5' },
           { label: 'Blocked', value: stats.blocked ?? 0, icon: UserX, color: '#EF4444', bg: '#FEE2E2' },
         ].map((stat, idx) => (
           <div key={idx} className="bg-white p-5 rounded-[2rem] border border-gray-100 shadow-sm flex items-center space-x-3">
@@ -196,8 +194,6 @@ export default function Users() {
               <option value="all">All Roles</option>
               <option value="customer">Customer</option>
               <option value="seller">Seller</option>
-              <option value="support">Support</option>
-              <option value="rider">Rider</option>
             </select>
             <select 
               name="status"

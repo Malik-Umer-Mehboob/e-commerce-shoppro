@@ -30,15 +30,12 @@ export default function ReturnRequestModal({ isOpen, onClose, onSuccess }) {
   const fetchDeliveredOrders = async () => {
     try {
       setLoadingOrders(true);
-      // Let's assume order endpoint can return all orders or we filter on frontend
-      // In a real app we might have a specific endpoint or query param
-      const response = await api.get('/orders');
+      const response = await api.get('/user/orders/eligible-returns');
       if (response.data?.success) {
-        const delivered = (response.data.data.data || response.data.data || []).filter(o => o.status === 'delivered');
-        setOrders(delivered);
+        setOrders(response.data.data || []);
       }
     } catch (error) {
-      
+      toast.error('Failed to load eligible orders');
     } finally {
       setLoadingOrders(false);
     }
@@ -86,7 +83,7 @@ export default function ReturnRequestModal({ isOpen, onClose, onSuccess }) {
             <AlertCircle className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
             <div className="text-sm text-blue-800">
               <p className="font-bold">Return Policy</p>
-              <p className="mt-1">Items can only be returned within 14 days of delivery. Once approved, you will receive instructions on how to ship the item back.</p>
+              <p className="mt-1">Items can only be returned within 30 days of delivery. Once approved, you will receive instructions on how to ship the item back.</p>
             </div>
           </div>
 

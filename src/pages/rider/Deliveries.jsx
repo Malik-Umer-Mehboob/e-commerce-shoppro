@@ -71,8 +71,12 @@ export default function RiderDeliveries() {
         { key: 'delivered', label: 'Delivered', emoji: '✅' },
     ];
 
+    // Normalize: 'assigned' is treated as 'pending' throughout the rider panel
+    const normalizeStatus = (status) =>
+        status === 'assigned' ? 'pending' : status;
+
     const filtered = assignments.filter(
-        a => a.status === activeTab
+        a => normalizeStatus(a.status) === activeTab
     );
 
     // Calculate paginated data
@@ -94,6 +98,7 @@ export default function RiderDeliveries() {
     };
 
     // Helper functions for data extraction
+    // shipping_address is already a parsed object from the backend
     const formatAddress = (address) => {
         if (!address) return 'Address not available';
         try {
@@ -106,39 +111,23 @@ export default function RiderDeliveries() {
                 addr.city,
                 addr.country,
             ].filter(Boolean);
-            return parts.length > 0 ? parts.join(', ') : (typeof address === 'string' ? address : 'Address details missing');
+            return parts.length > 0
+                ? parts.join(', ')
+                : 'Address details missing';
         } catch {
-            return address;
+            return typeof address === 'string' ? address : 'Address not available';
         }
     };
 
-    const getPhone = (address) => {
-        if (!address) return null;
-        try {
-            const addr = typeof address === 'string'
-                ? JSON.parse(address)
-                : address;
-            return addr.phone ?? null;
-        } catch {
-            return null;
-        }
-    };
+    // Phone is resolved server-side (checkout address phone → user mobile fallback)
+    const getCustomerPhone = (assignment) =>
+        assignment.customer?.phone ?? null;
 
-    const getCustomerName = (assignment) => {
-        if (assignment.customer?.name && assignment.customer.name !== 'Guest') {
-            return assignment.customer.name;
-        }
-        try {
-            const addr = typeof assignment.order?.shipping_address === 'string'
-                ? JSON.parse(assignment.order.shipping_address)
-                : assignment.order?.shipping_address;
-            return addr?.full_name ?? 'Customer';
-        } catch {
-            return 'Customer';
-        }
-    };
+    // Name is resolved server-side (checkout full_name → user account name fallback)
+    const getCustomerName = (assignment) =>
+        assignment.customer?.name ?? 'Customer';
 
-    const pendingCount = assignments.filter(a => a.status === 'pending').length;
+    const pendingCount = assignments.filter(a => normalizeStatus(a.status) === 'pending').length;
     const inTransitCount = assignments.filter(a => a.status === 'picked_up').length;
     const deliveredCount = assignments.filter(a => a.status === 'delivered').length;
     const totalCount = assignments.length;
@@ -277,7 +266,7 @@ export default function RiderDeliveries() {
                                         marginLeft: '6px',
                                     }}>
                                         {assignments.filter(
-                                            a => a.status === tab.key
+                                            a => normalizeStatus(a.status) === tab.key
                                         ).length}
                                     </span>
                                 </button>
@@ -355,8 +344,7 @@ export default function RiderDeliveries() {
                                         assignment.status
                                     );
                                     const customerName = getCustomerName(assignment);
-                                    const addressPhone = getPhone(assignment.order?.shipping_address);
-                                    const customerPhone = assignment.customer?.phone || addressPhone;
+                                    const customerPhone = getCustomerPhone(assignment);
                                     
                                     return (
                                         <div
@@ -552,7 +540,7 @@ export default function RiderDeliveries() {
                                             </div>
 
                                             {/* Action buttons */}
-                                            {assignment.status === 'pending' && (
+                                            {(assignment.status === 'pending' || assignment.status === 'assigned') && (
                                                 <button
                                                     onClick={() => handleStatusUpdate(assignment.id, 'picked_up')}
                                                     disabled={updating === assignment.id}

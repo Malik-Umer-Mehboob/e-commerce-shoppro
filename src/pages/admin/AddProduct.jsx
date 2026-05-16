@@ -204,6 +204,15 @@ export default function AddProduct() {
 
     const stock = Number(formData.stock_quantity);
     const threshold = Number(formData.low_stock_threshold);
+    
+    // Frontend validation
+    if (!formData.name.trim()) return toast.error('Product name is required');
+    if (!formData.description.trim()) return toast.error('Description is required');
+    if (!formData.category_id) return toast.error('Please select a category');
+    if (!formData.price || Number(formData.price) < 0) return toast.error('Valid price is required');
+    if (!formData.stock_quantity || Number(formData.stock_quantity) < 0) return toast.error('Valid stock quantity is required');
+    if (!isEdit && !thumbnail) return toast.error('Thumbnail image is required');
+
     if (formData.low_stock_threshold !== '' && threshold >= stock) {
       toast.error('Low stock threshold must be less than stock quantity');
       setThresholdError('Must be less than stock quantity');
@@ -268,8 +277,15 @@ export default function AddProduct() {
 
       navigate(user.role === 'admin' ? '/admin/products' : '/seller/products');
     } catch (error) {
-      const message = error.response?.data?.message || 'Operation failed';
-      toast.error(message);
+      if (error.response?.status === 422 && error.response?.data?.errors) {
+        const errors = error.response.data.errors;
+        Object.keys(errors).forEach(key => {
+          errors[key].forEach(msg => toast.error(msg));
+        });
+      } else {
+        const message = error.response?.data?.message || 'Operation failed';
+        toast.error(message);
+      }
     } finally {
       setLoading(false);
     }
@@ -293,52 +309,24 @@ export default function AddProduct() {
   if (fetching) return <div className="flex h-screen items-center justify-center">Loading...</div>;
 
   return (
-    <div className="min-h-screen flex bg-[#F8FAFC]">
-      {/* Sidebar - Reusing for consistency */}
-      <aside className={`fixed inset-y-0 left-0 bg-[#0F172A] w-64 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 ease-in-out z-20`}>
-        <div className="flex h-16 items-center px-6 text-white font-bold text-xl border-b border-gray-700">
-          ShopPro {user?.role?.charAt(0).toUpperCase() + user?.role?.slice(1)}
-        </div>
-        <nav className="p-4 space-y-2">
-          {navItems.map((item, idx) => (
-            <button key={idx} onClick={() => navigate(item.path)} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${item.active ? 'bg-[#F97316] text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white'}`}>
-              <item.icon className="w-5 h-5" />
-              <span>{item.label}</span>
-            </button>
-          ))}
-        </nav>
-      </aside>
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="mb-8">
+        <h1 className="text-3xl font-black text-[#0F172A]">{isEdit ? 'Edit Product' : 'Add New Product'}</h1>
+        <p className="text-gray-500 font-medium">
+          {isEdit ? 'Update product details, pricing, and stock.' : 'Create a new product for your store.'}
+        </p>
+      </div>
 
-      <div className="flex-1 md:ml-64 flex flex-col min-h-screen transition-all duration-300">
-        <header className="h-16 bg-white shadow-sm flex items-center justify-between px-4 sm:px-6 z-10">
-          <button className="md:hidden text-gray-500" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
-            <Menu className="w-6 h-6" />
-          </button>
-          <div className="flex items-center gap-2 text-gray-500 text-sm">
-            <span>Products</span>
-            <ChevronRight className="w-4 h-4" />
-            <span className="text-[#0F172A] font-semibold">{isEdit ? 'Edit Product' : 'Add New Product'}</span>
-          </div>
-          <div className="ml-auto flex items-center space-x-4">
-            <span className="text-sm font-medium text-[#0F172A] hidden sm:block">{user?.name}</span>
-            <div className="w-8 h-8 rounded-full bg-[#0F172A] text-white flex items-center justify-center font-bold">
-              {user?.name?.charAt(0)}
-            </div>
-            <button onClick={handleLogout} className="text-gray-500 hover:text-[#F97316]">
-              <LogOut className="w-5 h-5" />
-            </button>
-          </div>
-        </header>
-
-        <main className="p-6">
-          <form onSubmit={handleSubmit} className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-6">
+      <form onSubmit={handleSubmit} className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-6">
             {/* Left Column - Main Info */}
             <div className="flex-1 space-y-6">
               <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                 <h2 className="text-lg font-bold text-[#0F172A] mb-4">Basic Information</h2>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Product Name <span className="text-red-500">*</span>
+                    </label>
                     <input 
                       type="text" 
                       required
@@ -360,7 +348,9 @@ export default function AddProduct() {
                     ></textarea>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Full Description</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Full Description <span className="text-red-500">*</span>
+                    </label>
                     <textarea 
                       rows="6"
                       className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#F97316] outline-none"
@@ -376,7 +366,9 @@ export default function AddProduct() {
                 <h2 className="text-lg font-bold text-[#0F172A] mb-4">Pricing & Inventory</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Regular Price (Rs.)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Regular Price (Rs.) <span className="text-red-500">*</span>
+                    </label>
                     <input 
                       type="number" 
                       required
@@ -397,7 +389,9 @@ export default function AddProduct() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Stock Quantity</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Stock Quantity <span className="text-red-500">*</span>
+                    </label>
                     <input 
                       type="number" 
                       required
@@ -448,7 +442,9 @@ export default function AddProduct() {
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
                   {/* Thumbnail Row */}
                   <div className="col-span-full border-b pb-4 mb-2">
-                    <p className="text-sm font-medium text-gray-600 mb-3">Main Thumbnail</p>
+                    <p className="text-sm font-medium text-gray-600 mb-3">
+                      Main Thumbnail <span className="text-red-500">*</span>
+                    </p>
                     <label className="relative group cursor-pointer w-32 h-32 border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center hover:border-[#F97316] transition-all overflow-hidden bg-gray-50">
                       {thumbnailPreview ? (
                         <>
@@ -732,7 +728,9 @@ export default function AddProduct() {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Category <span className="text-red-500">*</span>
+                    </label>
                     <select 
                       required
                       className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#F97316] outline-none bg-white"
@@ -801,8 +799,6 @@ export default function AddProduct() {
               </div>
             </div>
           </form>
-        </main>
-      </div>
     </div>
   );
 }

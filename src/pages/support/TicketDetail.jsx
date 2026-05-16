@@ -24,9 +24,11 @@ export default function AgentTicketDetail() {
   const [ticket, setTicket] = useState(null);
   const [loading, setLoading] = useState(true);
   const [newMessage, setNewMessage] = useState('');
+  const [attachment, setAttachment] = useState(null);
   const [isInternal, setIsInternal] = useState(false);
   const [sending, setSending] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const fileInputRef = useRef(null);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -49,17 +51,32 @@ export default function AgentTicketDetail() {
     }
   };
 
+  const getAttachmentUrl = (path) => {
+    if (!path) return null;
+    return `http://localhost:8000/storage/${path}`;
+  };
+
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() && !attachment) return;
 
     setSending(true);
     try {
-      await api.post(`/tickets/${id}/messages`, {
-        message: newMessage,
-        is_internal: isInternal
+      const formData = new FormData();
+      formData.append('message', newMessage);
+      formData.append('is_internal', isInternal ? 1 : 0);
+      if (attachment) {
+        formData.append('attachment', attachment);
+      }
+
+      await api.post(`/tickets/${id}/messages`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
       });
       setNewMessage('');
+      setAttachment(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
       fetchTicket();
       toast.success(isInternal ? 'Internal note added' : 'Reply sent');
     } catch (error) {
@@ -89,7 +106,7 @@ export default function AgentTicketDetail() {
   const getStatusColor = (status) => {
     switch (status) {
       case 'Open': return 'bg-blue-100 text-blue-700';
-      case 'Pending': return 'bg-yellow-100 text-yellow-700';
+      case 'In Progress': return 'bg-yellow-100 text-yellow-700';
       case 'Resolved': return 'bg-green-100 text-green-700';
       case 'Closed': return 'bg-gray-100 text-gray-700';
       default: return 'bg-gray-100 text-gray-700';
@@ -141,7 +158,7 @@ export default function AgentTicketDetail() {
               onChange={(e) => handleUpdateStatus(e.target.value)}
             >
               <option>Open</option>
-              <option>Pending</option>
+              <option>In Progress</option>
               <option>Resolved</option>
               <option>Closed</option>
             </select>
@@ -161,12 +178,28 @@ export default function AgentTicketDetail() {
                 <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{new Date(ticket.created_at).toLocaleString()}</span>
               </div>
               <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">{ticket.message}</p>
+              {ticket.attachment && (
+                <div className="mt-4 pt-4 border-t border-gray-50">
+                  <p className="text-[10px] font-black text-gray-400 uppercase mb-2 tracking-widest">Attachment</p>
+                  <a 
+                    href={getAttachmentUrl(ticket.attachment)} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center p-3 bg-gray-50 rounded-2xl border border-gray-100 hover:border-[#F97316]/30 hover:bg-white transition-all group"
+                  >
+                    <Paperclip className="w-4 h-4 mr-2 text-gray-400 group-hover:text-[#F97316]" />
+                    <span className="text-xs font-bold text-gray-600 truncate max-w-[150px]">
+                      {ticket.attachment.split('/').pop()}
+                    </span>
+                  </a>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Conversation History */}
           {ticket.messages.map((msg) => {
-            const isMe = msg.user_id === localStorage.getItem('user_id'); // Agent's own message
+            const isMe = Number(msg.user_id) === Number(localStorage.getItem('user_id')); // Agent's own message
             const isNote = msg.is_internal;
             const isCustomer = msg.user_id === ticket.customer_id;
 
@@ -191,6 +224,25 @@ export default function AgentTicketDetail() {
                     <span className="text-[10px] font-bold uppercase tracking-widest">{new Date(msg.created_at).toLocaleString()}</span>
                   </div>
                   <p className="leading-relaxed whitespace-pre-wrap">{msg.message}</p>
+                  {msg.attachment && (
+                    <div className={`mt-4 pt-4 border-t ${isCustomer ? 'border-gray-50' : isNote ? 'border-yellow-200' : 'border-white/10'}`}>
+                      <a 
+                        href={getAttachmentUrl(msg.attachment)} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className={`inline-flex items-center p-3 rounded-2xl border transition-all group ${
+                          isCustomer ? 'bg-gray-50 border-gray-100 hover:border-[#F97316]/30 hover:bg-white' : 
+                          isNote ? 'bg-yellow-100/50 border-yellow-200 hover:bg-yellow-100 text-yellow-900' :
+                          'bg-white/10 border-white/10 hover:bg-white/20'
+                        }`}
+                      >
+                        <Paperclip className={`w-4 h-4 mr-2 ${isCustomer ? 'text-gray-400 group-hover:text-[#F97316]' : 'text-white'}`} />
+                        <span className={`text-xs font-bold truncate max-w-[150px] ${isCustomer ? 'text-gray-600' : 'text-white'}`}>
+                          {msg.attachment.split('/').pop()}
+                        </span>
+                      </a>
+                    </div>
+                  )}
                 </div>
               </div>
             );
@@ -220,6 +272,24 @@ export default function AgentTicketDetail() {
             </div>
 
             <div className="relative">
+              {attachment && (
+                <div className="absolute bottom-full left-0 mb-4 bg-white p-3 rounded-2xl shadow-xl border border-gray-100 flex items-center animate-in slide-in-from-bottom-2">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center mr-3 ${isInternal ? 'bg-yellow-100 text-yellow-600' : 'bg-[#F97316]/10 text-[#F97316]'}`}>
+                    <Paperclip className="w-5 h-5" />
+                  </div>
+                  <div className="mr-4">
+                    <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Attachment added</p>
+                    <p className="text-sm font-bold text-[#0F172A] truncate max-w-[200px]">{attachment.name}</p>
+                  </div>
+                  <button 
+                    type="button" 
+                    onClick={() => setAttachment(null)}
+                    className="p-2 hover:bg-red-50 text-red-400 hover:text-red-500 rounded-xl transition-colors"
+                  >
+                    <MoreVertical className="w-5 h-5 rotate-45" />
+                  </button>
+                </div>
+              )}
               <textarea
                 rows="3"
                 className={`w-full pl-6 pr-20 py-4 rounded-3xl border outline-none transition-all resize-none font-medium text-gray-700 ${
@@ -230,9 +300,23 @@ export default function AgentTicketDetail() {
                 onChange={(e) => setNewMessage(e.target.value)}
               ></textarea>
               <div className="absolute right-3 bottom-3 flex items-center space-x-2">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  onChange={(e) => setAttachment(e.target.files[0])}
+                  accept=".jpg,.jpeg,.png,.pdf"
+                />
+                <button 
+                  type="button" 
+                  onClick={() => fileInputRef.current?.click()}
+                  className={`p-3 rounded-xl transition-colors ${attachment ? 'bg-orange-100 text-[#F97316]' : 'text-gray-400 hover:bg-gray-100'}`}
+                >
+                  <Paperclip className="w-5 h-5" />
+                </button>
                 <button
                   type="submit"
-                  disabled={sending || !newMessage.trim()}
+                  disabled={sending || (!newMessage.trim() && !attachment)}
                   className={`p-4 rounded-2xl shadow-lg transition-all transform active:scale-95 disabled:opacity-50 ${
                     isInternal ? 'bg-yellow-500 hover:bg-yellow-600 text-white shadow-yellow-200' : 'bg-[#F97316] hover:bg-[#ea6a0f] text-white shadow-orange-200'
                   }`}

@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
-import { 
-  Star, 
-  CheckCircle2, 
-  XCircle, 
-  Clock, 
-  ShieldCheck, 
+import { useState, useEffect, useCallback } from 'react';
+import {
+  Star,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  ShieldCheck,
   ShieldAlert,
   MessageSquare,
   Search,
@@ -17,52 +17,70 @@ import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 
 export default function Reviews() {
-  const [reviews, setReviews] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [status, setStatus] = useState('all');
-  const [page, setPage] = useState(1);
+  // ── Filtered list state ────────────────────────────────────────────────
+  const [reviews, setReviews]   = useState([]);
+  const [loading, setLoading]   = useState(true);
+  const [status, setStatus]     = useState('all');
+  const [page, setPage]         = useState(1);
   const [lastPage, setLastPage] = useState(1);
+
+  // ── Global stats — NEVER derived from the filtered list ───────────────
   const [stats, setStats] = useState({
     total: 0,
     pending: 0,
     approved: 0,
-    verified: 0
+    verified: 0,
   });
 
-  useEffect(() => {
-    fetchReviews();
-  }, [status, page]);
+  // ── Fetch global stats independently ──────────────────────────────────
+  const fetchStats = useCallback(async () => {
+    try {
+      const res = await api.get('/admin/reviews/stats');
+      const d   = res.data?.data ?? {};
+      setStats({
+        total:    d.total    ?? 0,
+        pending:  d.pending  ?? 0,
+        approved: d.approved ?? 0,
+        verified: d.verified ?? 0,
+      });
+    } catch {
+      // stats non-critical — don't toast
+    }
+  }, []);
 
-  const fetchReviews = async () => {
+  // ── Fetch filtered review list ─────────────────────────────────────────
+  const fetchReviews = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await api.get('/admin/reviews', { 
-        params: { status: status !== 'all' ? status : '', page } 
+      const response = await api.get('/admin/reviews', {
+        params: { status: status !== 'all' ? status : '', page },
       });
       const { data } = response.data;
-      setReviews(data.data);
-      setLastPage(data.last_page);
-      
-      // Calculate stats (simplified for UI demonstration)
-      setStats({
-        total: data.total,
-        pending: status === 'pending' ? data.total : reviews.filter(r => !r.is_approved).length,
-        approved: status === 'approved' ? data.total : reviews.filter(r => r.is_approved).length,
-        verified: reviews.filter(r => r.verified_purchase).length
-      });
-    } catch (error) {
+      setReviews(data.data ?? []);
+      setLastPage(data.last_page ?? 1);
+    } catch {
       toast.error('Failed to fetch reviews');
     } finally {
       setLoading(false);
     }
-  };
+  }, [status, page]);
 
+  // ── Initial load + re-fetch when tab / page changes ───────────────────
+  useEffect(() => {
+    fetchStats();
+  }, []); // once on mount — refreshed after actions
+
+  useEffect(() => {
+    fetchReviews();
+  }, [fetchReviews]); // re-runs when status or page changes
+
+  // ── Actions ───────────────────────────────────────────────────────────
   const handleApprove = async (id) => {
     try {
       await api.post(`/admin/reviews/${id}/approve`);
       toast.success('Review approved');
-      fetchReviews();
-    } catch (error) {
+      await Promise.all([fetchReviews(), fetchStats()]);
+    } catch {
       toast.error('Failed to approve review');
     }
   };
@@ -72,25 +90,30 @@ export default function Reviews() {
     try {
       await api.delete(`/admin/reviews/${id}/reject`);
       toast.success('Review rejected and deleted');
-      fetchReviews();
-    } catch (error) {
+      await Promise.all([fetchReviews(), fetchStats()]);
+    } catch {
       toast.error('Failed to reject review');
     }
   };
 
-  const renderStars = (rating) => {
-    return (
-      <div className="flex">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <Star 
-            key={star} 
-            className={`w-4 h-4 ${star <= rating ? 'fill-[#F97316] text-[#F97316]' : 'text-gray-200'}`} 
-          />
-        ))}
-      </div>
-    );
+  // ── Helpers ───────────────────────────────────────────────────────────
+  const handleTabChange = (t) => {
+    setStatus(t);
+    setPage(1); // reset to page 1 on every tab switch
   };
 
+  const renderStars = (rating) => (
+    <div className="flex">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <Star
+          key={star}
+          className={`w-4 h-4 ${star <= rating ? 'fill-[#F97316] text-[#F97316]' : 'text-gray-200'}`}
+        />
+      ))}
+    </div>
+  );
+
+  // ── Render ────────────────────────────────────────────────────────────
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -105,10 +128,10 @@ export default function Reviews() {
         {['all', 'pending', 'approved'].map((t) => (
           <button
             key={t}
-            onClick={() => { setStatus(t); setPage(1); }}
+            onClick={() => handleTabChange(t)}
             className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
-              status === t 
-                ? 'bg-[#F97316] text-white shadow-lg shadow-[#F97316]/20' 
+              status === t
+                ? 'bg-[#F97316] text-white shadow-lg shadow-[#F97316]/20'
                 : 'text-gray-500 hover:text-[#0F172A] hover:bg-white/50'
             }`}
           >
@@ -117,13 +140,13 @@ export default function Reviews() {
         ))}
       </div>
 
-      {/* Stats Row */}
+      {/* Stats Row — sourced from fetchStats(), never from filtered list */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { label: 'Total Reviews', value: stats.total, icon: MessageSquare, bg: 'bg-indigo-50', color: 'text-indigo-600' },
-          { label: 'Pending Approval', value: stats.pending, icon: Clock, bg: 'bg-orange-50', color: 'text-orange-600', badge: true },
-          { label: 'Approved', value: stats.approved, icon: CheckCircle2, bg: 'bg-green-50', color: 'text-green-600' },
-          { label: 'Verified Purchases', value: stats.verified, icon: ShieldCheck, bg: 'bg-blue-50', color: 'text-blue-600' },
+          { label: 'Total Reviews',       value: stats.total,    icon: MessageSquare, bg: 'bg-indigo-50',  color: 'text-indigo-600' },
+          { label: 'Pending Approval',    value: stats.pending,  icon: Clock,         bg: 'bg-orange-50',  color: 'text-orange-600', badge: true },
+          { label: 'Approved',            value: stats.approved, icon: CheckCircle2,  bg: 'bg-green-50',   color: 'text-green-600' },
+          { label: 'Verified Purchases',  value: stats.verified, icon: ShieldCheck,   bg: 'bg-blue-50',    color: 'text-blue-600' },
         ].map((stat, idx) => (
           <div key={idx} className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center space-x-4">
             <div className={`p-4 rounded-2xl ${stat.bg} ${stat.color}`}>
@@ -196,14 +219,10 @@ export default function Reviews() {
                         <p className="text-[10px] text-gray-400 font-medium">{review.reviewer_email}</p>
                       </div>
                     </td>
-                    <td className="px-8 py-5">
-                      {renderStars(review.rating)}
-                    </td>
+                    <td className="px-8 py-5">{renderStars(review.rating)}</td>
                     <td className="px-8 py-5">
                       <div className="max-w-[200px]">
-                        <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed">
-                          {review.comment}
-                        </p>
+                        <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed">{review.comment}</p>
                         {review.comment.length > 100 && (
                           <button className="text-[9px] font-black text-[#F97316] uppercase mt-1">Read More</button>
                         )}
@@ -212,8 +231,7 @@ export default function Reviews() {
                     <td className="px-8 py-5 text-center">
                       {review.verified_purchase ? (
                         <span className="inline-flex items-center px-2 py-1 rounded-lg bg-green-50 text-green-600 text-[9px] font-black uppercase">
-                          <ShieldCheck className="w-3 h-3 mr-1" />
-                          Verified
+                          <ShieldCheck className="w-3 h-3 mr-1" /> Verified
                         </span>
                       ) : (
                         <span className="inline-flex items-center px-2 py-1 rounded-lg bg-gray-50 text-gray-400 text-[9px] font-black uppercase">
@@ -224,20 +242,18 @@ export default function Reviews() {
                     <td className="px-8 py-5">
                       {review.is_approved ? (
                         <span className="flex items-center text-green-500 font-black text-[10px] uppercase tracking-widest">
-                          <Check className="w-3 h-3 mr-1.5" />
-                          Approved
+                          <Check className="w-3 h-3 mr-1.5" /> Approved
                         </span>
                       ) : (
                         <span className="flex items-center text-orange-500 font-black text-[10px] uppercase tracking-widest">
-                          <Clock className="w-3 h-3 mr-1.5" />
-                          Pending
+                          <Clock className="w-3 h-3 mr-1.5" /> Pending
                         </span>
                       )}
                     </td>
                     <td className="px-8 py-5 text-right">
                       <div className="flex items-center justify-end space-x-2">
                         {!review.is_approved && (
-                          <button 
+                          <button
                             onClick={() => handleApprove(review.id)}
                             className="p-2 text-green-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all"
                             title="Approve"
@@ -245,7 +261,7 @@ export default function Reviews() {
                             <CheckCircle2 className="w-5 h-5" />
                           </button>
                         )}
-                        <button 
+                        <button
                           onClick={() => handleReject(review.id)}
                           className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
                           title="Reject/Delete"
@@ -264,9 +280,9 @@ export default function Reviews() {
         {/* Pagination */}
         {lastPage > 1 && (
           <div className="px-8 py-6 border-t border-gray-50 flex items-center justify-between">
-            <button 
+            <button
               disabled={page === 1}
-              onClick={() => setPage(p => p - 1)}
+              onClick={() => setPage((p) => p - 1)}
               className="px-4 py-2 rounded-xl border border-gray-200 font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-50 transition-all"
             >
               Previous
@@ -274,9 +290,9 @@ export default function Reviews() {
             <span className="font-black text-[10px] text-gray-400 uppercase tracking-widest">
               Page {page} of {lastPage}
             </span>
-            <button 
+            <button
               disabled={page === lastPage}
-              onClick={() => setPage(p => p + 1)}
+              onClick={() => setPage((p) => p + 1)}
               className="px-4 py-2 rounded-xl border border-gray-200 font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-50 transition-all"
             >
               Next

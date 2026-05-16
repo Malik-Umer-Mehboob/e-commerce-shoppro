@@ -41,7 +41,7 @@ export default function Checkout() {
     const navigate = useNavigate();
     const cart = useSelector(selectCart);
     const items = useSelector(selectCartItems);
-    const subtotal = cart?.subtotal || 0;
+    const subtotal = Number(cart?.subtotal || 0);
     const { user } = useSelector(state => state.auth);
     
     const [loading, setLoading] = useState(false);
@@ -165,8 +165,18 @@ export default function Checkout() {
         }
     };
 
-    const shippingCost = selectedCity?.delivery_charge || 0;
-    const grandTotal = subtotal + shippingCost - discount;
+    // Safely parse values to ensure they are numbers
+    const shippingCost = Number(selectedCity?.delivery_charge || 0);
+    const discountAmount = Number(discount || 0);
+    const taxAmount = 0; // Tax is currently 0 in UI, but included for future-proofing
+
+    const grandTotal = subtotal + shippingCost + taxAmount - discountAmount;
+
+    // Helper for safe formatting
+    const formatCurrency = (val) => {
+        const num = Number(val);
+        return isNaN(num) ? '0' : num.toLocaleString();
+    };
 
     return (
         <div className="bg-[#F8FAFC] min-h-screen pb-20">
@@ -450,7 +460,7 @@ export default function Checkout() {
                                                         {item.variant && <span className="w-1 h-1 bg-gray-300 rounded-full"></span>}
                                                         <span>Qty: {item.quantity}</span>
                                                     </div>
-                                                    <p className="text-sm font-black text-[#F97316] mt-1">Rs. {(item.price * item.quantity).toLocaleString()}</p>
+                                                    <p className="text-sm font-black text-[#F97316] mt-1">Rs. {formatCurrency(item.price * item.quantity)}</p>
                                                 </div>
                                             </div>
                                         ))}
@@ -459,12 +469,12 @@ export default function Checkout() {
                                     <div className="mt-8 pt-8 border-t border-slate-50 space-y-4">
                                         <div className="flex justify-between items-center text-sm">
                                             <span className="text-gray-500 font-bold">Subtotal</span>
-                                            <span className="text-[#0F172A] font-black">Rs. {subtotal.toLocaleString()}</span>
+                                            <span className="text-[#0F172A] font-black">Rs. {formatCurrency(subtotal)}</span>
                                         </div>
                                         <div className="flex justify-between items-center text-sm">
                                             <span className="text-gray-500 font-bold">Delivery</span>
                                             {selectedCity ? (
-                                                <span className="text-[#0F172A] font-black">Rs. {shippingCost}</span>
+                                                <span className="text-[#0F172A] font-black">Rs. {formatCurrency(shippingCost)}</span>
                                             ) : (
                                                 <span className="text-gray-300 italic font-medium">Select city</span>
                                             )}
@@ -472,7 +482,7 @@ export default function Checkout() {
                                         {discount > 0 && (
                                             <div className="flex justify-between items-center text-sm">
                                                 <span className="text-green-600 font-bold">Discount</span>
-                                                <span className="text-green-600 font-black">- Rs. {discount.toLocaleString()}</span>
+                                                <span className="text-green-600 font-black">- Rs. {formatCurrency(discountAmount)}</span>
                                             </div>
                                         )}
                                         <div className="flex justify-between items-center text-sm">
@@ -483,7 +493,7 @@ export default function Checkout() {
                                         <div className="mt-6 pt-6 border-t border-slate-100 flex justify-between items-center">
                                             <span className="text-xl font-black text-[#0F172A]">Total</span>
                                             <div className="text-right">
-                                                <span className="text-3xl font-black text-[#F97316]">Rs. {grandTotal.toLocaleString()}</span>
+                                                <span className="text-3xl font-black text-[#F97316]">Rs. {formatCurrency(grandTotal)}</span>
                                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Inclusive of all taxes</p>
                                             </div>
                                         </div>
@@ -497,7 +507,7 @@ export default function Checkout() {
                                         {loading ? (
                                             <Loader2 className="w-6 h-6 animate-spin" />
                                         ) : (
-                                            `Place Order — Rs. ${grandTotal.toLocaleString()}`
+                                            `Place Order — Rs. ${formatCurrency(grandTotal)}`
                                         )}
                                     </button>
 

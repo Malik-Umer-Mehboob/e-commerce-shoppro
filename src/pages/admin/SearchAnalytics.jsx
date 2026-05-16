@@ -25,10 +25,33 @@ export default function SearchAnalytics() {
   const [topKeywords, setTopKeywords] = useState([]);
   const [noResults, setNoResults] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     fetchAnalytics();
   }, []);
+
+  const handleExport = async () => {
+    try {
+      setExporting(true);
+      const response = await api.get('/admin/search-analytics/export', {
+        responseType: 'blob'
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `search_analytics_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success('Report exported successfully');
+    } catch (error) {
+      toast.error('Failed to export report');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const fetchAnalytics = async () => {
     try {
@@ -68,9 +91,17 @@ export default function SearchAnalytics() {
           <button className="p-3 bg-white border border-gray-100 rounded-2xl text-gray-500 hover:bg-gray-50 transition-all shadow-sm">
             <Filter className="w-5 h-5" />
           </button>
-          <button className="bg-[#0F172A] text-white px-6 py-3 rounded-2xl font-black flex items-center space-x-2 shadow-xl shadow-[#0F172A]/20 hover:bg-black transition-all transform hover:-translate-y-1">
-            <Download className="w-5 h-5" />
-            <span>Export Report</span>
+          <button 
+            onClick={handleExport}
+            disabled={exporting}
+            className="bg-[#0F172A] text-white px-6 py-3 rounded-2xl font-black flex items-center space-x-2 shadow-xl shadow-[#0F172A]/20 hover:bg-black transition-all transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+          >
+            {exporting ? (
+              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <Download className="w-5 h-5" />
+            )}
+            <span>{exporting ? 'Exporting...' : 'Export Report'}</span>
           </button>
         </div>
       </div>

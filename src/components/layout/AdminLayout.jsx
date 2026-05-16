@@ -25,13 +25,15 @@ import {
   Users,
   Star,
   Activity,
-  RotateCcw
+  RotateCcw,
+  Store
 } from 'lucide-react';
 import { authService } from '../../services/authService';
 import { logoutUser } from '../../store/authSlice';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import GlobalSearch from '../admin/GlobalSearch';
+import NotificationBell from '../notifications/NotificationBell';
 
 export default function AdminLayout({ children }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -60,6 +62,7 @@ export default function AdminLayout({ children }) {
         { icon: ShoppingCart, label: 'Orders', path: '/admin/orders' },
         { icon: RotateCcw, label: 'Returns', path: '/admin/returns' },
         { icon: Package, label: 'Products', path: '/admin/products' },
+        { icon: Store, label: 'Sellers', path: '/admin/sellers' },
         { icon: Tag, label: 'Categories', path: '/admin/categories' },
         { icon: Tag, label: 'Discounts', path: '/admin/discounts' },
         { icon: BarChart2, label: 'Reports', path: '/admin/reports' },
@@ -96,6 +99,7 @@ export default function AdminLayout({ children }) {
       title: 'System',
       items: [
         { icon: Truck, label: 'Shipping Zones', path: '/admin/shipping-zones' },
+        { icon: Users, label: 'Staff Management', path: '/admin/staff' },
         { icon: Users, label: 'Users', path: '/admin/users' },
         { icon: Activity, label: 'System Logs', path: '/admin/system-logs' },
         { icon: Settings, label: 'Settings', path: '/admin/settings' },
@@ -173,10 +177,9 @@ export default function AdminLayout({ children }) {
           </div>
           
           <div className="flex items-center space-x-6">
-            <button className="relative p-2 text-gray-400 hover:text-[#F97316] transition-colors rounded-xl hover:bg-gray-50">
-              <Bell className="w-6 h-6" />
-              <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-            </button>
+            <div className="text-[#0F172A]">
+              <NotificationBell />
+            </div>
             <div className="h-8 w-px bg-gray-100 mx-2"></div>
             <div className="flex items-center space-x-3">
               <div className="text-right hidden sm:block">

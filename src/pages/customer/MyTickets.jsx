@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Plus, MessageSquare, Clock, CheckCircle2, AlertCircle, ChevronRight, Search } from 'lucide-react';
+import { Plus, MessageSquare, Clock, CheckCircle2, AlertCircle, ChevronRight, Search, ArrowRight } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../services/api';
 import { toast } from 'react-hot-toast';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
 export default function MyTickets() {
   const [tickets, setTickets] = useState([]);
@@ -18,11 +16,7 @@ export default function MyTickets() {
 
   const fetchTickets = async () => {
     try {
-      const response = await axios.get(`${API_URL}/tickets`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const response = await api.get('/customer/tickets');
       setTickets(response.data.data);
       setLoading(false);
     } catch (error) {
@@ -35,7 +29,7 @@ export default function MyTickets() {
   const getStatusColor = (status) => {
     switch (status) {
       case 'Open': return 'bg-blue-100 text-blue-700';
-      case 'Pending': return 'bg-yellow-100 text-yellow-700';
+      case 'In Progress': return 'bg-yellow-100 text-yellow-700';
       case 'Resolved': return 'bg-green-100 text-green-700';
       case 'Closed': return 'bg-gray-100 text-gray-700';
       default: return 'bg-gray-100 text-gray-700';
@@ -74,7 +68,7 @@ export default function MyTickets() {
         {/* Filters & Search */}
         <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-6 flex flex-col md:flex-row md:items-center justify-between space-y-4 md:space-y-0">
           <div className="flex items-center space-x-2 overflow-x-auto pb-2 md:pb-0">
-            {['All', 'Open', 'Pending', 'Resolved', 'Closed'].map((s) => (
+            {['All', 'Open', 'In Progress', 'Resolved', 'Closed'].map((s) => (
               <button
                 key={s}
                 onClick={() => setFilter(s)}
@@ -104,7 +98,7 @@ export default function MyTickets() {
             filteredTickets.map((ticket) => (
               <Link
                 key={ticket.id}
-                to={`/customer/tickets/${ticket.id}`}
+                to={`/my-tickets/${ticket.id}`}
                 className="block bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all hover:border-[#F97316]/30 group"
               >
                 <div className="flex flex-col md:flex-row md:items-center justify-between">

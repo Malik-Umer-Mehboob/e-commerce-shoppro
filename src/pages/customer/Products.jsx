@@ -3,16 +3,29 @@ import Header from '../../components/layout/Header';
 import Footer from '../../components/layout/Footer';
 import ProductCard from '../../components/common/ProductCard';
 import api from '../../services/api';
-import { ShoppingBag, ChevronLeft, ChevronRight, Filter, Search as SearchIcon } from 'lucide-react';
+import { ShoppingBag, ChevronLeft, ChevronRight, Filter, Search as SearchIcon, X, Tag } from 'lucide-react';
 import SEOHead from '../../components/SEOHead';
 
 export default function Products() {
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [loaded, setLoaded] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const fetchCategories = async () => {
+    try {
+      const response = await api.get('/categories');
+      setCategories(response.data?.data?.categories || []);
+    } catch (err) {
+      console.error('Failed to fetch categories');
+    }
+  };
 
   const fetchProducts = async (page = 1) => {
     setLoading(true);
@@ -21,10 +34,11 @@ export default function Products() {
         params: {
           page,
           per_page: 12,
+          category_id: selectedCategory,
+          search: searchQuery,
         }
       });
 
-      // API returns { success: true, data: { products: { data: [...], ... }, stats: {...} } }
       const productsData = response.data?.data?.products;
       if (productsData) {
         setProducts(productsData.data || []);
@@ -35,7 +49,6 @@ export default function Products() {
         setProducts([]);
       }
     } catch (err) {
-      
       setProducts([]);
     } finally {
       setLoading(false);
@@ -43,14 +56,26 @@ export default function Products() {
   };
 
   useEffect(() => {
-    if (loaded && currentPage === 1) return;
-    fetchProducts(currentPage);
-    setLoaded(true);
-  }, [currentPage]);
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    if (loaded && currentPage === 1) {
+       fetchProducts(1);
+    } else {
+       fetchProducts(currentPage);
+       setLoaded(true);
+    }
+  }, [currentPage, selectedCategory, searchQuery]);
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleCategorySelect = (categoryId) => {
+    setSelectedCategory(categoryId === selectedCategory ? null : categoryId);
+    setCurrentPage(1);
   };
 
   return (
@@ -62,10 +87,13 @@ export default function Products() {
       <Header />
 
       <main className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-6">
           <div>
             <h1 className="text-4xl font-black text-[#0F172A]">Our <span className="text-orange-500">Shop</span></h1>
-            <p className="text-gray-500 mt-2 font-medium">Showing {products.length} of {total} products</p>
+            <p className="text-gray-500 mt-2 font-medium">
+              {selectedCategory ? `Filtered by ${categories.find(c => c.id === selectedCategory)?.name}` : 'Showing all products'} • {total} items
+            </p>
           </div>
           
           <div className="flex items-center gap-4">
@@ -74,12 +102,52 @@ export default function Products() {
               <input 
                 type="text" 
                 placeholder="Search products..." 
+                value={searchQuery}
+                onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
                 className="w-full pl-12 pr-4 py-3 bg-white border border-gray-100 rounded-2xl focus:ring-2 focus:ring-orange-500/20 outline-none transition-all font-medium"
               />
             </div>
-            <button className="bg-white border border-gray-100 p-3 rounded-2xl text-gray-500 hover:text-orange-500 transition-all shadow-sm">
+            <button 
+              onClick={() => setShowFilters(!showFilters)}
+              className={`p-3 rounded-2xl transition-all shadow-sm flex items-center gap-2 font-bold ${
+                showFilters || selectedCategory 
+                ? 'bg-orange-500 text-white' 
+                : 'bg-white border border-gray-100 text-gray-500 hover:text-orange-500'
+              }`}
+            >
               <Filter size={20} />
+              <span className="hidden sm:block">Filters</span>
             </button>
+          </div>
+        </div>
+
+        {/* Dynamic Category Chips */}
+        <div className="mb-12 overflow-x-auto pb-4 scrollbar-hide">
+          <div className="flex gap-3 min-w-max">
+            <button
+              onClick={() => handleCategorySelect(null)}
+              className={`px-6 py-3 rounded-2xl font-bold transition-all border ${
+                selectedCategory === null
+                ? 'bg-[#0F172A] text-white border-[#0F172A] shadow-lg shadow-slate-900/10'
+                : 'bg-white text-gray-500 border-gray-100 hover:border-orange-500 hover:text-orange-500'
+              }`}
+            >
+              All Items
+            </button>
+            {categories.map((category) => (
+              <button
+                key={category.id}
+                onClick={() => handleCategorySelect(category.id)}
+                className={`px-6 py-3 rounded-2xl font-bold transition-all border flex items-center gap-2 ${
+                  selectedCategory === category.id
+                  ? 'bg-orange-500 text-white border-orange-500 shadow-lg shadow-orange-500/20'
+                  : 'bg-white text-gray-500 border-gray-100 hover:border-orange-500 hover:text-orange-500'
+                }`}
+              >
+                <Tag size={16} className={selectedCategory === category.id ? 'text-white' : 'text-orange-500'} />
+                {category.name}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -142,7 +210,15 @@ export default function Products() {
               <ShoppingBag className="w-12 h-12 text-gray-300" />
             </div>
             <h3 className="text-2xl font-black text-gray-900">No products found</h3>
-            <p className="text-gray-500 mt-2 max-w-xs mx-auto">We couldn't find any products in our shop right now.</p>
+            <p className="text-gray-500 mt-2 max-w-xs mx-auto">We couldn't find any products in this category right now.</p>
+            {selectedCategory && (
+              <button 
+                onClick={() => handleCategorySelect(null)}
+                className="mt-6 text-orange-500 font-bold hover:underline"
+              >
+                Clear Filters
+              </button>
+            )}
           </div>
         )}
       </main>
@@ -151,3 +227,4 @@ export default function Products() {
     </div>
   );
 }
+

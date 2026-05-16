@@ -14,7 +14,7 @@ export default function AdminReturns() {
   const [approvalModal, setApprovalModal] = useState({ isOpen: false, requestId: null });
   const [rejectionModal, setRejectionModal] = useState({ isOpen: false, requestId: null });
   
-  const [approvalData, setApprovalData] = useState({ refund_type: 'original_payment', refund_amount: '', admin_notes: '' });
+  const [approvalData, setApprovalData] = useState({ refund_type: 'full_refund', refund_amount: '', admin_notes: '' });
   const [rejectionData, setRejectionData] = useState({ admin_notes: '' });
 
   useEffect(() => {
@@ -297,7 +297,8 @@ export default function AdminReturns() {
                   value={approvalData.refund_type}
                   onChange={(e) => setApprovalData({...approvalData, refund_type: e.target.value})}
                 >
-                  <option value="original_payment">Original Payment</option>
+                  <option value="full_refund">Full Refund (Original Payment)</option>
+                  <option value="partial_refund">Partial Refund</option>
                   <option value="store_credit">Store Credit</option>
                   <option value="replacement">Replacement Item</option>
                 </select>

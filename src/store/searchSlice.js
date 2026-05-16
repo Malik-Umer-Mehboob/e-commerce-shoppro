@@ -72,15 +72,25 @@ const searchSlice = createSlice({
       })
       .addCase(searchProducts.fulfilled, (state, action) => {
         state.loading = false;
-        const data = action.payload.data?.products || action.payload.results || {};
-        state.results = data.data || action.payload.results || [];
+        
+        // Handle both possible response structures
+        const results = action.payload.results || action.payload.data?.results || [];
+        const pagination = action.payload.pagination || action.payload.data?.pagination || {};
+        
+        state.results = results;
         state.pagination = {
-          current_page: data.current_page || 1,
-          last_page: data.last_page || 1,
-          per_page: data.per_page || 15,
-          total: data.total || 0
+          current_page: pagination.current_page || 1,
+          last_page: pagination.last_page || 1,
+          per_page: pagination.per_page || 15,
+          total: pagination.total || 0
         };
-        state.availableFilters = action.payload.data?.available_filters || action.payload.available_filters || state.availableFilters;
+        
+        state.availableFilters = action.payload.available_filters || action.payload.data?.available_filters || state.availableFilters;
+        
+        // Sync applied filters if backend returned them
+        if (action.payload.applied_filters) {
+            state.appliedFilters = action.payload.applied_filters;
+        }
       })
       .addCase(searchProducts.rejected, (state, action) => {
         state.loading = false;

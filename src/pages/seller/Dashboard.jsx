@@ -13,20 +13,26 @@ import {
   DollarSign, 
   AlertCircle,
   ChevronRight,
-  Tag
+  Tag,
+  Clock,
+  XCircle
 } from 'lucide-react';
 import { authService } from '../../services/authService';
-import { logoutUser } from '../../store/authSlice';
+import { logoutUser, updateUser } from '../../store/authSlice';
 import { useNavigate, NavLink, Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import api from '../../services/api';
+import NotificationBell from '../../components/notifications/NotificationBell';
+import ReApplyModal from './components/ReApplyModal';
 
 export default function SellerDashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [stats, setStats] = useState({});
   const [recentOrders, setRecentOrders] = useState([]);
   const [lowStock, setLowStock] = useState([]);
+  const [assignedCategories, setAssignedCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showReApplyModal, setShowReApplyModal] = useState(false);
   
   const { user } = useSelector(state => state.auth);
   const dispatch = useDispatch();
@@ -34,21 +40,33 @@ export default function SellerDashboard() {
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
       try {
         const response = await api.get('/seller/dashboard');
         if (response.data?.success) {
           setStats(response.data.data.stats || {});
           setRecentOrders(response.data.data.recent_orders || []);
           setLowStock(response.data.data.low_stock_products || []);
+          setAssignedCategories(response.data.data.assigned_categories || []);
+          
+          // Sync account status if backend returns a different one
+          if (response.data.data.account_status && response.data.data.account_status !== user?.seller_status) {
+            dispatch(updateUser({ seller_status: response.data.data.account_status }));
+          }
         }
       } catch (error) {
-        toast.error('Failed to fetch dashboard data');
+        if (error.response?.status === 403) {
+          // Access restricted - user likely pending/rejected
+          // No toast needed, the UI handles this via seller_status
+        } else {
+          toast.error('Failed to fetch dashboard data');
+        }
       } finally {
         setLoading(false);
       }
     };
     fetchData();
-  }, []);
+  }, [user?.seller_status]);
 
   const handleLogout = async () => {
     try {
@@ -72,10 +90,11 @@ export default function SellerDashboard() {
   ];
 
   const formatPrice = (amount) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-PK', {
       style: 'currency',
-      currency: 'USD',
-    }).format(amount || 0);
+      currency: 'PKR',
+      minimumFractionDigits: 0,
+    }).format(amount || 0).replace('PKR', 'Rs.');
   };
 
   const StatCard = ({ title, value, subText, icon: Icon, colorClass, subColorClass = "text-gray-400" }) => (
@@ -94,82 +113,99 @@ export default function SellerDashboard() {
   );
 
   return (
-    <div className="min-h-screen flex bg-[#F8FAFC]">
-      {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 bg-[#0F172A] w-72 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 ease-in-out z-30 shadow-2xl shadow-black/50 overflow-y-auto custom-scrollbar`}>
-        <div className="flex h-20 items-center px-8 text-white font-black text-2xl border-b border-white/5 sticky top-0 bg-[#0F172A] z-10">
-          <div className="w-10 h-10 bg-[#F97316] rounded-xl flex items-center justify-center mr-3 shadow-lg shadow-[#F97316]/20">
-            <Globe className="w-6 h-6 text-white" />
-          </div>
-          <span className="tracking-tighter">ShopPro <span className="text-[#F97316]">Seller</span></span>
+    <>
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-20 bg-white rounded-[2.5rem] border border-gray-100 shadow-sm">
+          <div className="w-12 h-12 border-4 border-[#F97316]/20 border-t-[#F97316] rounded-full animate-spin mb-4" />
+          <p className="text-gray-400 font-bold">Verifying your store status...</p>
         </div>
-        
-        <nav className="p-6 space-y-1">
-          {navItems.map((item, idx) => (
-            <NavLink 
-              key={idx} 
-              to={item.path}
-              end={item.end}
-              className={({ isActive }) => `w-full flex items-center justify-between px-4 py-3 rounded-2xl transition-all group ${isActive ? 'bg-[#F97316] text-white shadow-xl shadow-[#F97316]/20' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
-              onClick={() => setIsSidebarOpen(false)}
-            >
-              {({ isActive }) => (
-                <>
-                  <div className="flex items-center space-x-3">
-                    <item.icon className={`w-5 h-5 transition-colors`} />
-                    <span className="font-bold text-sm">{item.label}</span>
-                  </div>
-                  {isActive && <ChevronRight className="w-4 h-4 animate-in slide-in-from-left-2" />}
-                </>
-              )}
-            </NavLink>
-          ))}
-        </nav>
-
-        <div className="p-6 border-t border-white/5 mt-auto">
-          <button 
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-2xl text-red-400 font-bold hover:bg-red-500/10 transition-all border border-red-500/20"
-          >
-            <LogOut className="w-5 h-5" />
-            <span>Logout</span>
-          </button>
-        </div>
-      </aside>
-
-      {/* Main Content Area */}
-      <div className="flex-1 md:ml-72 flex flex-col min-h-screen transition-all duration-300">
-        <header className="h-20 bg-white/80 backdrop-blur-md sticky top-0 flex items-center justify-between px-8 z-20 border-b border-gray-100">
-          <button className="md:hidden p-2 text-gray-500 hover:bg-gray-100 rounded-xl" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
-            <Menu className="w-6 h-6" />
-          </button>
-          
-          <div className="ml-auto flex items-center space-x-6">
-            <div className="text-right hidden sm:block">
-              <p className="text-sm font-black text-[#0F172A]">{user?.name}</p>
-              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Seller Panel</p>
-            </div>
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#0F172A] to-slate-800 text-white flex items-center justify-center font-black border-2 border-white shadow-lg overflow-hidden">
-              {user?.avatar ? (
-                <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
-              ) : (
-                user?.name?.[0] || 'S'
-              )}
-            </div>
-          </div>
-        </header>
-
-        <main className="flex-1 p-8 lg:p-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      ) : user?.seller_status !== 'approved' ? (
+        <>
           <div className="mb-10">
             <h1 className="text-3xl font-black text-[#0F172A] mb-2">Welcome back, {user?.name}!</h1>
             <p className="text-gray-400 font-bold">Here&apos;s what&apos;s happening with your store today.</p>
           </div>
-
+          <div className={`p-8 rounded-[2.5rem] mb-10 border-2 shadow-xl animate-in zoom-in duration-500 ${
+          user?.seller_status === 'pending' ? 'bg-amber-50 border-amber-200 text-amber-900' :
+          user?.seller_status === 'rejected' ? 'bg-red-50 border-red-200 text-red-900' :
+          'bg-gray-50 border-gray-200 text-gray-900'
+        }`}>
+          <div className="flex items-center space-x-6">
+            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg ${
+              user?.seller_status === 'pending' ? 'bg-amber-500 text-white shadow-amber-500/20' :
+              user?.seller_status === 'rejected' ? 'bg-red-500 text-white shadow-red-500/20' :
+              'bg-gray-500 text-white shadow-gray-500/20'
+            }`}>
+              {user?.seller_status === 'pending' ? <Clock className="w-8 h-8" /> : 
+               user?.seller_status === 'rejected' ? <XCircle className="w-8 h-8" /> : <AlertCircle className="w-8 h-8" />}
+            </div>
+            <div className="flex-1">
+              <h2 className="text-2xl font-black uppercase tracking-tight">
+                Account Status: <span className="underline decoration-wavy decoration-2">{user?.seller_status}</span>
+              </h2>
+              <div className="mt-2 space-y-4">
+                <p className="font-bold opacity-70 max-w-2xl">
+                  {user?.seller_status === 'pending' && "Your application is currently being reviewed by our team. You'll receive a notification once your account is approved. Until then, dashboard access is restricted."}
+                  {user?.seller_status === 'rejected' && (
+                    <>
+                      Unfortunately, your seller application was rejected. 
+                      {user.rejection_reason && (
+                        <div className="mt-3 p-4 bg-white/50 rounded-2xl border border-red-100 italic font-medium">
+                          <span className="font-black text-red-600 block mb-1 uppercase text-[10px] tracking-widest not-italic">Reason for Rejection:</span>
+                          "{user.rejection_reason}"
+                        </div>
+                      )}
+                    </>
+                  )}
+                  {user?.seller_status === 'suspended' && "Your seller account has been suspended due to a policy violation. Please contact the administrator for further details."}
+                </p>
+                <div className="flex flex-wrap gap-4">
+                  {user?.seller_status === 'rejected' && (
+                    <button 
+                      onClick={() => setShowReApplyModal(true)}
+                      className="px-8 py-3 bg-[#F97316] text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-[#F97316]/20 hover:bg-[#ea6a0f] transition-all"
+                    >
+                      Re-Apply Now
+                    </button>
+                  )}
+                  <button 
+                    onClick={() => window.location.href = 'mailto:support@shoppro.com'}
+                    className={`px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${
+                      user?.seller_status === 'pending' ? 'bg-amber-500 text-white hover:bg-amber-600' :
+                      user?.seller_status === 'rejected' ? 'bg-white text-red-600 border border-red-200 hover:bg-red-50' :
+                      'bg-gray-500 text-white hover:bg-gray-600'
+                    }`}
+                  >
+                    Contact Support
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </>
+      ) : (
+        <>
+          <div className="mb-10">
+            <h1 className="text-3xl font-black text-[#0F172A] mb-2">Welcome back, {user?.name}!</h1>
+            <p className="text-gray-400 font-bold mb-4">Here&apos;s what&apos;s happening with your store today.</p>
+            
+            {assignedCategories.length > 0 && (
+              <div className="flex flex-wrap items-center gap-3 animate-in fade-in slide-in-from-left-4 duration-700 delay-200">
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mr-2">Authorized Seller of:</span>
+                {assignedCategories.map((cat) => (
+                  <span key={cat.id} className="px-4 py-1.5 bg-[#0F172A] text-white text-[10px] font-black uppercase tracking-widest rounded-full shadow-lg shadow-[#0F172A]/10 border border-white/10 hover:scale-105 transition-transform cursor-default">
+                    {cat.name}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
             <StatCard 
               title="Total Products" 
               value={stats.total_products} 
-              subText={`${stats.published_products} published · ${stats.draft_products} drafts`}
+              subText={`${stats.approved_products || 0} Approved · ${stats.pending_products || 0} Pending`}
               icon={Package}
               colorClass="bg-blue-500"
             />
@@ -266,12 +302,9 @@ export default function SellerDashboard() {
               </table>
             </div>
           </div>
-        </main>
-      </div>
-      
-      {isSidebarOpen && (
-        <div className="fixed inset-0 bg-[#0F172A]/60 z-20 md:hidden backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setIsSidebarOpen(false)}></div>
+        </>
       )}
-    </div>
+      <ReApplyModal isOpen={showReApplyModal} onClose={() => setShowReApplyModal(false)} user={user} />
+    </>
   );
 }

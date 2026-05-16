@@ -64,6 +64,16 @@ const Header = () => {
             <SearchBar />
           </div>
 
+          {/* Main Navigation */}
+          <div className="hidden lg:flex items-center space-x-8 px-4 border-r border-slate-700">
+            <Link to="/shop" className="text-sm font-bold text-slate-300 hover:text-orange-500 transition-colors uppercase tracking-widest">
+              Shop
+            </Link>
+            <Link to="/blog" className="text-sm font-bold text-slate-300 hover:text-orange-500 transition-colors uppercase tracking-widest">
+              Blog
+            </Link>
+          </div>
+
           {/* Right side */}
           <div className="flex items-center space-x-2 md:space-x-3 flex-shrink-0">
             <div className="hidden lg:flex items-center space-x-2 border-r border-slate-700 pr-3">
@@ -79,7 +89,7 @@ const Header = () => {
               <Heart size={22} />
             </Link>
 
-            <NotificationBell />
+            <NotificationBell isDark={true} />
             <CartIcon />
 
             {isAuthenticated ? (
@@ -110,6 +120,9 @@ const Header = () => {
                     </Link>
                     <Link to="/user/orders" onClick={() => setIsDropdownOpen(false)} className="block px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-[#F97316] transition-colors">
                       My Orders
+                    </Link>
+                    <Link to="/my-tickets" onClick={() => setIsDropdownOpen(false)} className="block px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-[#F97316] transition-colors">
+                      My Tickets
                     </Link>
                     <Link to="/returns" onClick={() => setIsDropdownOpen(false)} className="block px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-[#F97316] transition-colors">
                       My Returns

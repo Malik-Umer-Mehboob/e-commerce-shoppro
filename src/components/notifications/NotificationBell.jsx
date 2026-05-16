@@ -1,181 +1,292 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import { Bell, Check, CheckCheck, Package, Truck, Gift, Star, ShoppingCart, AlertTriangle, UserPlus, X } from 'lucide-react';
-import { fetchNotifications, fetchUnreadCount, markNotificationRead, markAllNotificationsRead } from '../../store/notificationSlice';
+import { useState, useEffect, useRef } from 'react';
+import { 
+    Bell, 
+    Package, 
+    ShoppingBag, 
+    AlertTriangle, 
+    CheckCircle, 
+    X, 
+    Info, 
+    XCircle, 
+    MessageSquare,
+    Truck,
+    Clock
+} from 'lucide-react';
+import api from '../../services/api';
 
-const typeIcons = {
-    order_placed: Package,
-    order_shipped: Truck,
-    order_delivered: Check,
-    order_cancelled: X,
-    order_refunded: AlertTriangle,
-    welcome: UserPlus,
-    promotion: Gift,
-    review_request: Star,
-    abandoned_cart: ShoppingCart,
-    low_stock: AlertTriangle,
-    new_order_seller: Package,
-    price_drop: Gift,
-    back_in_stock: Package,
-};
-
-const typeColors = {
-    order_placed: 'text-blue-400 bg-blue-400/10',
-    order_shipped: 'text-purple-400 bg-purple-400/10',
-    order_delivered: 'text-emerald-400 bg-emerald-400/10',
-    order_cancelled: 'text-red-400 bg-red-400/10',
-    order_refunded: 'text-yellow-400 bg-yellow-400/10',
-    welcome: 'text-[#F97316] bg-[#F97316]/10',
-    promotion: 'text-pink-400 bg-pink-400/10',
-    review_request: 'text-amber-400 bg-amber-400/10',
-    abandoned_cart: 'text-cyan-400 bg-cyan-400/10',
-    low_stock: 'text-orange-400 bg-orange-400/10',
-    new_order_seller: 'text-indigo-400 bg-indigo-400/10',
-};
-
-const NotificationBell = () => {
-    const dispatch = useDispatch();
-    const navigate = useNavigate();
-    const { items, unreadCount, loading } = useSelector((state) => state.notifications);
-    const { isAuthenticated } = useSelector((state) => state.auth);
-    const [showDropdown, setShowDropdown] = useState(false);
+export default function NotificationBell({ isDark = false }) {
+    const [notifications, setNotifications] = useState([]);
+    const [unreadCount, setUnreadCount] = useState(0);
+    const [isOpen, setIsOpen] = useState(false);
+    const [loading, setLoading] = useState(false);
     const dropdownRef = useRef(null);
 
-    // Fetch unread count once
+    // Fetch unread count every 30 seconds (polling)
     useEffect(() => {
-        dispatch(fetchUnreadCount());
+        fetchUnreadCount();
+        const interval = setInterval(fetchUnreadCount, 30000);
+        return () => clearInterval(interval);
     }, []);
 
-    // Close dropdown on outside click
+    // Close on outside click
     useEffect(() => {
-        const handleClickOutside = (e) => {
+        const handler = (e) => {
             if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-                setShowDropdown(false);
+                setIsOpen(false);
             }
         };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
     }, []);
 
-    const handleToggle = () => {
-        if (!showDropdown) {
-            dispatch(fetchNotifications(1));
+    const fetchUnreadCount = async () => {
+        try {
+            const res = await api.get('/notifications/unread-count');
+            setUnreadCount(res.data?.data?.unread_count ?? 0);
+        } catch {}
+    };
+
+    const fetchNotifications = async () => {
+        setLoading(true);
+        try {
+            const res = await api.get('/notifications');
+            setNotifications(res.data?.data?.notifications ?? []);
+            setUnreadCount(res.data?.data?.unread_count ?? 0);
+        } catch {}
+        finally { setLoading(false); }
+    };
+
+    const handleOpen = () => {
+        if (!isOpen) fetchNotifications();
+        setIsOpen(!isOpen);
+    };
+
+    const handleMarkRead = async (id) => {
+        try {
+            await api.post(`/notifications/${id}/read`);
+            setNotifications(prev =>
+                prev.map(n => n.id === id ? { ...n, is_read: true } : n)
+            );
+            setUnreadCount(prev => Math.max(0, prev - 1));
+        } catch {}
+    };
+
+    const handleMarkAllRead = async () => {
+        try {
+            await api.post('/notifications/mark-all-read');
+            setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+            setUnreadCount(0);
+        } catch {}
+    };
+
+    const getNotificationStyles = (type) => {
+        const t = type?.toLowerCase() || '';
+        
+        // Success Roles (Green)
+        if (t.includes('placed') || t.includes('delivered') || t.includes('success')) {
+            return {
+                icon: <CheckCircle className="w-4 h-4" />,
+                bg: 'bg-emerald-50 dark:bg-emerald-500/10',
+                text: 'text-emerald-600 dark:text-emerald-400',
+                border: 'border-emerald-100 dark:border-emerald-500/20',
+                dot: 'bg-emerald-500'
+            };
         }
-        setShowDropdown(!showDropdown);
-    };
-
-    const handleNotificationClick = (notification) => {
-        if (!notification.read_at) {
-            dispatch(markNotificationRead(notification.id));
+        
+        // Info Roles (Blue)
+        if (t.includes('shipped') || t.includes('processing') || t.includes('update')) {
+            return {
+                icon: <Truck className="w-4 h-4" />,
+                bg: 'bg-blue-50 dark:bg-blue-500/10',
+                text: 'text-blue-600 dark:text-blue-400',
+                border: 'border-blue-100 dark:border-blue-500/20',
+                dot: 'bg-blue-500'
+            };
         }
-        setShowDropdown(false);
-        if (notification.link) {
-            navigate(notification.link);
+        
+        // Warning Roles (Orange)
+        if (t.includes('stock') || t.includes('low') || t.includes('delay')) {
+            return {
+                icon: <AlertTriangle className="w-4 h-4" />,
+                bg: 'bg-amber-50 dark:bg-amber-500/10',
+                text: 'text-amber-600 dark:text-amber-400',
+                border: 'border-amber-100 dark:border-amber-500/20',
+                dot: 'bg-amber-500'
+            };
         }
-    };
+        
+        // Error Roles (Red)
+        if (t.includes('cancel') || t.includes('fail') || t.includes('error')) {
+            return {
+                icon: <XCircle className="w-4 h-4" />,
+                bg: 'bg-rose-50 dark:bg-rose-500/10',
+                text: 'text-rose-600 dark:text-rose-400',
+                border: 'border-rose-100 dark:border-rose-500/20',
+                dot: 'bg-rose-500'
+            };
+        }
 
-    const handleMarkAllRead = () => {
-        dispatch(markAllNotificationsRead());
-    };
+        // Support Roles (Purple)
+        if (t.includes('ticket') || t.includes('reply') || t.includes('message')) {
+            return {
+                icon: <MessageSquare className="w-4 h-4" />,
+                bg: 'bg-purple-50 dark:bg-purple-500/10',
+                text: 'text-purple-600 dark:text-purple-400',
+                border: 'border-purple-100 dark:border-purple-500/20',
+                dot: 'bg-purple-500'
+            };
+        }
 
-    const getTimeAgo = (dateStr) => {
-        const diff = Date.now() - new Date(dateStr).getTime();
-        const mins = Math.floor(diff / 60000);
-        if (mins < 1) return 'Just now';
-        if (mins < 60) return `${mins}m ago`;
-        const hours = Math.floor(mins / 60);
-        if (hours < 24) return `${hours}h ago`;
-        const days = Math.floor(hours / 24);
-        if (days < 7) return `${days}d ago`;
-        return new Date(dateStr).toLocaleDateString();
+        // Default
+        return {
+            icon: <Bell className="w-4 h-4" />,
+            bg: 'bg-slate-50 dark:bg-slate-500/10',
+            text: 'text-slate-600 dark:text-slate-400',
+            border: 'border-slate-100 dark:border-slate-500/20',
+            dot: 'bg-slate-500'
+        };
     };
-
-    if (!isAuthenticated) return null;
 
     return (
-        <div className="relative" ref={dropdownRef}>
+        <div ref={dropdownRef} className="relative inline-block">
+            {/* Bell Button */}
             <button
-                onClick={handleToggle}
-                className="relative p-2 text-gray-300 hover:text-white transition-colors"
-                title="Notifications"
-                id="notification-bell"
+                onClick={handleOpen}
+                className={`relative p-2.5 rounded-full transition-all duration-300 group
+                    ${unreadCount > 0 ? 'animate-bounce-short' : ''}
+                    ${isDark 
+                        ? 'bg-slate-800/50 hover:bg-slate-700 border border-slate-700 text-slate-100' 
+                        : 'bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-900'}`}
+                aria-label="Toggle notifications"
             >
-                <Bell size={22} />
+                <Bell className={`w-5 h-5 transition-transform duration-300 ${isOpen ? 'scale-110' : 'group-hover:scale-110'}`} />
+                
                 {unreadCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-lg animate-pulse">
-                        {unreadCount > 99 ? '99+' : unreadCount}
+                    <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center">
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75"></span>
+                        <span className="relative inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-rose-500 text-[9px] font-bold text-white shadow-sm ring-2 ring-white dark:ring-slate-900">
+                            {unreadCount > 9 ? '9+' : unreadCount}
+                        </span>
                     </span>
                 )}
             </button>
 
             {/* Dropdown */}
-            {showDropdown && (
-                <div className="absolute right-0 top-full mt-2 w-96 max-h-[480px] bg-[#1E293B] border border-gray-700 rounded-2xl shadow-2xl overflow-hidden z-50" id="notification-dropdown">
+            {isOpen && (
+                <div className="absolute right-0 top-full z-[100] mt-3 w-[calc(100vw-32px)] sm:w-[380px] origin-top-right overflow-hidden rounded-[1.5rem] bg-white shadow-[0_20px_50px_rgba(0,0,0,0.15)] ring-1 ring-slate-100 transition-all dark:bg-slate-900 dark:ring-slate-800 animate-in fade-in zoom-in-95 duration-200">
+                    
                     {/* Header */}
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700 bg-gray-800/50">
-                        <h3 className="text-white font-semibold text-sm">Notifications</h3>
+                    <div className="flex items-center justify-between border-b border-slate-50 bg-slate-50/50 px-6 py-4 dark:border-slate-800 dark:bg-slate-800/50">
+                        <div className="flex items-center gap-2.5">
+                            <h3 className="text-[15px] font-black tracking-tight text-slate-900 dark:text-white uppercase">
+                                Notifications
+                            </h3>
+                            {unreadCount > 0 && (
+                                <span className="rounded-full bg-rose-100 px-2.5 py-0.5 text-[10px] font-black text-rose-600 dark:bg-rose-500/10 dark:text-rose-400 uppercase tracking-wider">
+                                    {unreadCount} New
+                                </span>
+                            )}
+                        </div>
                         <div className="flex items-center gap-3">
                             {unreadCount > 0 && (
                                 <button
                                     onClick={handleMarkAllRead}
-                                    className="text-xs text-[#F97316] hover:text-[#ea580c] font-medium flex items-center gap-1 transition-colors"
+                                    className="text-xs font-bold text-orange-500 transition-colors hover:text-orange-600 dark:text-orange-400 dark:hover:text-orange-300"
                                 >
-                                    <CheckCheck className="w-3.5 h-3.5" />
-                                    Mark all read
+                                    Clear all
                                 </button>
                             )}
                             <button
-                                onClick={() => { setShowDropdown(false); navigate('/notifications/preferences'); }}
-                                className="text-xs text-gray-400 hover:text-white transition-colors"
+                                onClick={() => setIsOpen(false)}
+                                className="rounded-lg p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-200"
                             >
-                                Settings
+                                <X className="w-4 h-4" />
                             </button>
                         </div>
                     </div>
 
                     {/* List */}
-                    <div className="overflow-y-auto max-h-[400px]">
+                    <div className="custom-scrollbar max-h-[420px] overflow-y-auto">
                         {loading ? (
-                            <div className="text-center py-10 text-gray-500 text-sm">Loading...</div>
-                        ) : items.length === 0 ? (
-                            <div className="text-center py-12">
-                                <Bell className="w-10 h-10 text-gray-600 mx-auto mb-3" />
-                                <p className="text-gray-500 text-sm">No notifications yet</p>
+                            <div className="flex flex-col items-center justify-center gap-3 py-16">
+                                <div className="h-6 w-6 animate-spin rounded-full border-2 border-orange-500 border-t-transparent"></div>
+                                <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Updating inbox...</p>
+                            </div>
+                        ) : notifications.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-20 text-center px-8">
+                                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-slate-50 dark:bg-slate-800/50">
+                                    <Bell className="h-8 w-8 text-slate-200 dark:text-slate-700" />
+                                </div>
+                                <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">All caught up!</h4>
+                                <p className="mt-1 text-xs font-medium text-slate-400">You don't have any notifications at the moment.</p>
                             </div>
                         ) : (
-                            items.map((notification) => {
-                                const Icon = typeIcons[notification.type] || Bell;
-                                const colorClass = typeColors[notification.type] || 'text-gray-400 bg-gray-400/10';
-                                return (
-                                    <button
-                                        key={notification.id}
-                                        onClick={() => handleNotificationClick(notification)}
-                                        className={`w-full flex items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-white/5 border-b border-gray-700/50 last:border-b-0
-                      ${!notification.read_at ? 'bg-[#F97316]/5' : ''}`}
-                                    >
-                                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${colorClass}`}>
-                                            <Icon className="w-4 h-4" />
+                            <div className="divide-y divide-slate-50 dark:divide-slate-800/50">
+                                {notifications.map((n) => {
+                                    const styles = getNotificationStyles(n.type);
+                                    return (
+                                        <div
+                                            key={n.id}
+                                            onClick={() => !n.is_read && handleMarkRead(n.id)}
+                                            className={`group relative flex cursor-pointer gap-4 px-6 py-4 transition-all duration-200 
+                                                ${n.is_read 
+                                                    ? 'bg-white hover:bg-slate-50/50 dark:bg-slate-900 dark:hover:bg-slate-800/50' 
+                                                    : 'bg-orange-50/30 hover:bg-orange-50/50 dark:bg-orange-500/5 dark:hover:bg-orange-500/10'}`}
+                                        >
+                                            {/* Icon */}
+                                            <div className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border transition-transform duration-300 group-hover:scale-110 
+                                                ${styles.bg} ${styles.text} ${styles.border}`}
+                                            >
+                                                {styles.icon}
+                                            </div>
+
+                                            {/* Content */}
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <h4 className={`text-[13px] leading-snug transition-colors 
+                                                        ${n.is_read 
+                                                            ? 'font-bold text-slate-600 dark:text-slate-400' 
+                                                            : 'font-black text-slate-900 dark:text-white'}`}
+                                                    >
+                                                        {n.title}
+                                                    </h4>
+                                                    {!n.is_read && (
+                                                        <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full shadow-[0_0_8px_rgba(0,0,0,0.1)] ${styles.dot}`}></span>
+                                                    )}
+                                                </div>
+                                                <p className="mt-1 text-xs leading-relaxed text-slate-500 line-clamp-2 dark:text-slate-400/80">
+                                                    {n.message}
+                                                </p>
+                                                <div className="mt-2.5 flex items-center gap-3">
+                                                    <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-slate-400">
+                                                        <Clock className="w-3 h-3" />
+                                                        {n.time_ago}
+                                                    </div>
+                                                    {!n.is_read && (
+                                                        <span className="text-[10px] font-black uppercase tracking-wider text-orange-500">
+                                                            New Alert
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className={`text-sm leading-tight ${!notification.read_at ? 'text-white font-medium' : 'text-gray-300'}`}>
-                                                {notification.title}
-                                            </p>
-                                            <p className="text-xs text-gray-500 mt-0.5 truncate">{notification.message}</p>
-                                            <p className="text-[11px] text-gray-600 mt-1">{getTimeAgo(notification.created_at)}</p>
-                                        </div>
-                                        {!notification.read_at && (
-                                            <div className="w-2 h-2 rounded-full bg-[#F97316] flex-shrink-0 mt-2" />
-                                        )}
-                                    </button>
-                                );
-                            })
+                                    );
+                                })}
+                            </div>
                         )}
+                    </div>
+
+                    {/* Footer */}
+                    <div className="border-t border-slate-50 bg-slate-50/30 px-6 py-3 dark:border-slate-800 dark:bg-slate-800/30">
+                        <button 
+                            className="w-full text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-200"
+                            onClick={() => setIsOpen(false)}
+                        >
+                            View Activity History
+                        </button>
                     </div>
                 </div>
             )}
         </div>
     );
-};
-
-export default NotificationBell;
+}

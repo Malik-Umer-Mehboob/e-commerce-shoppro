@@ -23,6 +23,7 @@ const Discounts = lazy(() => import('./pages/admin/Discounts'));
 const BulkUpload = lazy(() => import('./pages/admin/BulkUpload'));
 const LowStock = lazy(() => import('./pages/admin/LowStock'));
 const AdminLayout = lazy(() => import('./components/layout/AdminLayout'));
+const SellerLayout = lazy(() => import('./components/layout/SellerLayout'));
 const CustomerLayout = lazy(() => import('./components/layout/CustomerLayout'));
 const Settings = lazy(() => import('./pages/admin/Settings'));
 const Campaigns = lazy(() => import('./pages/admin/marketing/Campaigns'));
@@ -42,6 +43,8 @@ const SystemLogs = lazy(() => import('./pages/admin/SystemLogs'));
 const RiderAssignments = lazy(() => import('./pages/admin/RiderAssignments'));
 const AdminReturns = lazy(() => import('./pages/admin/Returns'));
 const Categories = lazy(() => import('./pages/admin/Categories'));
+const SellerManagement = lazy(() => import('./pages/admin/SellerManagement'));
+const StaffManagement = lazy(() => import('./pages/admin/StaffManagement'));
 
 // Rider Components
 const RiderDashboard = lazy(() => import('./pages/rider/Dashboard'));
@@ -76,6 +79,8 @@ const SearchResults = lazy(() => import('./pages/search/SearchResults'));
 const NotificationPreferences = lazy(() => import('./pages/notifications/NotificationPreferences'));
 const HelpCenter = lazy(() => import('./pages/help/HelpCenter'));
 const ArticleDetail = lazy(() => import('./pages/help/ArticleDetail'));
+const HelpSearch = lazy(() => import('./pages/help/HelpSearch'));
+const CategoryArticles = lazy(() => import('./pages/help/CategoryArticles'));
 const ContactForm = lazy(() => import('./pages/help/ContactForm'));
 const OrderLookup = lazy(() => import('./pages/help/OrderLookup'));
 const MyTickets = lazy(() => import('./pages/customer/MyTickets'));
@@ -101,6 +106,7 @@ const CustomerOrders = lazy(() => import('./pages/customer/Orders'));
 const OrderDetail = lazy(() => import('./pages/customer/OrderDetail'));
 const AdminOrders = lazy(() => import('./pages/admin/Orders'));
 const AdminShippingZones = lazy(() => import('./pages/admin/ShippingZones'));
+const NotificationCenter = lazy(() => import('./pages/customer/NotificationCenter'));
 
 // Shared/Common Components
 const ChatWidget = lazy(() => import('./components/common/ChatWidget'));
@@ -183,6 +189,7 @@ function App() {
             </ProtectedRoute>
           } />
           <Route path="/products" element={<Products />} />
+          <Route path="/shop" element={<Products />} />
           <Route path="/products/:id" element={<ProductDetail />} />
           <Route path="/search" element={<SearchResults />} />
           <Route path="/compare" element={<ProductComparisonPage />} />
@@ -202,6 +209,11 @@ function App() {
               <NotificationPreferences />
             </ProtectedRoute>
           } />
+          <Route path="/user/notifications" element={
+            <ProtectedRoute allowedRoles={['customer', 'admin', 'seller', 'support']}>
+              <NotificationCenter />
+            </ProtectedRoute>
+          } />
 
           {/* Help Center Routes */}
           <Route path="/help" element={
@@ -212,6 +224,16 @@ function App() {
           <Route path="/help/article/:slug" element={
             <CustomerLayout>
               <ArticleDetail />
+            </CustomerLayout>
+          } />
+          <Route path="/help/category/:slug" element={
+            <CustomerLayout>
+              <CategoryArticles />
+            </CustomerLayout>
+          } />
+          <Route path="/help/search" element={
+            <CustomerLayout>
+              <HelpSearch />
             </CustomerLayout>
           } />
           <Route path="/help/contact" element={
@@ -231,12 +253,12 @@ function App() {
           <Route path="/blog/:slug" element={<BlogPostDetail />} />
 
           {/* Customer Support Routes */}
-          <Route path="/customer/tickets" element={
+          <Route path="/my-tickets" element={
             <ProtectedRoute allowedRoles={['customer', 'admin', 'seller', 'support']}>
               <MyTickets />
             </ProtectedRoute>
           } />
-          <Route path="/customer/tickets/:id" element={
+          <Route path="/my-tickets/:id" element={
             <ProtectedRoute allowedRoles={['customer', 'admin', 'seller', 'support']}>
               <TicketDetail />
             </ProtectedRoute>
@@ -446,6 +468,13 @@ function App() {
             </ProtectedRoute>
           } />
 
+          <Route path="/admin/staff" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminLayout>
+                <StaffManagement />
+              </AdminLayout>
+            </ProtectedRoute>
+          } />
           <Route path="/admin/users" element={
             <ProtectedRoute allowedRoles={['admin']}>
               <AdminLayout>
@@ -493,6 +522,14 @@ function App() {
               </AdminLayout>
             </ProtectedRoute>
           } />
+          
+          <Route path="/admin/sellers" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminLayout>
+                <SellerManagement />
+              </AdminLayout>
+            </ProtectedRoute>
+          } />
 
           {/* Rider Routes */}
           <Route path="/rider/dashboard" element={
@@ -521,49 +558,67 @@ function App() {
 
           <Route path="/seller/dashboard" element={
             <ProtectedRoute allowedRoles={['seller']}>
-              <SellerDashboard />
+              <SellerLayout>
+                <SellerDashboard />
+              </SellerLayout>
             </ProtectedRoute>
           } />
 
           <Route path="/seller/products" element={
             <ProtectedRoute allowedRoles={['seller']}>
-              <SellerProducts />
+              <SellerLayout>
+                <SellerProducts />
+              </SellerLayout>
             </ProtectedRoute>
           } />
           <Route path="/seller/products/add" element={
             <ProtectedRoute allowedRoles={['seller']}>
-              <AddProduct />
+              <SellerLayout>
+                <AddProduct />
+              </SellerLayout>
             </ProtectedRoute>
           } />
           <Route path="/seller/products/edit/:id" element={
             <ProtectedRoute allowedRoles={['seller']}>
-              <AddProduct />
+              <SellerLayout>
+                <AddProduct />
+              </SellerLayout>
             </ProtectedRoute>
           } />
           <Route path="/seller/orders" element={
             <ProtectedRoute allowedRoles={['seller']}>
-              <SellerOrders />
+              <SellerLayout>
+                <SellerOrders />
+              </SellerLayout>
             </ProtectedRoute>
           } />
           <Route path="/seller/analytics" element={
             <ProtectedRoute allowedRoles={['seller']}>
-              <SellerAnalytics />
+              <SellerLayout>
+                <SellerAnalytics />
+              </SellerLayout>
             </ProtectedRoute>
           } />
           <Route path="/seller/settings" element={
             <ProtectedRoute allowedRoles={['seller']}>
-              <SellerSettings />
+              <SellerLayout>
+                <SellerSettings />
+              </SellerLayout>
             </ProtectedRoute>
           } />
           <Route path="/seller/reports" element={
             <ProtectedRoute allowedRoles={['seller']}>
-              <SellerReportsDashboard />
+              <SellerLayout>
+                <SellerReportsDashboard />
+              </SellerLayout>
             </ProtectedRoute>
           } />
 
           <Route path="/seller/category-request" element={
             <ProtectedRoute allowedRoles={['seller']}>
-              <CategoryRequest />
+              <SellerLayout>
+                <CategoryRequest />
+              </SellerLayout>
             </ProtectedRoute>
           } />
 

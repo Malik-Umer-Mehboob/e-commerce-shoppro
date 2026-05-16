@@ -2,8 +2,10 @@ import api from './api';
 
 export const productService = {
     getProducts: async (filters = {}) => {
-        const queryParams = new URLSearchParams(filters).toString();
-        const response = await api.get(`/products?${queryParams}`);
+        const { isSeller, ...rest } = filters;
+        const queryParams = new URLSearchParams(rest).toString();
+        const endpoint = isSeller ? '/seller/products' : '/products';
+        const response = await api.get(`${endpoint}?${queryParams}`);
         return response.data;
     },
     
@@ -56,8 +58,8 @@ export const productService = {
     
     uploadImages: async (id, images) => {
         const formData = new FormData();
-        images.forEach((image, index) => {
-            formData.append(`images[${index}]`, image);
+        images.forEach((image) => {
+            formData.append('images[]', image);
         });
         const response = await api.post(`/products/${id}/images`, formData, {
             headers: {
@@ -74,6 +76,11 @@ export const productService = {
     
     updateStatus: async (id, status) => {
         const response = await api.patch(`/products/${id}/status`, { status });
+        return response.data;
+    },
+
+    updateModerationStatus: async (id, moderation_status) => {
+        const response = await api.patch(`/admin/products/${id}/moderation-status`, { moderation_status });
         return response.data;
     },
     

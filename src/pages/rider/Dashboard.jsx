@@ -14,6 +14,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import api from '../../services/api';
 import RiderLayout from '../../components/rider/Layout';
+import NotificationBell from '../../components/notifications/NotificationBell';
 
 export default function RiderDashboard() {
   const [data, setData] = useState(null);
@@ -72,6 +73,7 @@ export default function RiderDashboard() {
             </div>
           </div>
           <div className="flex items-center space-x-4 ml-auto">
+            <NotificationBell />
             <div className="text-right">
               <p className="text-sm font-black text-[#0F172A]">{user?.name}</p>
               <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Rider Panel</p>
@@ -170,7 +172,17 @@ export default function RiderDashboard() {
                           <div>
                             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Delivery Address</p>
                             <p className="text-xs font-bold text-[#0F172A] mt-0.5 line-clamp-2">
-                                {typeof a.delivery_address === 'string' ? a.delivery_address : (a.delivery_address?.street || 'N/A')}
+                                {(() => {
+                                  const addr = a.delivery_address;
+                                  if (!addr) return 'Address not available';
+                                  const parts = [
+                                    addr.address_line_1,
+                                    addr.address_line_2,
+                                    addr.city,
+                                    addr.country,
+                                  ].filter(Boolean);
+                                  return parts.length > 0 ? parts.join(', ') : 'Address not available';
+                                })()}
                             </p>
                           </div>
                         </div>

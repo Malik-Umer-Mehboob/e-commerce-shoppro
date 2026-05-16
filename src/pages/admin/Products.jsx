@@ -12,7 +12,11 @@ export default function AdminProducts() {
   const [stats, setStats] = useState({
     total: 0,
     published: 0,
-    drafts: 0,
+    draft: 0,
+    archived: 0,
+    approved: 0,
+    pending: 0,
+    rejected: 0,
     low_stock: 0,
   });
   const [loading, setLoading] = useState(true);
@@ -36,6 +40,7 @@ export default function AdminProducts() {
             search: filters.search,
             category_id: filters.category_id,
             status: filters.status,
+            moderation_status: filters.moderation_status,
         };
 
         const response = await api.get('/products', { params });
@@ -51,7 +56,11 @@ export default function AdminProducts() {
         setStats({
             total: statsData?.total ?? 0,
             published: statsData?.published ?? 0,
-            drafts: statsData?.drafts ?? 0,
+            draft: statsData?.draft ?? 0,
+            archived: statsData?.archived ?? 0,
+            approved: statsData?.approved ?? 0,
+            pending: statsData?.pending ?? 0,
+            rejected: statsData?.rejected ?? 0,
             low_stock: statsData?.low_stock ?? 0,
         });
 
@@ -65,7 +74,7 @@ export default function AdminProducts() {
 
   useEffect(() => {
     fetchProducts(currentPage);
-  }, [filters.category_id, filters.status, filters.search, currentPage]);
+  }, [filters.category_id, filters.status, filters.moderation_status, filters.search, currentPage]);
 
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
@@ -79,14 +88,23 @@ export default function AdminProducts() {
     }
   };
 
-  const toggleStatus = async (product) => {
-    const newStatus = product.status === 'published' ? 'draft' : 'published';
+  const updateProductStatus = async (product, newStatus) => {
     try {
       await api.patch(`/products/${product.id}/status`, { status: newStatus });
-      toast.success(`Product ${newStatus === 'published' ? 'published' : 'moved to drafts'}`);
+      toast.success(`Product ${newStatus}`);
       fetchProducts(currentPage);
     } catch (error) {
       toast.error('Failed to update status');
+    }
+  };
+
+  const updateModeration = async (product, newStatus) => {
+    try {
+      await api.patch(`/admin/products/${product.id}/moderation-status`, { moderation_status: newStatus });
+      toast.success(`Product ${newStatus}`);
+      fetchProducts(currentPage);
+    } catch (error) {
+      toast.error('Failed to update moderation status');
     }
   };
 
@@ -107,23 +125,26 @@ export default function AdminProducts() {
       </div>
 
       {/* Stats Bar */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4">
         {[
-          { icon: Package, label: 'Total Products', value: stats.total, color: '#3B82F6', bg: '#EFF6FF' },
+          { icon: Package, label: 'Total', value: stats.total, color: '#3B82F6', bg: '#EFF6FF' },
           { icon: CheckCircle, label: 'Published', value: stats.published, color: '#10B981', bg: '#ECFDF5' },
-          { icon: Clock, label: 'Drafts', value: stats.drafts, color: '#F59E0B', bg: '#FFFBEB' },
-          { icon: AlertTriangle, label: 'Low Stock', value: stats.low_stock, color: '#EF4444', bg: '#FEF2F2' }
+          { icon: Clock, label: 'Drafts', value: stats.draft, color: '#F59E0B', bg: '#FFFBEB' },
+          { icon: AlertTriangle, label: 'Archived', value: stats.archived, color: '#EF4444', bg: '#FEF2F2' },
+          { icon: CheckCircle, label: 'Approved', value: stats.approved, color: '#06B6D4', bg: '#ECFEFF' },
+          { icon: Clock, label: 'Pending', value: stats.pending, color: '#8B5CF6', bg: '#F5F3FF' },
+          { icon: AlertTriangle, label: 'Rejected', value: stats.rejected, color: '#EC4899', bg: '#FDF2F8' }
         ].map((stat, idx) => (
-          <div key={idx} className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center space-x-4">
+          <div key={idx} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center space-x-3">
             <div 
-              className="w-12 h-12 rounded-2xl flex items-center justify-center"
+              className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
               style={{ backgroundColor: stat.bg }}
             >
-              <stat.icon className="w-6 h-6" style={{ color: stat.color }} />
+              <stat.icon className="w-5 h-5" style={{ color: stat.color }} />
             </div>
             <div>
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{stat.label}</p>
-              <p className="text-2xl font-black text-[#0F172A]">{stat.value}</p>
+              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{stat.label}</p>
+              <p className="text-lg font-black text-[#0F172A]">{stat.value}</p>
             </div>
           </div>
         ))}
@@ -147,10 +168,20 @@ export default function AdminProducts() {
           value={filters.status}
           onChange={(e) => setFilters({ ...filters, status: e.target.value })}
         >
-          <option value="">All Status</option>
+          <option value="">All Publish</option>
           <option value="published">Published</option>
           <option value="draft">Draft</option>
           <option value="archived">Archived</option>
+        </select>
+        <select 
+          className="px-6 py-3 rounded-2xl bg-gray-50 border-none focus:bg-white focus:ring-4 focus:ring-[#F97316]/10 outline-none transition-all font-bold text-[#0F172A]"
+          value={filters.moderation_status}
+          onChange={(e) => setFilters({ ...filters, moderation_status: e.target.value })}
+        >
+          <option value="">All Moderation</option>
+          <option value="approved">Approved</option>
+          <option value="pending">Pending</option>
+          <option value="rejected">Rejected</option>
         </select>
       </div>
 
@@ -161,10 +192,12 @@ export default function AdminProducts() {
             <thead>
               <tr className="bg-gray-50/50">
                 <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Product</th>
+                <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Seller</th>
                 <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Category</th>
                 <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Price</th>
                 <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] text-center">Stock</th>
-                <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Status</th>
+                <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Publish</th>
+                <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Moderation</th>
                 <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] text-right">Actions</th>
               </tr>
             </thead>
@@ -211,6 +244,9 @@ export default function AdminProducts() {
                       </div>
                     </div>
                   </td>
+                  <td className="px-8 py-6 text-sm font-bold text-[#0F172A]">
+                    {product.seller?.name ?? 'Admin'}
+                  </td>
                   <td className="px-8 py-6 text-sm font-bold text-gray-500">
                     {product.category?.name ?? 'Uncategorized'}
                   </td>
@@ -226,17 +262,48 @@ export default function AdminProducts() {
                       <div className="flex flex-col space-y-2">
                         <span className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-lg inline-block w-fit ${
                             product.status === 'published' ? 'bg-green-100 text-green-700' :
-                            product.status === 'draft' ? 'bg-gray-100 text-gray-500' :
-                            'bg-red-100 text-red-600'
+                            product.status === 'draft' ? 'bg-yellow-100 text-yellow-700' :
+                            'bg-red-100 text-red-700'
                         }`}>
                             {product.status}
                         </span>
-                        <button 
-                            onClick={() => toggleStatus(product)}
-                            className="text-[10px] font-black text-[#F97316] uppercase tracking-widest hover:underline text-left"
-                        >
-                            {product.status === 'published' ? 'Unpublish' : 'Publish'}
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button 
+                              onClick={() => updateProductStatus(product, product.status === 'published' ? 'draft' : 'published')}
+                              className="text-[9px] font-black text-[#F97316] uppercase tracking-widest hover:underline"
+                          >
+                              Toggle
+                          </button>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6">
+                      <div className="flex flex-col space-y-2">
+                        <span className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-lg inline-block w-fit ${
+                            product.moderation_status === 'approved' ? 'bg-blue-100 text-blue-700' :
+                            product.moderation_status === 'pending' ? 'bg-purple-100 text-purple-700' :
+                            'bg-pink-100 text-pink-700'
+                        }`}>
+                            {product.moderation_status}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          {product.moderation_status !== 'approved' && (
+                            <button 
+                                onClick={() => updateModeration(product, 'approved')}
+                                className="text-[9px] font-black text-green-600 uppercase tracking-widest hover:underline"
+                            >
+                                Approve
+                            </button>
+                          )}
+                          {product.moderation_status !== 'rejected' && (
+                            <button 
+                                onClick={() => updateModeration(product, 'rejected')}
+                                className="text-[9px] font-black text-red-600 uppercase tracking-widest hover:underline"
+                            >
+                                Reject
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td className="px-8 py-6">

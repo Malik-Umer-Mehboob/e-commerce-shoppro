@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ThumbsUp, ThumbsDown, Clock, Eye, Share2 } from 'lucide-react';
-import axios from 'axios';
+import api from '../../services/api';
 import { toast } from 'react-hot-toast';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
 export default function ArticleDetail() {
   const { slug } = useParams();
@@ -19,11 +17,10 @@ export default function ArticleDetail() {
 
   const fetchArticle = async () => {
     try {
-      const response = await axios.get(`${API_URL}/kb/${slug}`);
+      const response = await api.get(`/kb/${slug}`);
       setArticle(response.data.data);
       setLoading(false);
     } catch (error) {
-      
       toast.error('Article not found');
       navigate('/help');
     }
@@ -32,7 +29,7 @@ export default function ArticleDetail() {
   const handleVote = async (type) => {
     if (voted) return;
     try {
-      await axios.post(`${API_URL}/kb/${article.id}/vote`, { type });
+      await api.post(`/kb/${article.id}/vote`, { type });
       setVoted(true);
       toast.success('Thank you for your feedback!');
       // Update local state for immediate feedback

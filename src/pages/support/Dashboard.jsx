@@ -15,12 +15,17 @@ import api from '../../services/api';
 export default function SupportDashboard() {
   const { user } = useSelector(state => state.auth);
   const [stats, setStats] = useState({
-    shift_progress: 0,
+    total_tickets: 0,
     open_tickets: 0,
-    pending_tickets: 0,
+    in_progress_tickets: 0,
+    resolved_tickets: 0,
+    closed_tickets: 0,
     resolved_today: 0,
     total_today: 0,
+    shift_progress: 0,
     active_chats: 0,
+    performance_metrics: [],
+    total_handled_by_agent: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -33,12 +38,17 @@ export default function SupportDashboard() {
       const response = await api.get('/support/dashboard');
       const data = response.data?.data;
       setStats({
-        shift_progress: data?.shift_progress ?? 0,
+        total_tickets: data?.total_tickets ?? 0,
         open_tickets: data?.open_tickets ?? 0,
-        pending_tickets: data?.pending_tickets ?? 0,
+        in_progress_tickets: data?.in_progress_tickets ?? 0,
+        resolved_tickets: data?.resolved_tickets ?? 0,
+        closed_tickets: data?.closed_tickets ?? 0,
         resolved_today: data?.resolved_today ?? 0,
         total_today: data?.total_today ?? 0,
+        shift_progress: data?.shift_progress ?? 0,
         active_chats: data?.active_chats ?? 0,
+        performance_metrics: data?.performance_metrics ?? [],
+        total_handled_by_agent: data?.total_handled_by_agent ?? 0,
       });
     } catch (error) {
       
@@ -48,10 +58,10 @@ export default function SupportDashboard() {
   };
 
   const statCards = [
+    { label: 'Total Tickets', value: stats.total_tickets, icon: Package, color: 'text-[#0F172A]', bg: 'bg-gray-100' },
     { label: 'Open Tickets', value: stats.open_tickets, icon: MessageSquare, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { label: 'Pending', value: stats.pending_tickets, icon: Clock, color: 'text-yellow-600', bg: 'bg-yellow-50' },
-    { label: 'Resolved Today', value: stats.resolved_today, icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50' },
-    { label: 'Active Chats', value: stats.active_chats, icon: TrendingUp, color: 'text-purple-600', bg: 'bg-purple-50' },
+    { label: 'In Progress', value: stats.in_progress_tickets, icon: Clock, color: 'text-yellow-600', bg: 'bg-yellow-50' },
+    { label: 'Resolved', value: stats.resolved_tickets, icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50' },
   ];
 
   return (
@@ -92,26 +102,51 @@ export default function SupportDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 bg-white rounded-[2rem] border border-gray-100 shadow-sm p-10">
           <div className="flex items-center justify-between mb-10">
-            <h2 className="text-xl font-black text-[#0F172A]">Performance Metrics</h2>
+            <div>
+              <h2 className="text-xl font-black text-[#0F172A]">Performance Metrics</h2>
+              <p className="text-xs font-bold text-gray-400 mt-1">{stats.total_handled_by_agent} Total Tickets Handled</p>
+            </div>
             <select className="text-xs font-bold bg-gray-50 border-none rounded-xl px-4 py-2 outline-none">
               <option>Last 7 Days</option>
               <option>Last 30 Days</option>
             </select>
           </div>
-          <div className="h-64 flex items-end justify-between space-x-4">
-            {[45, 65, 35, 85, 55, 75, 60].map((h, i) => (
-              <div key={i} className="flex-1 flex flex-col items-center group">
-                <div 
-                  className="w-full bg-[#F97316]/10 rounded-t-xl group-hover:bg-[#F97316]/20 transition-all relative"
-                  style={{ height: `${h}%` }}
-                >
-                  <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-[#0F172A] text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                    {h} Tickets
+          <div className="h-72 flex items-end justify-between space-x-2 sm:space-x-4 relative pt-10">
+            {/* Y-Axis Guideline (Subtle) */}
+            <div className="absolute inset-x-0 bottom-0 top-10 border-b border-gray-50 flex flex-col justify-between pointer-events-none">
+              <div className="border-t border-gray-50 w-full h-0"></div>
+              <div className="border-t border-gray-50 w-full h-0"></div>
+              <div className="border-t border-gray-50 w-full h-0"></div>
+            </div>
+
+            {stats.performance_metrics.length > 0 ? (
+              stats.performance_metrics.map((m, i) => {
+                const maxCount = Math.max(...stats.performance_metrics.map(d => d.count), 5);
+                const height = (m.count / maxCount) * 100;
+                
+                return (
+                  <div key={i} className="flex-1 flex flex-col items-center group relative z-10">
+                    <span className="text-[10px] font-black text-[#F97316] mb-2">{m.count}</span>
+                    <div 
+                      className="w-full bg-[#F97316]/20 rounded-t-xl group-hover:bg-[#F97316] transition-all relative border-x border-t border-[#F97316]/10"
+                      style={{ height: `${Math.max(height, 2)}%` }}
+                    >
+                    </div>
+                    <div className="mt-4 flex flex-col items-center">
+                      <span className="text-[10px] font-black text-[#0F172A] uppercase">{m.day}</span>
+                      <span className="text-[8px] font-bold text-gray-400 mt-1">{m.date.split('-').slice(1).join('/')}</span>
+                    </div>
                   </div>
+                );
+              })
+            ) : (
+              [45, 65, 35, 85, 55, 75, 60].map((h, i) => (
+                <div key={i} className="flex-1 flex flex-col items-center animate-pulse">
+                  <div className="w-full bg-gray-50 rounded-t-xl" style={{ height: `${h}%` }}></div>
+                  <span className="text-[10px] font-black text-gray-200 mt-4 uppercase">...</span>
                 </div>
-                <span className="text-[10px] font-black text-gray-400 mt-4 uppercase">Day {i+1}</span>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 

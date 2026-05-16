@@ -7,18 +7,36 @@ import Header from '../../components/layout/Header';
 
 const BlogHome = () => {
   const dispatch = useDispatch();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { posts, loading, pagination } = useSelector((state) => state.blog);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
 
   useEffect(() => {
     const params = Object.fromEntries([...searchParams]);
     dispatch(fetchPosts(params));
   }, [dispatch, searchParams]);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const currentSearch = searchParams.get('search') || '';
+      if (searchTerm !== currentSearch) {
+        setSearchParams(prev => {
+          if (searchTerm) prev.set('search', searchTerm);
+          else prev.delete('search');
+          return prev;
+        });
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm, setSearchParams, searchParams]);
+
   const handleSearch = (e) => {
     e.preventDefault();
-    // Update URL with search param
+    setSearchParams(prev => {
+      if (searchTerm) prev.set('search', searchTerm);
+      else prev.delete('search');
+      return prev;
+    });
   };
 
   return (
@@ -43,7 +61,7 @@ const BlogHome = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-            <button className="absolute right-3 top-3 bg-orange-500 p-2 rounded-xl hover:bg-orange-600 transition-colors">
+            <button type="submit" className="absolute right-3 top-3 bg-orange-500 p-2 rounded-xl hover:bg-orange-600 transition-colors">
               <Search size={20} />
             </button>
           </form>
@@ -55,8 +73,12 @@ const BlogHome = () => {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-12">
             {loading ? (
-              <div className="text-center py-20">Loading...</div>
-            ) : (
+              <div className="space-y-12">
+                {[1, 2].map(i => (
+                  <div key={i} className="bg-white rounded-[2.5rem] h-[300px] animate-pulse border border-slate-100" />
+                ))}
+              </div>
+            ) : posts.length > 0 ? (
               posts.map((post) => (
                 <article key={post.id} className="group bg-white rounded-[2.5rem] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 border border-slate-100 flex flex-col md:flex-row h-full md:h-[300px]">
                   <div className="md:w-2/5 relative overflow-hidden">
@@ -98,6 +120,12 @@ const BlogHome = () => {
                   </div>
                 </article>
               ))
+            ) : (
+              <div className="text-center py-24 bg-white rounded-[3rem] border border-dashed border-slate-200">
+                <Search size={48} className="mx-auto text-slate-200 mb-4" />
+                <h3 className="text-2xl font-black text-slate-900">No articles found</h3>
+                <p className="text-slate-500 mt-2">Try adjusting your search terms or category filters.</p>
+              </div>
             )}
 
             {/* Pagination Placeholder */}

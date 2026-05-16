@@ -77,7 +77,7 @@ export default function CustomerReturns() {
               <RefreshCcw className="w-10 h-10 text-gray-300" />
             </div>
             <h2 className="text-xl font-black text-[#0F172A] mb-2">No return requests yet</h2>
-            <p className="text-gray-500 font-medium">You can request a return within 14 days of delivery</p>
+            <p className="text-gray-500 font-medium">You can request a return within 30 days of delivery</p>
           </div>
         ) : (
           <div className="space-y-6">

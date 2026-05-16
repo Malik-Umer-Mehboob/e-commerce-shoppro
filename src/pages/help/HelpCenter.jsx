@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Search, Book, Truck, RotateCcw, CreditCard, User, ArrowRight, MessageCircle } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+import api from '../../services/api';
 
 const categories = [
   { id: 'FAQ', name: 'FAQ', icon: Book, description: 'Frequently asked questions' },
@@ -25,11 +23,10 @@ export default function HelpCenter() {
 
   const fetchPopularArticles = async () => {
     try {
-      const response = await axios.get(`${API_URL}/kb`);
+      const response = await api.get('/kb');
       setPopularArticles(response.data.data.slice(0, 5));
       setLoading(false);
     } catch (error) {
-      
       setLoading(false);
     }
   };

@@ -143,7 +143,7 @@ const BlogPostDetail = () => {
 
           <CommentSection 
             postId={currentPost.id} 
-            comments={currentPost.approved_comments} 
+            comments={currentPost.root_approved_comments} 
             onCommentAdded={() => dispatch(fetchPostBySlug(slug))}
           />
 

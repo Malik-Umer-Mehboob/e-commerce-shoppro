@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import adminService from '../../services/adminService';
 import toast from 'react-hot-toast';
+import SalesChart from '../../components/admin/SalesChart';
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({
@@ -29,6 +30,7 @@ export default function AdminDashboard() {
                 orders_growth: statsData.orders_growth ?? 0,
                 total_revenue: statsData.total_revenue ?? 0,
                 revenue_growth: statsData.revenue_growth ?? 0,
+                total_users: statsData.total_users ?? 0,
                 new_users: statsData.new_users ?? 0,
                 users_growth: statsData.users_growth ?? 0,
                 total_products: statsData.total_products ?? 0,
@@ -60,8 +62,8 @@ export default function AdminDashboard() {
       color: 'green' 
     },
     { 
-      label: 'New Users', 
-      value: loading ? '...' : (stats.new_users ?? 0).toLocaleString(), 
+      label: 'Total Users', 
+      value: loading ? '...' : (stats.total_users ?? 0).toLocaleString(), 
       change: loading ? '' : `${stats.users_growth >= 0 ? '+' : ''}${stats.users_growth}%`, 
       color: 'purple' 
     },
@@ -121,8 +123,8 @@ export default function AdminDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm min-h-[400px] flex items-center justify-center text-gray-300 font-bold italic">
-          Sales Chart Placeholder
+        <div className="lg:col-span-2 bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm min-h-[400px] flex flex-col">
+          <SalesChart />
         </div>
         <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
           <h3 className="text-lg font-black text-[#0F172A] mb-6">Recent Orders</h3>

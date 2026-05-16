@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Send, User, Mail, MessageSquare, Paperclip, ChevronLeft, CheckCircle } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Send, User, Mail, MessageSquare, Paperclip, ChevronLeft, CheckCircle, X, FileText, Image as ImageIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
@@ -15,24 +15,83 @@ export default function ContactForm() {
   });
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef(null);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      validateAndSetFile(file);
+    }
+  };
+
+  const validateAndSetFile = (file) => {
+    const allowedTypes = ['image/png', 'image/jpeg', 'application/pdf'];
+    const maxSize = 5 * 1024 * 1024; // 5MB
+
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Invalid file type. Only PNG, JPG, and PDF are allowed.');
+      return;
+    }
+
+    if (file.size > maxSize) {
+      toast.error('File size too large. Maximum size is 5MB.');
+      return;
+    }
+
+    setFormData({ ...formData, attachment: file });
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      validateAndSetFile(file);
+    }
+  };
+
+  const removeFile = (e) => {
+    e.stopPropagation();
+    setFormData({ ...formData, attachment: null });
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      // Use centralized api instance which handles tokens automatically
-      await api.post('/tickets', {
-        subject: formData.subject,
-        message: `[Contact Form Submission from ${formData.name}]\n\n${formData.message}`,
-        category: formData.category,
+      const data = new FormData();
+      data.append('subject', formData.subject);
+      data.append('message', `[Contact Form Submission from ${formData.name}]\n\n${formData.message}`);
+      data.append('category', formData.category);
+      if (formData.attachment) {
+        data.append('attachment', formData.attachment);
+      }
+
+      await api.post('/tickets', data, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
 
       setSubmitted(true);
       toast.success('Message sent successfully!');
     } catch (error) {
-      
-      toast.error('Failed to send message. Please log in first.');
+      const message = error.response?.data?.message || 'Failed to send message. Please log in first.';
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -151,11 +210,54 @@ export default function ContactForm() {
 
             <div className="space-y-2">
               <label className="text-sm font-bold text-gray-700">Attachment (Optional)</label>
-              <div className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center hover:border-[#F97316]/50 transition-colors cursor-pointer group">
-                <Paperclip className="w-8 h-8 text-gray-400 mx-auto mb-2 group-hover:text-[#F97316]" />
-                <p className="text-sm text-gray-500">Click to upload or drag and drop</p>
-                <p className="text-xs text-gray-400 mt-1">PNG, JPG or PDF up to 5MB</p>
-                <input type="file" className="hidden" />
+              <div 
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={handleDragOver}
+                onDragEnter={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                className={`border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer group ${
+                  isDragging ? 'border-[#F97316] bg-[#F97316]/5' : 'border-gray-200 hover:border-[#F97316]/50'
+                }`}
+              >
+                {formData.attachment ? (
+                  <div className="flex flex-col items-center">
+                    <div className="relative mb-2">
+                      <div className="w-16 h-16 bg-orange-50 rounded-2xl flex items-center justify-center text-[#F97316]">
+                        {formData.attachment.type.startsWith('image/') ? (
+                          <ImageIcon className="w-8 h-8" />
+                        ) : (
+                          <FileText className="w-8 h-8" />
+                        )}
+                      </div>
+                      <button 
+                        onClick={removeFile}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors shadow-lg"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <p className="text-sm font-medium text-gray-700 truncate max-w-[200px]">
+                      {formData.attachment.name}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {(formData.attachment.size / (1024 * 1024)).toFixed(2)} MB
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <Paperclip className="w-8 h-8 text-gray-400 mx-auto mb-2 group-hover:text-[#F97316] transition-colors" />
+                    <p className="text-sm text-gray-500">Click to upload or drag and drop</p>
+                    <p className="text-xs text-gray-400 mt-1">PNG, JPG or PDF up to 5MB</p>
+                  </>
+                )}
+                <input 
+                  type="file" 
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  className="hidden" 
+                  accept=".png,.jpg,.jpeg,.pdf"
+                />
               </div>
             </div>
 

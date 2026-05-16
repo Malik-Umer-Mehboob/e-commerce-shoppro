@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { 
   fetchCart, 
@@ -22,12 +22,23 @@ const CartPage = () => {
   const navigate = useNavigate();
   const [couponCode, setCouponCode] = useState('');
 
+  const itemsRef = useRef(items);
+  
   useEffect(() => {
     dispatch(fetchCart());
   }, [dispatch]);
 
-  const handleUpdateQty = (itemId, newQty) => {
+  useEffect(() => {
+    itemsRef.current = items;
+  }, [items]);
+
+  const handleUpdateQty = (itemId, delta) => {
+    const currentItem = itemsRef.current.find(i => i.id === itemId);
+    if (!currentItem) return;
+    
+    const newQty = currentItem.quantity + delta;
     if (newQty < 1) return;
+    
     dispatch(updateCartItem({ itemId, quantity: newQty }));
   };
 
@@ -119,14 +130,15 @@ const CartPage = () => {
                     {/* Qty Selector */}
                     <div className="flex items-center gap-3 bg-gray-50 p-1.5 rounded-lg border border-gray-200">
                       <button 
-                        onClick={() => handleUpdateQty(item.id, item.quantity - 1)}
-                        className="p-1 hover:bg-white rounded transition-colors text-gray-600"
+                        onClick={() => handleUpdateQty(item.id, -1)}
+                        className="p-1 hover:bg-white rounded transition-colors text-gray-600 disabled:opacity-30"
+                        disabled={item.quantity <= 1}
                       >
                         <Minus size={16} />
                       </button>
                       <span className="w-8 text-center font-bold text-gray-900">{item.quantity}</span>
                       <button 
-                        onClick={() => handleUpdateQty(item.id, item.quantity + 1)}
+                        onClick={() => handleUpdateQty(item.id, 1)}
                         className="p-1 hover:bg-white rounded transition-colors text-gray-600"
                       >
                         <Plus size={16} />

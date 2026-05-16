@@ -18,6 +18,7 @@ import { logoutUser } from '../../../store/authSlice.js';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import api from '../../../services/api';
+import NotificationBell from '../../../components/notifications/NotificationBell';
 
 export default function SupportLayout({ children }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -217,10 +218,7 @@ export default function SupportLayout({ children }) {
           </div>
           
           <div className="flex items-center space-x-6">
-            <button className="relative p-2 text-gray-400 hover:text-[#F97316] transition-colors rounded-xl hover:bg-gray-50">
-              <Bell className="w-6 h-6" />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-            </button>
+            <NotificationBell />
             <button className="p-2 text-gray-400 hover:text-[#F97316] transition-colors rounded-xl hover:bg-gray-50">
               <Settings className="w-6 h-6" />
             </button>

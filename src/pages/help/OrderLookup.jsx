@@ -1,10 +1,8 @@
 import { useState } from 'react';
 import { Search, Package, User, Mail, ChevronLeft, MapPin, Truck, Calendar, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../services/api';
 import { toast } from 'react-hot-toast';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
 export default function OrderLookup() {
   const [orderNumber, setOrderNumber] = useState('');
@@ -18,7 +16,7 @@ export default function OrderLookup() {
     setOrder(null);
 
     try {
-      const response = await axios.post(`${API_URL}/support/order-lookup`, {
+      const response = await api.post('/order-tracking', {
         order_number: orderNumber,
         email: email
       });
@@ -178,30 +176,57 @@ export default function OrderLookup() {
                 </div>
               </div>
 
-              {/* Items List */}
-              <div className="space-y-6">
-                <h3 className="text-xl font-extrabold text-gray-900">Ordered Items</h3>
-                <div className="space-y-4">
-                  {order.items?.map((item) => (
-                    <div key={item.id} className="flex items-center bg-white border border-gray-100 p-4 rounded-2xl hover:shadow-md transition-shadow">
-                      <div className="w-16 h-16 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
-                        <img 
-                          src={item.product?.main_image || 'https://placehold.co/150'} 
-                          alt={item.product?.name}
-                          className="w-full h-full object-cover"
-                        />
+              {/* Items & Updates Grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                {/* Items List */}
+                <div className="lg:col-span-2 space-y-6">
+                  <h3 className="text-xl font-extrabold text-gray-900">Ordered Items</h3>
+                  <div className="space-y-4">
+                    {order.items?.map((item) => (
+                      <div key={item.id} className="flex items-center bg-white border border-gray-100 p-4 rounded-2xl hover:shadow-md transition-shadow">
+                        <div className="w-16 h-16 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
+                          <img 
+                            src={item.product?.main_image || 'https://placehold.co/150'} 
+                            alt={item.product?.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="ml-4 flex-1">
+                          <h4 className="font-bold text-gray-900">{item.product?.name}</h4>
+                          <p className="text-xs text-gray-500">
+                            {item.variant?.name ? `Variant: ${item.variant.name}` : 'Default Variant'} • Qty: {item.quantity}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-black text-[#0F172A]">Rs. {item.price}</p>
+                        </div>
                       </div>
-                      <div className="ml-4 flex-1">
-                        <h4 className="font-bold text-gray-900">{item.product?.name}</h4>
-                        <p className="text-xs text-gray-500">
-                          {item.variant?.name ? `Variant: ${item.variant.name}` : 'Default Variant'} • Qty: {item.quantity}
-                        </p>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Shipment Updates Timeline */}
+                <div className="space-y-6">
+                  <h3 className="text-xl font-extrabold text-gray-900 flex items-center">
+                    <Truck className="w-6 h-6 mr-2 text-[#F97316]" />
+                    Status Updates
+                  </h3>
+                  <div className="relative pl-6 space-y-8 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-gray-100">
+                    {order.shipment_updates?.map((update, idx) => (
+                      <div key={idx} className="relative">
+                        <div className={`absolute -left-[21px] top-1.5 w-4 h-4 rounded-full border-4 border-white shadow-sm ${idx === 0 ? 'bg-[#F97316]' : 'bg-gray-300'}`}></div>
+                        <p className="text-xs font-black text-[#F97316] uppercase tracking-tighter">{update.date}</p>
+                        <h4 className="text-sm font-bold text-gray-900">{update.status}</h4>
+                        <p className="text-xs text-gray-500 leading-tight mt-1">{update.message}</p>
                       </div>
-                      <div className="text-right">
-                        <p className="font-black text-[#0F172A]">Rs. {item.price}</p>
+                    ))}
+                    {order.estimated_delivery && (
+                      <div className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-100">
+                        <p className="text-[10px] font-black text-blue-400 uppercase">Estimated Delivery</p>
+                        <p className="text-sm font-bold text-blue-900">{new Date(order.estimated_delivery).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
                       </div>
-                    </div>
-                  ))}
+                    )}
+                  </div>
                 </div>
               </div>
 

@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RotateCcw, ChevronLeft, Package, CheckCircle2, AlertTriangle, Truck, Info } from 'lucide-react';
-import axios from 'axios';
+import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+
 
 export default function ReturnRequest() {
   const [orders, setOrders] = useState([]);
@@ -20,21 +20,11 @@ export default function ReturnRequest() {
 
   const fetchEligibleOrders = async () => {
     try {
-      const response = await axios.get(`${API_URL}/user/orders`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      // Filter for delivered orders within 30 days
-      const eligible = response.data.data.filter(order => {
-        const deliveredDate = new Date(order.updated_at);
-        const daysSinceDelivery = (new Date() - deliveredDate) / (1000 * 60 * 60 * 24);
-        return order.status === 'delivered' && daysSinceDelivery <= 30;
-      });
-      setOrders(eligible);
+      const response = await api.get('/user/orders/eligible-returns');
+      // Backend now handles the filtering (delivered status + 30 day window)
+      setOrders(response.data.data || []);
       setLoading(false);
     } catch (error) {
-      
       toast.error('Failed to load orders');
       setLoading(false);
     }
@@ -47,16 +37,12 @@ export default function ReturnRequest() {
     setSubmitting(true);
     try {
       // In this system, a return request creates a ticket
-      await axios.post(`${API_URL}/tickets`, {
+      await api.post('/tickets', {
         subject: `Return Request for Order #${selectedOrder.id}`,
-        message: `Reason for Return: ${reason}\n\nOrder Items:\n${selectedOrder.items.map(item => `- ${item.product.name} x${item.quantity}`).join('\n')}`,
+        message: `Reason for Return: ${reason}\n\nOrder Items:\n${selectedOrder.items.map(item => `- ${item.product?.name || 'Product'} x${item.quantity}`).join('\n')}`,
         category: 'Returns & Refunds',
         order_id: selectedOrder.id,
         priority: 'Medium'
-      }, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
       });
 
       toast.success('Return request submitted successfully!');

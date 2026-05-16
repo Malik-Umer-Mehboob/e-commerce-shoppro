@@ -25,10 +25,9 @@ const SearchResults = () => {
     const query = searchParams.get('q') || '';
 
     useEffect(() => {
-        if (query) {
-            dispatch(searchProducts({ q: query }));
-        }
-    }, [query, dispatch]);
+        const params = Object.fromEntries([...searchParams.entries()]);
+        dispatch(searchProducts(params));
+    }, [searchParams, dispatch]);
 
     const syncUrl = useCallback((overrides = {}) => {
         const params = new URLSearchParams();

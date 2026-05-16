@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
-import { Send, User } from 'lucide-react';
+import { Send, User, MessageCircle } from 'lucide-react';
 import { useSelector } from 'react-redux';
+import { Link } from 'react-router-dom';
 
 const CommentSection = ({ postId, comments, onCommentAdded }) => {
   const { isAuthenticated, user } = useSelector(state => state.auth);
@@ -40,9 +41,9 @@ const CommentSection = ({ postId, comments, onCommentAdded }) => {
           <p className="text-sm text-slate-600 leading-relaxed">{comment.content}</p>
         </div>
       </div>
-      {comment.children?.length > 0 && (
+      {comment.approved_children?.length > 0 && (
         <div className="ml-12 space-y-4 border-l-2 border-slate-100 pl-6">
-          {comment.children.map(child => renderComment(child))}
+          {comment.approved_children.map(child => renderComment(child))}
         </div>
       )}
     </div>
@@ -96,7 +97,7 @@ const CommentSection = ({ postId, comments, onCommentAdded }) => {
       {/* Comments List */}
       <div className="space-y-6">
         {comments?.length > 0 ? (
-          comments.filter(c => !c.parent_id).map(comment => renderComment(comment))
+          comments.map(comment => renderComment(comment))
         ) : (
           <div className="text-center py-12 text-slate-400">
             No comments yet. Be the first to start the discussion!
@@ -106,8 +107,5 @@ const CommentSection = ({ postId, comments, onCommentAdded }) => {
     </div>
   );
 };
-
-// Internal MessageCircle as it's not imported yet
-import { MessageCircle, Link } from 'lucide-react';
 
 export default CommentSection;

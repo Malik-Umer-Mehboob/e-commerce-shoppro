@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Header from '../../components/layout/Header';
 import AddToCart from '../../components/common/AddToCart';
 import AddToWishlist from '../../components/common/AddToWishlist';
+import ProductReviews from '../../components/common/ProductReviews';
 import api from '../../services/api';
 import { Minus, Plus, ChevronLeft, Star, ShieldCheck, Truck } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -110,13 +111,20 @@ const ProductDetail = () => {
                 <span className="text-orange-500 font-bold text-sm uppercase tracking-wider">{product.category?.name || 'General'}</span>
                 <h1 className="text-4xl font-black text-gray-900 mt-2 mb-4">{product.name}</h1>
                 <div className="flex items-center gap-4 mb-6">
-                  <div className="flex items-center gap-1 text-yellow-400">
-                    <Star size={18} fill="currentColor" />
-                    <Star size={18} fill="currentColor" />
-                    <Star size={18} fill="currentColor" />
-                    <Star size={18} fill="currentColor" />
-                    <Star size={18} fill="currentColor" />
-                    <span className="text-gray-400 text-sm ml-2 font-medium">(120 Reviews)</span>
+                  <div className="flex items-center gap-1">
+                    <div className="flex text-yellow-400">
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <Star 
+                          key={s} 
+                          size={18} 
+                          fill={s <= Math.round(product.average_rating || 0) ? "currentColor" : "none"} 
+                          className={s <= Math.round(product.average_rating || 0) ? "" : "text-gray-200"}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-gray-400 text-sm ml-2 font-medium">
+                      ({product.total_reviews || 0} Reviews)
+                    </span>
                   </div>
                 </div>
               </div>
@@ -198,6 +206,9 @@ const ProductDetail = () => {
             </div>
           </div>
         </div>
+
+        {/* Reviews section */}
+        <ProductReviews productId={id} />
       </main>
     </div>
   );

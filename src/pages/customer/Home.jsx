@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import Header from '../../components/layout/Header';
-import Footer from '../../components/layout/Footer';
+const Footer = React.lazy(() => import('../../components/layout/Footer'));
 import ProductCard from '../../components/common/ProductCard';
 import api from '../../services/api';
 import { ShoppingBag, ChevronRight, Sparkles } from 'lucide-react';
@@ -12,11 +12,8 @@ export default function Home() {
   const { data: productsData, isLoading: loading } = useQuery({
     queryKey: ['products', 'featured'],
     queryFn: async () => {
-      const response = await api.get('/products', {
-        params: { per_page: 8 }
-      });
-      // The API returns { success: true, data: { products: { data: [...] }, stats: {...} } }
-      return response.data?.data?.products?.data || response.data?.data || [];
+      const response = await api.get('/homepage');
+      return response.data?.data?.featured_products || [];
     },
     staleTime: 1000 * 60 * 10,
     gcTime: 1000 * 60 * 30,
@@ -51,9 +48,9 @@ export default function Home() {
               Discover our curated selection of high-quality items designed to elevate your lifestyle. Quality and style, delivered to your doorstep.
             </p>
             <div className="flex flex-wrap gap-4">
-              <button className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-4 rounded-2xl font-bold transition-all shadow-xl hover:shadow-orange-500/20 flex items-center gap-2">
+              <Link to="/shop" className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-4 rounded-2xl font-bold transition-all shadow-xl hover:shadow-orange-500/20 flex items-center gap-2">
                 Shop Now <ChevronRight size={20} />
-              </button>
+              </Link>
               <button className="bg-white/10 hover:bg-white/20 text-white px-8 py-4 rounded-2xl font-bold transition-all backdrop-blur-md">
                 Learn More
               </button>
@@ -101,7 +98,9 @@ export default function Home() {
         )}
       </main>
       
-      <Footer />
+      <Suspense fallback={<div className="h-20 bg-gray-100 flex items-center justify-center animate-pulse rounded-t-3xl mt-10">Loading footer...</div>}>
+        <Footer />
+      </Suspense>
     </div>
   );
 }

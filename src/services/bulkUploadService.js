@@ -12,8 +12,8 @@ export const bulkUploadService = {
   },
   
   downloadTemplate: () => {
-    const columns = 'name,description,price,sale_price,category_id,stock_quantity,status,size,color,material';
-    const sample = '"Sample Product","Description",1000,800,1,50,published,M,Red,Cotton';
+    const columns = 'name,price,stock,category,description,image';
+    const sample = '"Sample Product",1000,50,"Electronics","A great product","https://placehold.co/600x400"';
     const csvContent = `${columns}\n${sample}`;
     
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
