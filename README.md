@@ -1,361 +1,552 @@
-# 🛒 ShopPro — Frontend
+# 🛒 ShopPro — Enterprise Multi-Vendor E-Commerce Platform
 
-> **A complete, production-ready multi-vendor e-commerce platform** built with React 19, Tailwind CSS v4, and Redux Toolkit. Features 6 role-based panels, full order lifecycle, payment system, delivery management, and advanced SEO.
-
----
-
-## 🌟 Complete Feature List
-
-### 👥 User Roles & Access Control
-- 5 roles: **Admin, Seller, Customer, Support Staff, Delivery Rider**
-- Each role has a **completely separate protected dashboard**
-- Email domain enforcement per role:
-  - 🛒 Customer → @gmail.com only
-  - 🏪 Seller → @yahoo.com only
-  - 🎧 Support → @hotmail.com only
-  - 🚴 Rider → @rider.com only
-  - 👑 Admin → fixed credentials
-- Role-based route protection (ProtectedRoute component)
-- Unauthorized access auto-redirects
-
-### 🔐 Authentication & Security
-- Email & password login with Zod validation
-- Google OAuth — Continue with Google (fully working)
-- Forgot password → 6-digit OTP via Gmail → Reset password
-- Rate limiting — account locks after 5 failed attempts
-  - Shows remaining attempts on each wrong try
-  - Shows lockout timer countdown
-- Device logout — see & revoke all active sessions
-- Role-based redirect after login
-- Token stored in Redux + localStorage (persists on refresh)
-
-### 🏪 Product Management
-- Add / Edit / Delete products (Admin & Seller)
-- Draft → Published → Archived status toggle
-- Product categories & subcategories (nested)
-- Multiple image upload with preview (max 5)
-- Product variants — Size, Color, Material
-- Auto SKU generation
-- Stock quantity with low stock threshold
-- Discount / Offer tagging with badges
-- Bulk CSV upload
-- Low stock alerts page
-
-### 🛒 Cart & Wishlist
-- Add to cart with quantity selector
-- Mini cart popup on add
-- Update / Remove cart items
-- Persistent cart across sessions
-- Wishlist — save favorite products
-- Move wishlist items directly to cart
-- Share wishlist feature
-
-### 💳 Order Management
-- Full order flow: Cart → Checkout → Processing → Shipped → Delivered
-- Order status visual timeline
-- Order cancellation with **24-hour time window**
-  - Shows hours remaining to cancel
-  - Auto stock restore on cancellation
-- Return / Refund request system
-- Order history per user
-
-### 💰 Payment System
-- **Cash on Delivery (COD)** — pay when order arrives
-- **Bank Transfer** — with bank details display & reference number input
-- **Stripe placeholder** — Coming Soon (structure ready)
-- Payment status tracking: Pending / Paid / Failed / Refunded
-- Admin can mark orders as paid / process refunds
-
-### 🚚 Shipping & Delivery
-- Shipping address management (multiple per user)
-- **Delivery charges by city/region** — auto-calculated on checkout
-  - Karachi: Rs. 150 (2 days)
-  - Lahore: Rs. 150 (2 days)
-  - Islamabad: Rs. 200 (3 days)
-  - Other cities: Rs. 350 (7 days)
-- Order tracking status timeline
-- **Delivery Rider assignment** by admin
-- Rider panel to update delivery status
-
-### 📦 Inventory & Warehouse
-- Real-time stock deduction on order
-- Low stock alerts (admin & seller)
-- **Warehouse management** — multiple warehouses
-- Stock tracking per warehouse per product
-- Product availability status
-
-### 📊 Admin Dashboard (Dynamic)
-- Real-time stats: Total Orders, Revenue, New Users, Products
-- Month-over-month growth percentages
-- Recent orders table (live from database)
-- Low stock product list
-
-### 🎯 Discount & Coupon System
-- Coupon codes at checkout
-- Percentage & fixed amount discounts
-- Expiry date & usage limits per user
-- Minimum order amount condition
-
-### ⭐ Reviews & Ratings
-- 1–5 star rating system
-- **Verified Purchase badge** (auto-detected from order history)
-- Admin moderation — approve/reject reviews
-- Average rating calculation per product
-
-### 🔍 Search & Filtering
-- Live product search
-- Filter by: price range, category, brand, rating
-- Sort by: newest, price low/high, popularity
-- **Search Analytics dashboard** (admin)
-
-### ❤️ Wishlist System
-- Save favorite products
-- Move to cart from wishlist
-- Share wishlist via unique link
-
-### 📩 Notification System
-- Order confirmation emails
-- Shipping update emails
-- OTP password reset emails
-- Low stock alerts for admin/seller
-
-### 📄 Invoice & Reports
-- Auto-generated PDF invoices
-- Monthly sales reports
-- Seller analytics with bar charts
-- Top selling products report
-
-### 🧑 Customer Account Panel
-- Profile management with avatar upload
-- Order tracking with status timeline
-- Address book (multiple addresses)
-- Wishlist management
-- Returns & refunds tracking
-
-### 🧑‍💼 Admin Control Panel
-- **User Management** — view all users by role
-- **Block / Unblock users** with reason
-- Manage products (all sellers)
-- Manage orders & payment status
-- Manage coupons & discounts
-- Email campaign management
-- Newsletter & templates
-- Blog manager with article creation
-- **Search Analytics**
-- **System Logs** — all activity tracked
-- **Warehouse Management**
-- **Rider Assignment** for deliveries
-- Settings & profile
-
-### 🚴 Delivery Rider Panel
-- Active deliveries dashboard
-- Today's stats (delivered, active, total)
-- Mark orders as Picked Up → Delivered
-- Delivery address & customer details
-
-### ⚙️ Advanced Features
-- 🌐 **SEO meta tags** on all product pages (Open Graph, Twitter Card, Schema.org)
-- 🗺️ **Sitemap generator** at /sitemap.xml
-- 📋 **System Logs** — who did what, when, from where
-- 🖼️ Avatar upload for all roles
-- 🔑 Change password from settings
-- 📱 Device session management — logout specific devices
-- 🌙 Dark mode ready (Tailwind CSS v4)
-- 📱 Fully responsive — mobile to desktop
-- 🔒 Per-role route protection
-- 🎭 Loading skeletons on all async data
-- 🔔 Toast notifications throughout
+> **A production-grade, enterprise-level multi-vendor e-commerce platform** built with React 19, Next.js, Node.js, Express.js, Laravel modules, Redis, and scalable software engineering architecture.
+> Designed with performance optimization, modular architecture, real-time systems, role-based dashboards, advanced order lifecycle management, and enterprise engineering practices.
 
 ---
 
-## 🛠️ Tech Stack
+# 🌟 Project Overview
 
-| Technology | Purpose |
-|---|---|
-| ⚛️ React 19 | UI Framework |
-| ⚡ Vite 8 | Build Tool |
-| 🎨 Tailwind CSS v4 | Styling (no config file needed) |
-| 🗃️ Redux Toolkit | Global State Management |
-| 🛣️ React Router DOM v6 | Client-side Routing |
-| 🌐 Axios | HTTP API Calls |
-| 🔄 React Query v5 | Server State & Caching |
-| 📝 React Hook Form | Form Management |
-| ✅ Zod | Schema Validation |
-| 📊 Recharts | Charts & Analytics |
-| 🎠 Swiper | Product Image Sliders |
-| 🎭 Framer Motion | Animations |
-| 🔷 Lucide React | Icon Library |
-| 🔔 React Hot Toast | Toast Notifications |
-| 🍬 SweetAlert2 | Confirmation Dialogs |
-| 📅 Date-fns | Date Formatting |
-| ⭐ React Stars | Star Rating Component |
-| 📄 React Paginate | Pagination |
-| 🪖 React Helmet Async | SEO Meta Tags |
+ShopPro is a complete software-engineering-level e-commerce ecosystem designed to simulate real-world scalable marketplace platforms like Daraz, Amazon, and Shopify Marketplace.
+
+The platform supports:
+
+* Multi-vendor marketplace
+* Enterprise admin management
+* Seller onboarding & approval system
+* Delivery rider management
+* Real-time order lifecycle
+* Inventory & warehouse management
+* Payment workflows
+* Analytics & reports
+* SEO optimization
+* Role-based dashboards
+* Advanced security architecture
+* Performance optimization
+* Scalable backend engineering
 
 ---
 
-## 🎨 Theme & Design
+# 🏗️ Software Engineering Upgrades Implemented
 
-| Color | Hex | Usage |
-|---|---|---|
-| 🟦 Navy | `#0F172A` | Sidebar, Header, Navbar |
-| 🟠 Orange | `#F97316` | Buttons, Active States, CTAs |
-| ⬜ White | `#F8FAFC` | Backgrounds, Cards |
-| 🟢 Green | `#10B981` | Success, In Stock, Delivered |
-| 🔴 Red | `#EF4444` | Errors, Out of Stock, Blocked |
+The project was upgraded from a normal full-stack application into a scalable production-ready architecture.
 
----
+## ✅ Architecture Improvements
 
-## 📁 Project Structure
-
-```
-shoppro-frontend/
-├── src/
-│   ├── pages/
-│   │   ├── auth/
-│   │   │   ├── Login.jsx
-│   │   │   ├── Register.jsx
-│   │   │   ├── ForgotPassword.jsx
-│   │   │   ├── VerifyOtp.jsx
-│   │   │   ├── ResetPassword.jsx
-│   │   │   └── GoogleCallback.jsx
-│   │   ├── admin/
-│   │   │   ├── Dashboard.jsx
-│   │   │   ├── Products.jsx
-│   │   │   ├── Orders.jsx
-│   │   │   ├── Users.jsx
-│   │   │   ├── Reviews.jsx
-│   │   │   ├── Discounts.jsx
-│   │   │   ├── Reports.jsx
-│   │   │   ├── LowStock.jsx
-│   │   │   ├── BulkUpload.jsx
-│   │   │   ├── Warehouses.jsx
-│   │   │   ├── SystemLogs.jsx
-│   │   │   ├── SearchAnalytics.jsx
-│   │   │   ├── Settings.jsx
-│   │   │   └── marketing/
-│   │   │       ├── Campaigns.jsx
-│   │   │       ├── Segments.jsx
-│   │   │       ├── Newsletters.jsx
-│   │   │       └── Templates.jsx
-│   │   │   └── blog/
-│   │   │       ├── BlogManager.jsx
-│   │   │       └── CreateBlog.jsx
-│   │   ├── seller/
-│   │   │   ├── Dashboard.jsx
-│   │   │   ├── Products.jsx
-│   │   │   ├── Orders.jsx
-│   │   │   ├── Analytics.jsx
-│   │   │   └── Settings.jsx
-│   │   ├── support/
-│   │   │   └── Dashboard.jsx
-│   │   ├── rider/
-│   │   │   └── Dashboard.jsx
-│   │   └── customer/
-│   │       ├── Home.jsx
-│   │       ├── Cart.jsx
-│   │       ├── Checkout.jsx
-│   │       ├── Wishlist.jsx
-│   │       └── Orders.jsx
-│   ├── components/
-│   │   ├── ProtectedRoute.jsx
-│   │   ├── SEOHead.jsx
-│   │   ├── ProductCard.jsx
-│   │   └── Footer.jsx
-│   ├── store/
-│   │   ├── index.js
-│   │   └── authSlice.js
-│   ├── services/
-│   │   ├── api.js
-│   │   ├── authService.js
-│   │   ├── productService.js
-│   │   ├── adminService.js
-│   │   ├── cartService.js
-│   │   ├── wishlistService.js
-│   │   ├── orderService.js
-│   │   └── shippingService.js
-│   └── index.css
-├── vite.config.js
-└── package.json
-```
+* Modular architecture
+* Service layer separation
+* Repository pattern
+* Controller → Service → Repository flow
+* Shared utility layer
+* Centralized API handling
+* Reusable middleware structure
+* Scalable folder organization
+* Improved maintainability
+* Backward-compatible refactoring
 
 ---
 
-## 🚀 Getting Started
+## ⚡ Performance Optimization
 
-### Prerequisites
-- Node.js 18+
-- npm
-- ShopPro Backend running on `http://localhost:8000`
+* Redis-ready caching architecture
+* Optimized API response handling
+* Pagination optimization
+* Reduced unnecessary frontend re-renders
+* Query optimization
+* Improved loading states
+* Lazy loading support
+* Better component separation
+* Optimized state management
 
-### Installation
+---
+
+## 🔄 Async & Background Processing
+
+* Queue-ready architecture
+* BullMQ + Redis preparation
+* Background processing structure for:
+
+  * Emails
+  * Notifications
+  * Reports
+  * Invoice generation
+  * Analytics processing
+
+---
+
+## 🔐 Security Enhancements
+
+* Protected role-based routing
+* Session handling improvements
+* OTP verification system
+* Activity & system logs
+* Validation and sanitization
+* Rate limiting
+* Secure authentication workflows
+* Per-role access protection
+
+---
+
+## 🚀 DevOps & Deployment Ready
+
+* Docker-ready structure
+* CI/CD-ready architecture
+* PM2 deployment support
+* Production-ready environment handling
+* Nginx reverse-proxy ready
+* Environment separation support
+
+---
+
+# 👥 User Roles & Access Control
+
+## 👑 Admin
+
+Complete system control with enterprise dashboard access.
+
+### Features
+
+* Manage all users
+* Approve/reject sellers
+* Approve seller category requests
+* Product moderation
+* Order management
+* Rider assignment
+* Inventory management
+* Warehouse management
+* Coupon management
+* Reports & analytics
+* Marketing campaigns
+* Blog management
+* System logs
+* Search analytics
+* Role management
+
+---
+
+## 🏪 Seller
+
+Dedicated marketplace seller panel.
+
+### Features
+
+* Seller registration approval workflow
+* Seller category restriction system
+* Add/Edit/Delete products
+* Bulk upload products
+* Product approval system
+* Inventory tracking
+* Revenue analytics
+* Order management
+* Category request system
+* Real-time dashboard statistics
+
+### Seller Category Authorization System
+
+Sellers can ONLY add products in categories approved by admin.
+
+Workflow:
+
+1. Seller selects categories during registration
+2. Admin approves seller
+3. Seller can request new categories later
+4. Admin approves category requests
+5. Approved categories become available system-wide
+
+---
+
+## 🛒 Customer
+
+Modern shopping experience with complete order lifecycle.
+
+### Features
+
+* Product browsing
+* Live product search
+* Cart & wishlist
+* Checkout system
+* Multiple shipping addresses
+* Order tracking timeline
+* Returns & refunds
+* Reviews & ratings
+* Secure authentication
+* Responsive shopping UI
+
+---
+
+## 🚴 Delivery Rider
+
+Dedicated delivery management panel.
+
+### Features
+
+* Assigned deliveries
+* Delivery tracking
+* Update delivery status
+* Mark order as picked up
+* Mark order as delivered
+* Rider performance monitoring
+* Admin rider detail tracking
+
+### Rider Workflow Improvements
+
+* Admin can view rider details via action modal
+* Rider statistics visible in admin panel
+* Delivered COD orders automatically update payment status to `paid`
+
+---
+
+# 🏪 Product Management System
+
+## Features
+
+* Product variants
+* Multiple image uploads
+* SKU generation
+* Stock tracking
+* Low stock alerts
+* Product approval workflow
+* Draft / Published / Archived status
+* Product moderation
+* Product analytics
+
+---
+
+# 🧩 Category Management System
+
+## Advanced Category Approval Workflow
+
+### Seller Registration Categories
+
+Sellers select business categories during registration.
+
+### Admin Approval System
+
+Admin approves seller category access.
+
+### Seller Category Restrictions
+
+Seller CANNOT create products outside approved categories.
+
+### Category Request System
+
+Seller can request:
+
+* Main category
+* Subcategory
+* Both together
+
+### System-Wide Synchronization
+
+Approved categories automatically appear in:
+
+* Admin category list
+* Seller dashboard
+* Seller registration category selection
+* Customer shop filters
+* Frontend navigation
+
+---
+
+# 🛒 Cart, Wishlist & Checkout
+
+## Cart Features
+
+* Persistent cart
+* Quantity management
+* Mini-cart popup
+* Cross-session persistence
+
+## Wishlist Features
+
+* Save products
+* Move wishlist items to cart
+* Share wishlist support
+
+## Checkout Features
+
+* Shipping calculation
+* Address management
+* Coupon support
+* Order summary
+* Payment method selection
+
+---
+
+# 💳 Payment System
+
+## Supported Payments
+
+* Cash on Delivery (COD)
+* Bank Transfer
+* Stripe-ready architecture
+
+## Payment Features
+
+* Payment tracking
+* Refund handling
+* COD workflow
+* Automatic payment synchronization
+* Order payment statuses:
+
+  * Pending
+  * Paid
+  * Failed
+  * Refunded
+
+---
+
+# 🚚 Shipping & Delivery System
+
+## Delivery Features
+
+* Delivery zones
+* City-based shipping charges
+* Estimated delivery timing
+* Rider assignment
+* Delivery tracking timeline
+* Real-time delivery updates
+
+
+---
+
+# 📦 Inventory & Warehouse Engineering
+
+## Features
+
+* Real-time stock deduction
+* Multi-warehouse architecture
+* Warehouse stock tracking
+* Low stock monitoring
+* Product availability management
+
+---
+
+# 📊 Admin Dashboard
+
+## Real-Time Analytics
+
+* Total orders
+* Revenue
+* User growth
+* Product growth
+* Recent orders
+* Low stock alerts
+* Seller analytics
+* Search analytics
+
+---
+
+# ⭐ Reviews & Ratings
+
+## Features
+
+* Verified purchase badge
+* Review moderation
+* Average rating calculation
+* Review approval/rejection
+
+---
+
+# 🔍 Advanced Search & Filtering
+
+## Features
+
+* Live search
+* Advanced filtering
+* Category filters
+* Price filters
+* Rating filters
+* Search analytics dashboard
+* Search-ready scalable architecture
+
+---
+
+# 📩 Notification System
+
+## Notifications
+
+* OTP emails
+* Order confirmation
+* Shipping updates
+* Low stock alerts
+* Seller notifications
+* Admin alerts
+
+---
+
+# 📄 Reports & Invoice System
+
+## Features
+
+* PDF invoice generation
+* Monthly sales reports
+* Seller analytics
+* Product performance reports
+* Revenue charts
+
+---
+
+# ⚙️ Advanced Engineering Features
+
+* SEO optimization
+* Sitemap generation
+* Open Graph tags
+* Twitter Cards
+* Schema.org support
+* Dark mode support
+* Mobile-first responsive design
+* Skeleton loaders
+* Toast notification system
+* Real-time architecture support
+
+---
+
+# 🛠️ Tech Stack
+
+| Technology                   | Purpose                  |
+| ---------------------------- | ------------------------ |
+| React 19                     | Frontend UI              |
+| Next.js                      | SSR & scalable frontend  |
+| Tailwind CSS v4              | Styling                  |
+| Redux Toolkit                | State management         |
+| React Query v5               | API caching              |
+| TypeScript                   | Type safety              |
+| Node.js                      | Backend runtime          |
+| Express.js                   | Backend APIs             |
+| Laravel                      | Modular backend services |
+| MongoDB / PostgreSQL / MySQL | Database                 |
+| Redis                        | Caching & queues         |
+| BullMQ                       | Background jobs          |
+| Socket.io                    | Real-time communication  |
+| Axios                        | API communication        |
+| Zod                          | Validation               |
+| React Hook Form              | Forms                    |
+| Recharts                     | Analytics                |
+| Framer Motion                | Animations               |
+| Winston / Pino               | Logging                  |
+
+---
+
+# 📁 Scalable Project Structure
 
 ```bash
-# 1. Clone the repository
-git clone https://github.com/YOUR_USERNAME/shoppro-frontend.git
+shoppro/
+├── apps/
+│   ├── frontend/
+│   ├── backend/
+│   └── admin/
+├── services/
+├── modules/
+├── shared/
+├── infrastructure/
+├── queues/
+├── logs/
+├── docker/
+├── nginx/
+├── docs/
+└── scripts/
+```
 
-# 2. Navigate to project
-cd shoppro-frontend
+---
 
-# 3. Install all dependencies
-npm install
+# 🔐 Authentication System
 
-# 4. Start development server
+## Features
+
+* Email/password login
+* Google OAuth
+* OTP password reset
+* Device session management
+* Role-based redirects
+* Session persistence
+* Activity tracking
+
+---
+
+# 📈 Monitoring & Logging
+
+## Features
+
+* Centralized logs
+* Activity logs
+* Request logs
+* Error logs
+* Monitoring-ready structure
+* Audit tracking
+
+---
+
+# 🧪 Testing Ready
+
+## Supported
+
+* Unit testing
+* Integration testing
+* API testing
+* Regression-safe architecture
+
+---
+
+# 🚀 Deployment Ready
+
+## Production Features
+
+* Docker support
+* PM2 support
+* CI/CD ready
+* Nginx reverse proxy ready
+* Environment management
+* Production-safe architecture
+
+---
+
+# 📜 Scripts
+
+```bash
 npm run dev
-```
-
-### Open in browser
-```
-http://localhost:5173
+npm run build
+npm run preview
+npm run lint
 ```
 
 ---
 
-## 🔑 Demo Login Credentials
+# 🔗 Backend Support
 
-| Role | Email | Password |
-|---|---|---|
-| 👑 Admin | malik.umerkhan97@gmail.com | malikawan97 |
-| 🏪 Seller | any@yahoo.com | Register first |
-| 🛒 Customer | any@gmail.com | Register first |
-| 🎧 Support | any@hotmail.com | Register first |
-| 🚴 Rider | any@rider.com | Register first |
-
-> ⚠️ **Email domain is strictly enforced per role**
-
----
-
-## 📜 Scripts
+Backend APIs run on:
 
 ```bash
-npm run dev       # Start development server (port 5173)
-npm run build     # Build for production
-npm run preview   # Preview production build
-npm run lint      # Run ESLint
+http://localhost:8000
 ```
 
 ---
 
-## 🔗 Backend Repository
+# 👨‍💻 Developer
 
-👉 **[ShopPro Backend Repository](https://github.com/YOUR_USERNAME/shoppro-backend)**
+## Malik Umer Khan
 
-Backend must be running at `http://localhost:8000`
-
----
-
-## 📄 License
-
-[MIT License](LICENSE)
+📧 [malik.umerkhan97@gmail.com](mailto:malik.umerkhan97@gmail.com)
 
 ---
 
-## 👨‍💻 Developer
+# 🎯 Portfolio Value
 
-**Malik Umer Khan**
-- 📧 malik.umerkhan97@gmail.com
+This project demonstrates:
 
+* Enterprise software engineering
+* Scalable backend architecture
+* Advanced frontend engineering
+* Multi-vendor marketplace systems
+* Role-based access control
+* Real-world order lifecycle
+* Performance optimization
+* DevOps readiness
+* Production-grade architecture
+* Professional engineering standards
 
 ---
 
-> 💡 **Portfolio Project** — Demonstrates professional full-stack e-commerce development with React 19, role-based access, real payment flow, delivery management, SEO optimization, and clean UI/UX design.
+# 📌 Final Goal
+
+ShopPro is designed to simulate a real-world scalable marketplace ecosystem with enterprise engineering standards while maintaining high performance, modular maintainability, and production-safe architecture.
