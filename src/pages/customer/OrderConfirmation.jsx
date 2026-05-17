@@ -3,9 +3,11 @@ import { useLocation, Link, Navigate } from 'react-router-dom';
 import { 
     CheckCircle2, Package, Truck, 
     Building2, Clipboard, ChevronRight,
-    ShoppingBag, Search, Copy
+    ShoppingBag, Search, Copy, FileText,
+    Download
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import api from '../../services/api';
 
 export default function OrderConfirmation() {
     const location = useLocation();
@@ -20,6 +22,27 @@ export default function OrderConfirmation() {
         toast.success(`${label} copied to clipboard`);
     };
 
+    const handleDownloadInvoice = async () => {
+        try {
+            const response = await api.get(`/orders/${orderData.order_id}/invoice/download`, {
+                responseType: 'blob'
+            });
+            
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            
+            link.setAttribute('download', `invoice-${orderData.order_id}.pdf`);
+            
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (error) {
+            console.error('Error handling invoice:', error);
+            toast.error('Failed to process invoice. Please try from your order history.');
+        }
+    };
+
     return (
         <div className="bg-[#F8FAFC] min-h-screen pb-20 pt-12">
             <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -30,9 +53,18 @@ export default function OrderConfirmation() {
                     </div>
                     <h1 className="text-4xl font-black text-[#0F172A] mb-2 tracking-tight">Order Placed Successfully!</h1>
                     <p className="text-lg text-gray-500 font-medium italic">Thank you for shopping with ShopPro</p>
-                    <div className="mt-6 inline-flex items-center px-6 py-2 bg-white border border-slate-200 rounded-full shadow-sm">
-                        <span className="text-xs font-black text-gray-400 uppercase tracking-widest mr-2">Order Number:</span>
-                        <span className="text-lg font-black text-[#0F172A]">{orderData.order_number}</span>
+                    
+                    <div className="mt-6 flex flex-wrap justify-center gap-3">
+                        <div className="inline-flex items-center px-6 py-2 bg-white border border-slate-200 rounded-full shadow-sm">
+                            <span className="text-xs font-black text-gray-400 uppercase tracking-widest mr-2">Order:</span>
+                            <span className="text-lg font-black text-[#0F172A]">{orderData.order_number}</span>
+                        </div>
+                        {orderData.invoice_number && (
+                            <div className="inline-flex items-center px-6 py-2 bg-orange-50 border border-orange-100 rounded-full shadow-sm">
+                                <span className="text-xs font-black text-orange-400 uppercase tracking-widest mr-2">Invoice:</span>
+                                <span className="text-lg font-black text-orange-700">{orderData.invoice_number}</span>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -97,6 +129,30 @@ export default function OrderConfirmation() {
                         </div>
                     )}
 
+                    {/* Invoice Actions */}
+                    <div className="bg-[#0F172A] rounded-[2.5rem] p-8 sm:p-10 shadow-xl shadow-slate-200 text-white">
+                        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                            <div className="flex items-center space-x-6">
+                                <div className="w-16 h-16 bg-slate-800 rounded-3xl flex items-center justify-center shrink-0 border border-slate-700">
+                                    <FileText className="w-8 h-8 text-[#F97316]" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-black mb-1">Order Invoice</h3>
+                                    <p className="text-slate-400 font-medium">Download your official receipt</p>
+                                </div>
+                            </div>
+                            <div className="w-full md:w-auto">
+                                <button 
+                                    onClick={handleDownloadInvoice}
+                                    className="w-full md:w-auto bg-[#F97316] text-white px-8 py-4 rounded-2xl font-black hover:bg-[#ea580c] transition-all flex items-center justify-center space-x-2 shadow-lg shadow-orange-500/20"
+                                >
+                                    <Download className="w-5 h-5" />
+                                    <span>Download Invoice</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Delivery Timeline Card */}
                     <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8 sm:p-10">
                         <div className="flex items-center space-x-6">
@@ -132,3 +188,4 @@ export default function OrderConfirmation() {
         </div>
     );
 }
+

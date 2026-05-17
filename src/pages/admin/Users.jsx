@@ -148,22 +148,24 @@ export default function Users() {
       </div>
 
       {/* Stats Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 lg:gap-6">
         {[
           { label: 'Total Users', value: stats.total ?? 0, icon: UsersIcon, color: '#0F172A', bg: '#F1F5F9' },
           { label: 'Customers', value: stats.customers ?? 0, icon: ShoppingBag, color: '#1E40AF', bg: '#DBEAFE' },
           { label: 'Sellers', value: stats.sellers ?? 0, icon: Store, color: '#F97316', bg: '#FED7AA' },
+          { label: 'Support', value: stats.support ?? 0, icon: Headphones, color: '#5B21B6', bg: '#EDE9FE' },
+          { label: 'Riders', value: stats.riders ?? 0, icon: Truck, color: '#065F46', bg: '#D1FAE5' },
           { label: 'Blocked', value: stats.blocked ?? 0, icon: UserX, color: '#EF4444', bg: '#FEE2E2' },
         ].map((stat, idx) => (
-          <div key={idx} className="bg-white p-5 rounded-[2rem] border border-gray-100 shadow-sm flex items-center space-x-3">
+          <div key={idx} className="bg-white p-5 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col xl:flex-row items-center xl:space-x-3 space-y-3 xl:space-y-0 text-center xl:text-left">
             <div 
-                className="p-3 rounded-2xl flex items-center justify-center"
+                className="p-3 rounded-2xl flex items-center justify-center shrink-0"
                 style={{ backgroundColor: stat.bg, color: stat.color }}
             >
               <stat.icon className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-tight">{stat.label}</p>
+              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-tight mb-1">{stat.label}</p>
               <h4 className="text-xl font-black text-[#0F172A] leading-tight">{stat.value}</h4>
             </div>
           </div>
@@ -194,6 +196,8 @@ export default function Users() {
               <option value="all">All Roles</option>
               <option value="customer">Customer</option>
               <option value="seller">Seller</option>
+              <option value="support">Support</option>
+              <option value="rider">Rider</option>
             </select>
             <select 
               name="status"

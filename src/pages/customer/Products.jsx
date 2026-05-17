@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Header from '../../components/layout/Header';
 import Footer from '../../components/layout/Footer';
 import ProductCard from '../../components/common/ProductCard';
@@ -7,16 +8,17 @@ import { ShoppingBag, ChevronLeft, ChevronRight, Filter, Search as SearchIcon, X
 import SEOHead from '../../components/SEOHead';
 
 export default function Products() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState(parseInt(searchParams.get('category_id')) || null);
   const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(parseInt(searchParams.get('page')) || 1);
   const [lastPage, setLastPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [loaded, setLoaded] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
 
   const fetchCategories = async () => {
     try {
@@ -60,6 +62,16 @@ export default function Products() {
   }, []);
 
   useEffect(() => {
+    const page = parseInt(searchParams.get('page')) || 1;
+    const category = parseInt(searchParams.get('category_id')) || null;
+    const search = searchParams.get('search') || '';
+
+    if (page !== currentPage) setCurrentPage(page);
+    if (category !== selectedCategory) setSelectedCategory(category);
+    if (search !== searchQuery) setSearchQuery(search);
+  }, [searchParams]);
+
+  useEffect(() => {
     if (loaded && currentPage === 1) {
        fetchProducts(1);
     } else {
@@ -70,12 +82,23 @@ export default function Products() {
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
+    setSearchParams(prev => {
+      prev.set('page', page);
+      return prev;
+    });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleCategorySelect = (categoryId) => {
-    setSelectedCategory(categoryId === selectedCategory ? null : categoryId);
+    const newCategory = categoryId === selectedCategory ? null : categoryId;
+    setSelectedCategory(newCategory);
     setCurrentPage(1);
+    setSearchParams(prev => {
+      prev.set('page', 1);
+      if (newCategory) prev.set('category_id', newCategory);
+      else prev.delete('category_id');
+      return prev;
+    });
   };
 
   return (
@@ -103,7 +126,17 @@ export default function Products() {
                 type="text" 
                 placeholder="Search products..." 
                 value={searchQuery}
-                onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+                onChange={(e) => { 
+                  const query = e.target.value;
+                  setSearchQuery(query); 
+                  setCurrentPage(1);
+                  setSearchParams(prev => {
+                    prev.set('page', 1);
+                    if (query) prev.set('search', query);
+                    else prev.delete('search');
+                    return prev;
+                  });
+                }}
                 className="w-full pl-12 pr-4 py-3 bg-white border border-gray-100 rounded-2xl focus:ring-2 focus:ring-orange-500/20 outline-none transition-all font-medium"
               />
             </div>

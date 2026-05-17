@@ -49,6 +49,20 @@ export const markAllNotificationsRead = createAsyncThunk(
   }
 );
 
+export const deleteNotification = createAsyncThunk(
+  'notifications/delete',
+  async (id, { rejectWithValue }) => {
+    try {
+      if (notificationService.deleteNotification) {
+        await notificationService.deleteNotification(id);
+      }
+      return id;
+    } catch (error) {
+      return rejectWithValue(error.response?.data);
+    }
+  }
+);
+
 export const fetchPreferences = createAsyncThunk(
   'notifications/fetchPreferences',
   async (_, { rejectWithValue }) => {
@@ -126,6 +140,10 @@ const notificationSlice = createSlice({
       .addCase(markAllNotificationsRead.fulfilled, (state) => {
         state.items.forEach((n) => { n.read_at = n.read_at || new Date().toISOString(); });
         state.unreadCount = 0;
+      })
+
+      .addCase(deleteNotification.fulfilled, (state, action) => {
+        state.items = state.items.filter((n) => n.id !== action.payload);
       })
 
       .addCase(fetchPreferences.pending, (state) => { state.preferencesLoading = true; })

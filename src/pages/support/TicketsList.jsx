@@ -11,23 +11,38 @@ import {
   MoreVertical,
   ArrowUpDown
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 
 export default function AgentTicketsList() {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [filters, setFilters] = useState({
-    status: 'All',
-    category: 'All',
-    priority: 'All'
+    status: searchParams.get('status') || 'All',
+    category: searchParams.get('category') || 'All',
+    priority: searchParams.get('priority') || 'All'
   });
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
+  const [debouncedSearch, setDebouncedSearch] = useState(searchParams.get('search') || '');
   const navigate = useNavigate();
 
   useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchTerm), 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    const newParams = new URLSearchParams();
+    if (filters.status !== 'All') newParams.set('status', filters.status);
+    if (filters.category !== 'All') newParams.set('category', filters.category);
+    if (filters.priority !== 'All') newParams.set('priority', filters.priority);
+    if (debouncedSearch) newParams.set('search', debouncedSearch);
+    
+    setSearchParams(newParams, { replace: true });
     fetchTickets();
-  }, [filters]);
+  }, [filters, debouncedSearch, setSearchParams]);
 
   const fetchTickets = async () => {
     setLoading(true);
@@ -36,6 +51,7 @@ export default function AgentTicketsList() {
       if (filters.status !== 'All') params.status = filters.status;
       if (filters.category !== 'All') params.category = filters.category;
       if (filters.priority !== 'All') params.priority = filters.priority;
+      if (debouncedSearch) params.search = debouncedSearch;
 
       const response = await api.get(`/tickets`, { params });
       setTickets(response.data.data);
@@ -84,6 +100,8 @@ export default function AgentTicketsList() {
               type="text"
               placeholder="Search by ID, customer..."
               className="pl-10 pr-4 py-2 rounded-xl border border-gray-200 outline-none focus:border-[#F97316] text-sm w-full md:w-64"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
         </div>
@@ -134,7 +152,10 @@ export default function AgentTicketsList() {
         </select>
 
         <button 
-          onClick={() => setFilters({status: 'All', category: 'All', priority: 'All'})}
+          onClick={() => {
+            setFilters({status: 'All', category: 'All', priority: 'All'});
+            setSearchTerm('');
+          }}
           className="text-xs font-bold text-[#F97316] hover:underline ml-auto"
         >
           Clear All

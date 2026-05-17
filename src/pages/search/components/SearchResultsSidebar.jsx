@@ -148,4 +148,4 @@ const SearchResultsSidebar = ({ availableFilters, appliedFilters, onFilterChange
   );
 };
 
-export default SearchResultsSidebar;
+export default React.memo(SearchResultsSidebar);
