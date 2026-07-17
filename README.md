@@ -5,6 +5,18 @@
 
 ---
 
+# 📸 Screenshots
+
+| Home Page | Blog / Categories |
+|:---:|:---:|
+| ![Home Page](screenshots/E-commerce1.png) | ![Blog Categories](screenshots/E-commerce2.png) |
+
+| Footer | Admin Dashboard |
+|:---:|:---:|
+| ![Footer](screenshots/E-commerce3.png) | ![Admin Products Management](screenshots/E-commerce4.png) |
+
+---
+
 # 🌟 Project Overview
 
 ShopPro is a complete software-engineering-level e-commerce ecosystem designed to simulate real-world scalable marketplace platforms like Daraz, Amazon, and Shopify Marketplace.
