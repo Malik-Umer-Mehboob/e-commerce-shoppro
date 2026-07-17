@@ -25,17 +25,7 @@ The platform supports:
 * Performance optimization
 * Scalable backend engineering
 
----
----
 
-# 📸 Project Preview
-
-Explore the modern and responsive user interface of **ShopPro**, designed to deliver a premium multi-vendor e-commerce experience.
-
-<p align="center">
-  <img src="./screenshots/home-page.png" alt="ShopPro Home Page" width="48%" />
-  <img src="./screenshots/blog-page.png" alt="ShopPro Blog Page" width="48%" />
-</p>
 
 ---
 
