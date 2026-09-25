@@ -126,7 +126,7 @@ export default function AddProduct() {
       if (p.thumbnail) {
         setThumbnailPreview(p.thumbnail.startsWith('http')
           ? p.thumbnail
-          : `http://localhost:8000/storage/${p.thumbnail}`);
+          : `${import.meta.env.VITE_STORAGE_URL || 'http://localhost:8000/storage'}/${p.thumbnail}`);
       }
       setExistingImages(p.images || []);
     } catch (error) {
@@ -466,7 +466,7 @@ export default function AddProduct() {
                   {/* Existing Gallery */}
                   {existingImages.map((img) => (
                     <div key={img.id} className="relative group w-full aspect-square border-2 border-gray-100 rounded-xl overflow-hidden bg-gray-50">
-                      <img src={`http://localhost:8000/storage/${img.image_path}`} className="w-full h-full object-cover" />
+                      <img src={`${import.meta.env.VITE_STORAGE_URL || 'http://localhost:8000/storage'}/${img.image_path}`} className="w-full h-full object-cover" />
                       <button 
                         type="button"
                         onClick={() => removeExistingImage(img.id)}

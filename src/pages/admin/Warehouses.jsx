@@ -296,7 +296,7 @@ export default function Warehouses() {
                         <div className="w-10 h-10 rounded-xl bg-gray-50 overflow-hidden flex-shrink-0 border border-gray-100">
                           {p.thumbnail ? (
                             <img 
-                              src={p.thumbnail?.trim().startsWith('http') ? p.thumbnail.trim() : `http://localhost:8000/storage/${p.thumbnail?.trim()}`} 
+                              src={p.thumbnail?.trim().startsWith('http') ? p.thumbnail.trim() : `${import.meta.env.VITE_STORAGE_URL || 'http://localhost:8000/storage'}/${p.thumbnail?.trim()}`} 
                               alt="" 
                               className="w-full h-full object-cover" 
                             />

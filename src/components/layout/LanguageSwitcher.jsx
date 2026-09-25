@@ -9,8 +9,13 @@ const LanguageSwitcher = () => {
   const { languages, currentLanguage, loading } = useSelector((state) => state.localization);
   const { i18n } = useTranslation();
 
+  // PERFORMANCE FIX: Header har page par dobara mount hota hai, is liye
+  // pehle HAR page change par /localization/languages request jati thi.
+  // Ab sirf ek dafa (jab list khali ho).
   useEffect(() => {
-    dispatch(fetchLanguages());
+    if (languages.length === 0 && !loading) {
+      dispatch(fetchLanguages());
+    }
   }, []);
 
   const handleLanguageChange = (lang) => {

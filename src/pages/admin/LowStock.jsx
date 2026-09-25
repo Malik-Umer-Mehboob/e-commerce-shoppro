@@ -170,7 +170,7 @@ export default function LowStock() {
                             <img 
                               src={product.thumbnail?.trim().startsWith('http') 
                                 ? product.thumbnail.trim() 
-                                : `http://localhost:8000/storage/${product.thumbnail?.trim()}`} 
+                                : `${import.meta.env.VITE_STORAGE_URL || 'http://localhost:8000/storage'}/${product.thumbnail?.trim()}`} 
                               alt={product.name}
                               className="w-full h-full object-cover"
                             />

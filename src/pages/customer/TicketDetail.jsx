@@ -37,7 +37,7 @@ export default function TicketDetail() {
 
   const getAttachmentUrl = (path) => {
     if (!path) return null;
-    return `http://localhost:8000/storage/${path}`;
+    return `${import.meta.env.VITE_STORAGE_URL || 'http://localhost:8000/storage'}/${path}`;
   };
 
   const handleSendMessage = async (e) => {

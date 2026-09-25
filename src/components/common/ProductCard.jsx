@@ -48,7 +48,7 @@ const ProductCard = ({ product }) => {
                 <Link to={`/products/${product.id}`}>
                     <img 
                         src={product.thumbnail 
-                            ? (product.thumbnail.trim().startsWith('http') ? product.thumbnail.trim() : `http://localhost:8000/storage/${product.thumbnail.trim()}`)
+                            ? (product.thumbnail.trim().startsWith('http') ? product.thumbnail.trim() : `${import.meta.env.VITE_STORAGE_URL || 'http://localhost:8000/storage'}/${product.thumbnail.trim()}`)
                             : 'https://placehold.co/300'
                         } 
                         alt={product.name} 

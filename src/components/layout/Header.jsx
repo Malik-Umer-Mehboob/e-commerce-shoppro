@@ -99,7 +99,7 @@ const Header = () => {
                   className="flex items-center space-x-2 text-gray-300 hover:text-white border-l border-gray-700 pl-3 focus:outline-none transition-colors"
                 >
                   {user?.avatar ? (
-                    <img src={user.avatar.startsWith('http') ? user.avatar : `http://localhost:8000/storage/${user.avatar}`} className="w-8 h-8 rounded-full border border-slate-700 object-cover" alt={user.name} />
+                    <img src={user.avatar.startsWith('http') ? user.avatar : `${import.meta.env.VITE_STORAGE_URL || 'http://localhost:8000/storage'}/${user.avatar}`} className="w-8 h-8 rounded-full border border-slate-700 object-cover" alt={user.name} />
                   ) : (
                     <div className="w-8 h-8 rounded-full bg-[#1E293B] flex items-center justify-center border border-slate-700">
                       <User className="w-4 h-4 text-gray-300" />

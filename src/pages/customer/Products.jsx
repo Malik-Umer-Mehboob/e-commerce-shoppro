@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import Header from '../../components/layout/Header';
 import Footer from '../../components/layout/Footer';
@@ -19,6 +19,9 @@ export default function Products() {
   const [loaded, setLoaded] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
+  const [searchInput, setSearchInput] = useState(searchParams.get('search') || '');
+  const searchDebounceRef = useRef(null);
+  useEffect(() => () => clearTimeout(searchDebounceRef.current), []);
 
   const fetchCategories = async () => {
     try {
@@ -68,7 +71,7 @@ export default function Products() {
 
     if (page !== currentPage) setCurrentPage(page);
     if (category !== selectedCategory) setSelectedCategory(category);
-    if (search !== searchQuery) setSearchQuery(search);
+    if (search !== searchQuery) { setSearchQuery(search); setSearchInput(search); }
   }, [searchParams]);
 
   useEffect(() => {
@@ -125,17 +128,24 @@ export default function Products() {
               <input 
                 type="text" 
                 placeholder="Search products..." 
-                value={searchQuery}
-                onChange={(e) => { 
+                value={searchInput}
+                onChange={(e) => {
+                  // PERFORMANCE FIX: pehle har keystroke par API call jati thi
+                  // ("iphone" likhne par 6 requests). Ab user ke rukne ke
+                  // 400ms baad sirf ek request.
                   const query = e.target.value;
-                  setSearchQuery(query); 
-                  setCurrentPage(1);
-                  setSearchParams(prev => {
-                    prev.set('page', 1);
-                    if (query) prev.set('search', query);
-                    else prev.delete('search');
-                    return prev;
-                  });
+                  setSearchInput(query);
+                  if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+                  searchDebounceRef.current = setTimeout(() => {
+                    setSearchQuery(query);
+                    setCurrentPage(1);
+                    setSearchParams(prev => {
+                      prev.set('page', 1);
+                      if (query) prev.set('search', query);
+                      else prev.delete('search');
+                      return prev;
+                    });
+                  }, 400);
                 }}
                 className="w-full pl-12 pr-4 py-3 bg-white border border-gray-100 rounded-2xl focus:ring-2 focus:ring-orange-500/20 outline-none transition-all font-medium"
               />

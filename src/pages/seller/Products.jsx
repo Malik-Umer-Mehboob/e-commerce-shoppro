@@ -200,7 +200,7 @@ export default function SellerProducts() {
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
                     <img src={product.thumbnail 
-                      ? (product.thumbnail.trim().startsWith('http') ? product.thumbnail.trim() : `http://localhost:8000/storage/${product.thumbnail.trim()}`)
+                      ? (product.thumbnail.trim().startsWith('http') ? product.thumbnail.trim() : `${import.meta.env.VITE_STORAGE_URL || 'http://localhost:8000/storage'}/${product.thumbnail.trim()}`)
                       : 'https://placehold.co/40'} 
                       className="w-10 h-10 rounded-lg object-cover" 
                     />

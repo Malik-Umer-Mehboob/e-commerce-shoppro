@@ -13,6 +13,7 @@ import {
     Clock
 } from 'lucide-react';
 import api from '../../services/api';
+import { useSelector } from 'react-redux';
 
 export default function NotificationBell({ isDark = false }) {
     const [notifications, setNotifications] = useState([]);
@@ -21,12 +22,29 @@ export default function NotificationBell({ isDark = false }) {
     const [loading, setLoading] = useState(false);
     const dropdownRef = useRef(null);
 
-    // Fetch unread count every 30 seconds (polling)
+    const isAuthenticated = useSelector((state) => state.auth?.isAuthenticated);
+
+    // PERFORMANCE FIX:
+    // 1) Guest users (login nahi) ke liye request bilkul nahi jayegi.
+    //    Pehle guest par bhi har 30 sec request jati thi (aur 401 aa sakta tha).
+    // 2) Jab tab background mein ho to polling ruk jati hai.
+    // 3) Polling 60 sec ki gayi.
     useEffect(() => {
-        fetchUnreadCount();
-        const interval = setInterval(fetchUnreadCount, 30000);
-        return () => clearInterval(interval);
-    }, []);
+        if (!isAuthenticated) {
+            setUnreadCount(0);
+            return;
+        }
+        const tick = () => {
+            if (document.visibilityState === 'visible') fetchUnreadCount();
+        };
+        tick();
+        const interval = setInterval(tick, 60000);
+        document.addEventListener('visibilitychange', tick);
+        return () => {
+            clearInterval(interval);
+            document.removeEventListener('visibilitychange', tick);
+        };
+    }, [isAuthenticated]);
 
     // Close on outside click
     useEffect(() => {

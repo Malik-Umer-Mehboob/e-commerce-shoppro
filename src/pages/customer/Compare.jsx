@@ -122,7 +122,7 @@ export default function Compare() {
                             }}>
                                 {product.thumbnail ? (
                                     <img
-                                        src={product.thumbnail.startsWith('http') ? product.thumbnail : `http://localhost:8000/storage/${product.thumbnail}`}
+                                        src={product.thumbnail.startsWith('http') ? product.thumbnail : `${import.meta.env.VITE_STORAGE_URL || 'http://localhost:8000/storage'}/${product.thumbnail}`}
                                         alt={product.name}
                                         style={{
                                             width: '100%',
