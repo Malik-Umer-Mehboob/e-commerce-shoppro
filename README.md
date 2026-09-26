@@ -430,8 +430,6 @@ Approved categories automatically appear in:
 | Redux Toolkit                | State management         |
 | React Query v5               | API caching              |
 | TypeScript                   | Type safety              |
-| Node.js                      | Backend runtime          |
-| Express.js                   | Backend APIs             |
 | Laravel                      | Modular backend services |
 | MongoDB / PostgreSQL / MySQL | Database                 |
 | Redis                        | Caching & queues         |
