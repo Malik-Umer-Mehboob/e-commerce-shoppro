@@ -1,6 +1,6 @@
 # ShopPro Frontend — CI/CD Pipeline
 # CI: har push aur pull request par lint + tests + build
-# CD: sirf main branch par, jab repo variable DEPLOY_ENABLED = true ho
+# CD: tests pass hon, main branch ho, aur DEPLOY_ENABLED = true ho → Vercel deploy
 
 name: Frontend CI/CD
 
@@ -46,37 +46,38 @@ jobs:
           VITE_API_URL: ${{ vars.VITE_API_URL || 'http://localhost:8000/api' }}
           VITE_STORAGE_URL: ${{ vars.VITE_STORAGE_URL || 'http://localhost:8000/storage' }}
 
-      - name: Build ko save karo (deploy job ke liye)
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-dist
-          path: dist
-          retention-days: 7
-
   deploy:
-    name: Deploy to Server
+    name: Deploy to Vercel
     needs: test
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.DEPLOY_ENABLED == 'true'
     environment: production
-    timeout-minutes: 10
+    timeout-minutes: 15
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
     steps:
-      - name: Build download
-        uses: actions/download-artifact@v4
+      - name: Code checkout
+        uses: actions/checkout@v4
+
+      - name: Node.js setup
+        uses: actions/setup-node@v4
         with:
-          name: frontend-dist
-          path: dist
+          node-version: 22
+          cache: npm
 
-      - name: SSH key setup
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -p "${{ secrets.SSH_PORT || 22 }}" -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
+      - name: Vercel CLI install
+        run: npm install --global vercel@latest
 
-      - name: Files server par upload
+      - name: Vercel project settings aur environment variables lao
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Production build (Vercel ke andaz mein)
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Live par deploy
         run: |
-          rsync -az --delete \
-            -e "ssh -i ~/.ssh/deploy_key -p ${{ secrets.SSH_PORT || 22 }}" \
-            dist/ "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.FRONTEND_PATH }}/"
+          URL=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
+          echo "Website live: $URL"
+          echo "### 🚀 Deployed: $URL" >> "$GITHUB_STEP_SUMMARY"

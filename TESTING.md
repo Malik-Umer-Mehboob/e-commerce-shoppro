@@ -21,27 +21,9 @@ File: `.github/workflows/ci-cd.yml`
 
 Result dekhne ke liye: GitHub repo → **Actions** tab.
 
-### Deploy on karne ke liye (jab server ready ho)
+### Deploy
 
-Repo → **Settings → Secrets and variables → Actions**
-
-**Variables** tab:
-| Naam | Value |
-|---|---|
-| `DEPLOY_ENABLED` | `true` |
-| `VITE_API_URL` | `https://api.yourdomain.com/api` |
-| `VITE_STORAGE_URL` | `https://api.yourdomain.com/storage` |
-
-**Secrets** tab:
-| Naam | Value |
-|---|---|
-| `SSH_HOST` | server ka IP ya domain |
-| `SSH_USER` | server ka username |
-| `SSH_PRIVATE_KEY` | SSH private key (poori, BEGIN se END tak) |
-| `SSH_PORT` | aam taur par `22` (optional) |
-| `FRONTEND_PATH` | server par folder, jaise `/var/www/shoppro-frontend` |
-
-Jab tak `DEPLOY_ENABLED` set nahi, pipeline sirf test karegi, deploy nahi.
+Deploy ka poora tareeqa `DEPLOYMENT.md` mein hai.
 
 ## 3. Manual testing checklist
 
