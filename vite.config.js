@@ -10,6 +10,14 @@ export default defineConfig({
     hmr: true,
   },
 
+  // Tests (npm test) ke liye settings
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: './src/test/setup.js',
+    css: false,
+  },
+
   build: {
     sourcemap: false,
     minify: 'oxc',

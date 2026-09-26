@@ -7,6 +7,9 @@ import { Award, Zap, Gift, Trophy, ArrowUpRight, History, Sparkles, ChevronRight
 const LoyaltyDashboard = () => {
   const dispatch = useDispatch();
   const { points, currentTier, nextTier, history, rewards, loading } = useSelector((state) => state.loyalty);
+  // BUG FIX: `auth` neeche use ho raha tha lekin define nahi tha,
+  // is liye Loyalty page khulte hi "auth is not defined" error se crash hota tha.
+  const auth = useSelector((state) => state.auth);
 
   useEffect(() => {
     dispatch(fetchLoyaltyStatus());
