@@ -426,7 +426,6 @@ Approved categories automatically appear in:
 | Technology                   | Purpose                  |
 | ---------------------------- | ------------------------ |
 | React 19                     | Frontend UI              |
-| Next.js                      | SSR & scalable frontend  |
 | Tailwind CSS v4              | Styling                  |
 | Redux Toolkit                | State management         |
 | React Query v5               | API caching              |
