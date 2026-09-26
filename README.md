@@ -431,7 +431,7 @@ Approved categories automatically appear in:
 | React Query v5               | API caching              |
 | TypeScript                   | Type safety              |
 | Laravel                      | Modular backend services |
-| MongoDB / PostgreSQL / MySQL | Database                 |
+| MySQL                        | Database                 |
 | Redis                        | Caching & queues         |
 | BullMQ                       | Background jobs          |
 | Socket.io                    | Real-time communication  |
